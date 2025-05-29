@@ -16,22 +16,22 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
    * [x] Add license file (`LICENSE`) (GPL v3).
 3. **Python Setup**
 
-   * [ ] Create `pyproject.toml` with PEP 621 fields (Name, Version, Authors).
-   * [ ] Configure `[build-system]` with `requires = ["setuptools>=61.0"]` and `build-backend = "setuptools.build_meta"`.
+   * [x] Create `pyproject.toml` with PEP 621 fields (Name, Version, Authors).
+   * [x] Configure `[build-system]` with `requires = ["setuptools>=61.0"]` and `build-backend = "setuptools.build_meta"`.
    * [ ] Add example `setup.cfg` or `setup.py` for pip installation.
 4. **Work Environment**
 
-   * [ ] Install `uv` and briefly describe in README.
-   * [ ] Create virtual environment (`python -m venv .venv`).
-   * [ ] Add dependencies in `pyproject.toml`: `pycairo`, `PyGObject`, `pytest`, `pytest-gtk`, `ruff`, `black`, `isort`, `mypy`.
+   * [x] Install `uv` and briefly describe in README.
+   * [x] Create virtual environment (`python -m venv .venv`).
+   * [x] Add dependencies in `pyproject.toml`: `pycairo`, `PyGObject`, `pytest`, `pytest-gtk`, `ruff`, `black`, `isort`, `mypy`.
 5. **Code Quality**
 
-   * [ ] Configure `pre-commit` with hooks: `ruff`, `black`, `isort`, `mypy`.
+   * [-] Configure `pre-commit` with hooks: `ruff`, `black`, `isort`, `mypy`.
 6. **CI Scaffolding**
 
-   * [ ] Create `.gitlab-ci.yml`.
-   * [ ] Job `lint`: runs `ruff`, `black --check`, `isort --check`, `mypy`.
-   * [ ] Job `test`: runs `pytest` (unit tests) via Docker image `python:3.11`.
+   * [x] Create `.gitlab-ci.yml`.
+   * [x] Job `lint`: runs `ruff`, `black --check`, `isort --check`, `mypy`.
+   * [x] Job `test`: runs `pytest` (unit tests) via Docker image `python:3.11`.
 
 ---
 
