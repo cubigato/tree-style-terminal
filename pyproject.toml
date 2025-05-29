@@ -22,7 +22,11 @@ classifiers = [
     "Topic :: System :: Shells",
 ]
 requires-python = ">=3.11"
-dependencies = ["pycairo>=1.20.0"]
+dependencies = [
+    "pycairo>=1.20.0",
+    "PyGObject>=3.42.0",
+    "pyvte>=0.1.0",
+]
 
 [project.optional-dependencies]
 dev = [
