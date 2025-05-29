@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""
+Tree Style Terminal - Main application entry point.
+
+This module contains the main GTK application class and window implementation.
+"""
+
+import sys
+import os
+from pathlib import Path
+from typing import Optional
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+
+from gi.repository import Gtk, Gio, GLib
+
+
+class MainWindow(Gtk.ApplicationWindow):
+    """Main application window with tree-style terminal layout."""
+    
+    def __init__(self, application: "TreeStyleTerminalApp"):
+        super().__init__(application=application)
+        
+        # Set up window properties
+        self.set_title("Tree Style Terminal")
+        self.set_default_size(1024, 768)
+        
+        # Create header bar
+        self._setup_headerbar()
+        
+        # Load the UI from the Glade file
+        self._load_ui()
+        
+    def _setup_headerbar(self) -> None:
+        """Set up the header bar."""
+        self.headerbar = Gtk.HeaderBar()
+        self.headerbar.set_show_close_button(True)
+        self.headerbar.set_title("Tree Style Terminal")
+        self.set_titlebar(self.headerbar)
+        
+        # Add sidebar toggle button
+        self.sidebar_toggle_button = Gtk.Button()
+        self.sidebar_toggle_button.set_image(
+            Gtk.Image.new_from_icon_name("view-sidebar-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.sidebar_toggle_button.set_tooltip_text("Toggle sidebar")
+        self.sidebar_toggle_button.connect("clicked", self._on_sidebar_toggle_clicked)
+        self.headerbar.pack_start(self.sidebar_toggle_button)
+        
+        # Add new terminal button
+        self.new_terminal_button = Gtk.Button()
+        self.new_terminal_button.set_image(
+            Gtk.Image.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.new_terminal_button.set_tooltip_text("New terminal")
+        self.new_terminal_button.connect("clicked", self._on_new_terminal_clicked)
+        self.headerbar.pack_start(self.new_terminal_button)
+        
+    def _load_ui(self) -> None:
+        """Load the UI from the Glade file."""
+        # Get the path to the UI file
+        ui_path = self._get_ui_file_path()
+        
+        # Create a builder and load the UI
+        builder = Gtk.Builder()
+        try:
+            builder.add_from_file(str(ui_path))
+        except Exception as e:
+            # Fallback to manual UI creation if file loading fails
+            print(f"Warning: Could not load UI file {ui_path}: {e}")
+            self._create_manual_ui()
+            return
+        
+        # Get the main container from the UI
+        main_container = builder.get_object("main_container")
+        if main_container:
+            self.add(main_container)
+        else:
+            self._create_manual_ui()
+        
+        # Store references to important widgets
+        self.sidebar_revealer = builder.get_object("sidebar_revealer")
+        self.session_tree_view = builder.get_object("session_tree_view")
+        self.terminal_stack = builder.get_object("terminal_stack")
+        
+        # Connect additional signals from UI file
+        sidebar_toggle_ui = builder.get_object("sidebar_toggle_button")
+        if sidebar_toggle_ui:
+            sidebar_toggle_ui.connect("clicked", self._on_sidebar_toggle_clicked)
+        
+        new_terminal_ui = builder.get_object("new_terminal_button")
+        if new_terminal_ui:
+            new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
+        
+        welcome_new_terminal_ui = builder.get_object("welcome_new_terminal_button")
+        if welcome_new_terminal_ui:
+            welcome_new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
+    
+    def _create_manual_ui(self) -> None:
+        """Create a basic UI manually if Glade file is not available."""
+        # Create main horizontal box
+        main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        
+        # Create sidebar area
+        sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        sidebar_box.set_size_request(250, -1)
+        
+        # Create sidebar revealer
+        self.sidebar_revealer = Gtk.Revealer()
+        self.sidebar_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_RIGHT)
+        self.sidebar_revealer.set_transition_duration(200)
+        self.sidebar_revealer.set_reveal_child(True)
+        self.sidebar_revealer.add(sidebar_box)
+        
+        # Create tree view for sessions
+        self.session_tree_view = Gtk.TreeView()
+        self.session_tree_view.set_headers_visible(False)
+        
+        # Add tree view to scrolled window
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.add(self.session_tree_view)
+        sidebar_box.pack_start(scrolled, True, True, 0)
+        
+        # Create terminal area
+        terminal_area = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        
+        # Create welcome page
+        welcome_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        welcome_box.set_halign(Gtk.Align.CENTER)
+        welcome_box.set_valign(Gtk.Align.CENTER)
+        welcome_box.set_spacing(12)
+        
+        welcome_label = Gtk.Label("Welcome to Tree Style Terminal")
+        welcome_label.set_markup("<big><b>Welcome to Tree Style Terminal</b></big>")
+        welcome_box.pack_start(welcome_label, False, False, 0)
+        
+        subtitle_label = Gtk.Label("Create a new terminal session to get started")
+        welcome_box.pack_start(subtitle_label, False, False, 0)
+        
+        welcome_button = Gtk.Button.new_with_label("New Terminal")
+        welcome_button.connect("clicked", self._on_new_terminal_clicked)
+        welcome_box.pack_start(welcome_button, False, False, 0)
+        
+        terminal_area.pack_start(welcome_box, True, True, 0)
+        
+        # Create stack for terminal switching
+        self.terminal_stack = Gtk.Stack()
+        self.terminal_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        self.terminal_stack.add_named(welcome_box, "welcome")
+        terminal_area.pack_start(self.terminal_stack, True, True, 0)
+        
+        # Add separator
+        separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        
+        # Pack everything into main box
+        main_box.pack_start(self.sidebar_revealer, False, False, 0)
+        main_box.pack_start(separator, False, False, 0)
+        main_box.pack_start(terminal_area, True, True, 0)
+        
+        self.add(main_box)
+    
+    def _get_ui_file_path(self) -> Path:
+        """Get the path to the UI file."""
+        # Get the directory where this module is located
+        module_dir = Path(__file__).parent
+        ui_file = module_dir / "ui" / "main_window.ui"
+        return ui_file
+    
+    def _on_sidebar_toggle_clicked(self, button: Gtk.Button) -> None:
+        """Handle sidebar toggle button click."""
+        if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
+            current_state = self.sidebar_revealer.get_reveal_child()
+            self.sidebar_revealer.set_reveal_child(not current_state)
+            
+            # Update button icon based on state
+            if hasattr(button, 'get_image'):
+                image = button.get_image()
+                if current_state:
+                    image.set_from_icon_name("view-sidebar-symbolic", Gtk.IconSize.BUTTON)
+                else:
+                    image.set_from_icon_name("view-sidebar-symbolic", Gtk.IconSize.BUTTON)
+    
+    def _on_new_terminal_clicked(self, button: Gtk.Button) -> None:
+        """Handle new terminal button click."""
+        # TODO: Implement terminal creation in later milestones
+        print("New terminal requested")
+
+
+class TreeStyleTerminalApp(Gtk.Application):
+    """Main GTK application class."""
+    
+    def __init__(self):
+        super().__init__(
+            application_id="org.example.TreeStyleTerminal",
+            flags=Gio.ApplicationFlags.FLAGS_NONE
+        )
+        
+        self.window: Optional[MainWindow] = None
+        
+        # Connect the activate signal
+        self.connect("activate", self._on_activate)
+        self.connect("startup", self._on_startup)
+    
+    def _on_startup(self, app: "TreeStyleTerminalApp") -> None:
+        """Called when the application starts up."""
+        # Set up any application-wide resources here
+        pass
+    
+    def _on_activate(self, app: "TreeStyleTerminalApp") -> None:
+        """Called when the application is activated."""
+        if not self.window:
+            self.window = MainWindow(application=self)
+        
+        self.window.show_all()
+        self.window.present()
+
+
+def main() -> int:
+    """Main entry point for the application."""
+    # Create and run the application
+    app = TreeStyleTerminalApp()
+    return app.run(sys.argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

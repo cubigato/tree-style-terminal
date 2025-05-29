@@ -1,1 +1,1 @@
-tree-style-terminal
+tree_style_terminal

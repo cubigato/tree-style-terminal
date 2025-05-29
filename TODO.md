@@ -29,9 +29,9 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
    * [-] Configure `pre-commit` with hooks: `ruff`, `black`, `isort`, `mypy`.
 6. **CI Scaffolding**
 
-   * [x] Create `.gitlab-ci.yml`.
-   * [x] Job `lint`: runs `ruff`, `black --check`, `isort --check`, `mypy`.
-   * [x] Job `test`: runs `pytest` (unit tests) via Docker image `python:3.11`.
+   * [-] Create `.gitlab-ci.yml`.
+   * [-] Job `lint`: runs `ruff`, `black --check`, `isort --check`, `mypy`.
+   * [-] Job `test`: runs `pytest` (unit tests) via Docker image `python:3.11`.
 
 ---
 
@@ -39,21 +39,21 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
 
 1. **Project Structure**
 
-   * [ ] Create `src/tree_style_terminal/`.
-   * [ ] Create `__init__.py` and `main.py`.
+   * [x] Create `src/tree_style_terminal/`.
+   * [x] Create `__init__.py` and `main.py`.
 2. **Gtk.Application & Window**
 
-   * [ ] Define `Gtk.Application` class in `main.py`.
-   * [ ] Initialize `MainWindow` (inheriting from `Gtk.ApplicationWindow`) with `HeaderBar`.
-   * [ ] `python -m tree_style_terminal` starts empty window.
+   * [x] Define `Gtk.Application` class in `main.py`.
+   * [x] Initialize `MainWindow` (inheriting from `Gtk.ApplicationWindow`) with `HeaderBar`.
+   * [x] `python -m tree_style_terminal` starts empty window.
 3. **GtkBuilder Layout**
 
-   * [ ] Create `ui/main_window.ui` with Glade or manually.
-   * [ ] Integrate HeaderBar + central `Gtk.Box` placeholder.
-   * [ ] Implement loading of UI file in `main.py`.
+   * [x] Create `ui/main_window.ui` with Glade or manually.
+   * [x] Integrate HeaderBar + central `Gtk.Box` placeholder.
+   * [x] Implement loading of UI file in `main.py`.
 4. **Wayland/X11 Test**
 
-   * [ ] Start app under X11 and briefly check functionality.
+   * [x] Start app under X11 and briefly check functionality.
    * [ ] Start app under Wayland and check.
 
 ---

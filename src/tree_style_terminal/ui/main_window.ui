@@ -1,220 +1,344 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.40.0 -->
 <interface>
-  <requires lib="gtk" version="4.0"/>
-  <template class="TreeStyleTerminalMainWindow" parent="GtkApplicationWindow">
-    <property name="can-focus">False</property>
-    <property name="default-width">1024</property>
-    <property name="default-height">768</property>
-    <property name="title">Tree Style Terminal</property>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkBox" id="main_container">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="orientation">horizontal</property>
     <child>
-      <object class="GtkBox" id="main_container">
-        <property name="orientation">horizontal</property>
-        <property name="can-focus">False</property>
+      <object class="GtkRevealer" id="sidebar_revealer">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="transition_type">slide-right</property>
+        <property name="transition_duration">200</property>
+        <property name="reveal_child">True</property>
         <child>
-          <object class="GtkRevealer" id="sidebar_revealer">
-            <property name="transition-type">slide-right</property>
-            <property name="transition-duration">200</property>
-            <property name="reveal-child">True</property>
-            <property name="can-focus">False</property>
-            <child>
-              <object class="GtkBox" id="sidebar_container">
-                <property name="orientation">vertical</property>
-                <property name="width-request">250</property>
-                <property name="can-focus">False</property>
-                <style>
-                  <class name="sidebar"/>
-                </style>
-                <child>
-                  <object class="GtkHeaderBar" id="sidebar_header">
-                    <property name="can-focus">False</property>
-                    <property name="show-title-buttons">False</property>
-                    <style>
-                      <class name="sidebar-header"/>
-                    </style>
-                    <child type="start">
-                      <object class="GtkButton" id="sidebar_toggle_button">
-                        <property name="can-focus">True</property>
-                        <property name="receives-default">True</property>
-                        <property name="icon-name">sidebar-hide-symbolic</property>
-                        <property name="tooltip-text">Toggle sidebar</property>
-                        <style>
-                          <class name="flat"/>
-                        </style>
-                      </object>
-                    </child>
-                    <child type="title">
-                      <object class="GtkLabel" id="sidebar_title">
-                        <property name="can-focus">False</property>
-                        <property name="label">Sessions</property>
-                        <style>
-                          <class name="heading"/>
-                        </style>
-                      </object>
-                    </child>
-                    <child type="end">
-                      <object class="GtkMenuButton" id="sidebar_menu_button">
-                        <property name="can-focus">True</property>
-                        <property name="receives-default">True</property>
-                        <property name="icon-name">view-more-symbolic</property>
-                        <property name="tooltip-text">Tree options</property>
-                        <style>
-                          <class name="flat"/>
-                        </style>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow" id="sidebar_scrolled">
-                    <property name="can-focus">True</property>
-                    <property name="hscrollbar-policy">automatic</property>
-                    <property name="vscrollbar-policy">automatic</property>
-                    <property name="vexpand">True</property>
-                    <child>
-                      <object class="GtkTreeView" id="session_tree_view">
-                        <property name="can-focus">True</property>
-                        <property name="headers-visible">False</property>
-                        <property name="enable-tree-lines">True</property>
-                        <property name="show-expanders">True</property>
-                        <property name="level-indentation">16</property>
-                        <style>
-                          <class name="sidebar-tree"/>
-                        </style>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-          </object>
-        </child>
-        <child>
-          <object class="GtkSeparator" id="sidebar_separator">
+          <object class="GtkBox" id="sidebar_container">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
-            <property name="can-focus">False</property>
-            <property name="width-request">1</property>
+            <property name="width_request">250</property>
             <style>
-              <class name="sidebar-separator"/>
+              <class name="sidebar"/>
             </style>
-          </object>
-        </child>
-        <child>
-          <object class="GtkBox" id="terminal_area">
-            <property name="orientation">vertical</property>
-            <property name="can-focus">False</property>
-            <property name="hexpand">True</property>
-            <property name="vexpand">True</property>
             <child>
-              <object class="GtkHeaderBar" id="terminal_header">
-                <property name="can-focus">False</property>
-                <property name="show-title-buttons">True</property>
+              <object class="GtkBox" id="sidebar_header">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">horizontal</property>
+                <property name="spacing">6</property>
+                <property name="margin_top">6</property>
+                <property name="margin_bottom">6</property>
+                <property name="margin_left">6</property>
+                <property name="margin_right">6</property>
                 <style>
-                  <class name="terminal-header"/>
+                  <class name="sidebar-header"/>
                 </style>
-                <child type="start">
-                  <object class="GtkButton" id="new_terminal_button">
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="icon-name">list-add-symbolic</property>
-                    <property name="tooltip-text">New terminal</property>
-                    <style>
-                      <class name="flat"/>
-                    </style>
+                <child>
+                  <object class="GtkButton" id="sidebar_toggle_button">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text">Toggle sidebar</property>
+                    <property name="relief">none</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">view-sidebar-symbolic</property>
+                        <property name="icon_size">1</property>
+                      </object>
+                    </child>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
                 </child>
-                <child type="title">
-                  <object class="GtkLabel" id="terminal_title">
-                    <property name="can-focus">False</property>
-                    <property name="label">Terminal</property>
-                    <property name="ellipsize">end</property>
-                    <style>
-                      <class name="heading"/>
-                    </style>
+                <child>
+                  <object class="GtkLabel" id="sidebar_title">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label">Sessions</property>
+                    <property name="halign">start</property>
+                    <property name="hexpand">True</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
                   </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
                 </child>
-                <child type="end">
-                  <object class="GtkMenuButton" id="terminal_menu_button">
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="icon-name">open-menu-symbolic</property>
-                    <property name="tooltip-text">Terminal options</property>
-                    <style>
-                      <class name="flat"/>
-                    </style>
+                <child>
+                  <object class="GtkButton" id="sidebar_menu_button">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text">Tree options</property>
+                    <property name="relief">none</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">view-more-symbolic</property>
+                        <property name="icon_size">1</property>
+                      </object>
+                    </child>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
                 </child>
               </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
             </child>
             <child>
-              <object class="GtkStack" id="terminal_stack">
-                <property name="can-focus">False</property>
+              <object class="GtkScrolledWindow" id="sidebar_scrolled">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hscrollbar_policy">automatic</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <property name="vexpand">True</property>
-                <property name="transition-type">crossfade</property>
-                <property name="transition-duration">150</property>
                 <child>
-                  <object class="GtkStackPage">
-                    <property name="name">welcome</property>
-                    <property name="child">
-                      <object class="GtkBox" id="welcome_page">
-                        <property name="orientation">vertical</property>
-                        <property name="can-focus">False</property>
-                        <property name="valign">center</property>
-                        <property name="halign">center</property>
-                        <property name="spacing">24</property>
-                        <style>
-                          <class name="welcome-page"/>
-                        </style>
-                        <child>
-                          <object class="GtkImage" id="welcome_icon">
-                            <property name="can-focus">False</property>
-                            <property name="icon-name">utilities-terminal</property>
-                            <property name="icon-size">large</property>
-                            <property name="pixel-size">64</property>
-                            <style>
-                              <class name="dim-label"/>
-                            </style>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="welcome_title">
-                            <property name="can-focus">False</property>
-                            <property name="label">Welcome to Tree Style Terminal</property>
-                            <style>
-                              <class name="title-2"/>
-                            </style>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="welcome_subtitle">
-                            <property name="can-focus">False</property>
-                            <property name="label">Create a new terminal session to get started</property>
-                            <style>
-                              <class name="dim-label"/>
-                            </style>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="welcome_new_terminal_button">
-                            <property name="can-focus">True</property>
-                            <property name="receives-default">True</property>
-                            <property name="label">New Terminal</property>
-                            <property name="halign">center</property>
-                            <style>
-                              <class name="suggested-action"/>
-                              <class name="pill"/>
-                            </style>
-                          </object>
-                        </child>
-                      </object>
-                    </property>
+                  <object class="GtkTreeView" id="session_tree_view">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="headers_visible">False</property>
+                    <property name="enable_tree_lines">True</property>
+                    <property name="show_expanders">True</property>
+                    <property name="level_indentation">16</property>
+                    <style>
+                      <class name="sidebar-tree"/>
+                    </style>
                   </object>
                 </child>
               </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
         </child>
       </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
     </child>
-  </template>
+    <child>
+      <object class="GtkSeparator" id="sidebar_separator">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="width_request">1</property>
+        <style>
+          <class name="sidebar-separator"/>
+        </style>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkBox" id="terminal_area">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="hexpand">True</property>
+        <property name="vexpand">True</property>
+        <child>
+          <object class="GtkBox" id="terminal_header">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">horizontal</property>
+            <property name="spacing">6</property>
+            <property name="margin_top">6</property>
+            <property name="margin_bottom">6</property>
+            <property name="margin_left">6</property>
+            <property name="margin_right">6</property>
+            <style>
+              <class name="terminal-header"/>
+            </style>
+            <child>
+              <object class="GtkButton" id="new_terminal_button">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text">New terminal</property>
+                <property name="relief">none</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">list-add-symbolic</property>
+                    <property name="icon_size">1</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="terminal_title">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label">Terminal</property>
+                <property name="ellipsize">end</property>
+                <property name="halign">start</property>
+                <property name="hexpand">True</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="terminal_menu_button">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text">Terminal options</property>
+                <property name="relief">none</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">open-menu-symbolic</property>
+                    <property name="icon_size">1</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkStack" id="terminal_stack">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="vexpand">True</property>
+            <property name="transition_type">crossfade</property>
+            <property name="transition_duration">150</property>
+            <child>
+              <object class="GtkBox" id="welcome_page">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <property name="valign">center</property>
+                <property name="halign">center</property>
+                <property name="spacing">24</property>
+                <style>
+                  <class name="welcome-page"/>
+                </style>
+                <child>
+                  <object class="GtkImage" id="welcome_icon">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">utilities-terminal</property>
+                    <property name="icon_size">6</property>
+                    <property name="pixel_size">64</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="welcome_title">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label">Welcome to Tree Style Terminal</property>
+                    <attributes>
+                      <attribute name="scale" value="1.5"/>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="welcome_subtitle">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label">Create a new terminal session to get started</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="welcome_new_terminal_button">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="label">New Terminal</property>
+                    <property name="halign">center</property>
+                    <style>
+                      <class name="suggested-action"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="name">welcome</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">2</property>
+      </packing>
+    </child>
+  </object>
 </interface>
