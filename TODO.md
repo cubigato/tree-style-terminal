@@ -78,7 +78,7 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
 5. **Basic Configuration**
 
    * [x] Add methods for font size and scrollback length (set via property).
-   * [ ] Unit test: Terminal widget instantiable without error message.
+   * [x] Unit test: Terminal widget instantiable without error message.
 
 ---
 
