@@ -10,11 +10,11 @@ cache:
     - .cache/pip/
     - .venv/
 
-before_script:
-  - python --version
-  - python -m venv .venv
-  - source .venv/bin/activate
-  - pip install -e .
+# before_script:
+#   - python --version
+#   - python -m venv .venv
+#   - source .venv/bin/activate
+#   - pip install -e .
 
 lint:
   stage: lint
