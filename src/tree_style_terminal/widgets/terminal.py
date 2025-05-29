@@ -46,6 +46,11 @@ class VteTerminal(Gtk.Box):
         # Pack into the box
         self.pack_start(self.scrolled_window, True, True, 0)
         
+        # Show the terminal widgets explicitly
+        self.terminal.show()
+        self.scrolled_window.show()
+        self.show()
+        
         # Store process information
         self.pid: Optional[int] = None
         self.pty_fd: Optional[int] = None

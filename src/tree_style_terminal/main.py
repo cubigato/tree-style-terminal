@@ -34,6 +34,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.terminal_counter = 0
         self.active_terminal_id: Optional[str] = None
         
+        # Sidebar state management
+        self._sidebar_collapsed = False
+        
         # Create header bar
         self._setup_headerbar()
         
@@ -93,7 +96,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.session_tree_view = builder.get_object("session_tree_view")
         self.terminal_stack = builder.get_object("terminal_stack")
         
-        # Connect signals from UI file (only these, not the header bar buttons)
+        # Connect signals from UI file
         new_terminal_ui = builder.get_object("new_terminal_button")
         if new_terminal_ui:
             new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
@@ -102,14 +105,13 @@ class MainWindow(Gtk.ApplicationWindow):
         if welcome_new_terminal_ui:
             welcome_new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
         
-        # Set up sidebar toggle from UI file
+        # Connect sidebar toggle from UI file
         sidebar_toggle_ui = builder.get_object("sidebar_toggle_button")
         if sidebar_toggle_ui:
             sidebar_toggle_ui.connect("clicked", self._on_sidebar_toggle_clicked)
         
-        # Hide header bar buttons since UI file has its own buttons
+        # Hide header bar sidebar toggle since UI file has its own
         self.sidebar_toggle_button.set_visible(False)
-        self.new_terminal_button.set_visible(False)
     
     def _create_manual_ui(self) -> None:
         """Create a basic UI manually if Glade file is not available."""
@@ -184,16 +186,27 @@ class MainWindow(Gtk.ApplicationWindow):
     def _on_sidebar_toggle_clicked(self, button: Gtk.Button) -> None:
         """Handle sidebar toggle button click."""
         if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
-            current_state = self.sidebar_revealer.get_reveal_child()
-            self.sidebar_revealer.set_reveal_child(not current_state)
+            print(f"Sidebar toggle: collapsed={self._sidebar_collapsed} -> {not self._sidebar_collapsed}")
             
-            # Update button icon based on state
-            if hasattr(button, 'get_image'):
-                image = button.get_image()
-                if current_state:
-                    image.set_from_icon_name("view-sidebar-symbolic", Gtk.IconSize.BUTTON)
-                else:
-                    image.set_from_icon_name("view-sidebar-symbolic", Gtk.IconSize.BUTTON)
+            if not self._sidebar_collapsed:  # Currently expanded, so collapse
+                # Simply force the revealer to collapse and take no space
+                self.sidebar_revealer.set_reveal_child(False)
+                self.sidebar_revealer.set_size_request(0, -1)
+                self.sidebar_revealer.set_visible(False)
+                
+                self._sidebar_collapsed = True
+                print("Sidebar collapsed (forced invisible)")
+            else:  # Currently collapsed, so expand
+                # Restore the revealer
+                self.sidebar_revealer.set_visible(True)
+                self.sidebar_revealer.set_size_request(-1, -1)
+                self.sidebar_revealer.set_reveal_child(True)
+                
+                self._sidebar_collapsed = False
+                print("Sidebar expanded (forced visible)")
+            
+            # Force immediate layout update
+            GLib.idle_add(lambda: self.queue_resize())
     
     def _on_new_terminal_clicked(self, button: Gtk.Button) -> None:
         """Handle new terminal button click."""
@@ -227,13 +240,19 @@ class MainWindow(Gtk.ApplicationWindow):
             # Store terminal reference
             self.terminals[terminal_id] = terminal_widget
             
-            # Show the terminal widget first
-            terminal_widget.show_all()
+            # Show only the terminal widget, not all children to avoid affecting sidebar
+            terminal_widget.show()
+            
+            # Ensure sidebar state is not affected by new terminal
+            if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
+                current_reveal_state = self.sidebar_revealer.get_reveal_child()
+                # Re-apply the current state to ensure it's preserved
+                GLib.idle_add(lambda: self.sidebar_revealer.set_reveal_child(current_reveal_state))
             
             # Add to stack
             self.terminal_stack.add_named(terminal_widget, terminal_id)
             
-            # Switch to the new terminal
+            # Switch to the new terminal  
             self._switch_to_terminal(terminal_id)
             
             print(f"Created new terminal: {terminal_id}")
@@ -242,6 +261,15 @@ class MainWindow(Gtk.ApplicationWindow):
         except Exception as e:
             print(f"Error creating terminal {terminal_id}: {e}")
             return terminal_id
+    
+    def _ensure_revealer_state(self, desired_state: bool) -> bool:
+        """Ensure the revealer maintains its desired state."""
+        if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
+            current_state = self.sidebar_revealer.get_reveal_child()
+            if current_state != desired_state:
+                print(f"Correcting revealer state: {current_state} -> {desired_state}")
+                self.sidebar_revealer.set_reveal_child(desired_state)
+        return False  # Don't repeat
     
     def _switch_to_terminal(self, terminal_id: str) -> None:
         """Switch to the specified terminal."""
