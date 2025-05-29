@@ -54,7 +54,7 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
 4. **Wayland/X11 Test**
 
    * [x] Start app under X11 and briefly check functionality.
-   * [ ] Start app under Wayland and check.
+   * [-] Start app under Wayland and check.
 
 ---
 
@@ -62,22 +62,22 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
 
 1. **VTE Dependency**
 
-   * [ ] Install `gir1.2-vte-2.91` (GTK3) or `gir1.2-vte-2.91` (GTK4).
+   * [x] Install `gir1.2-vte-2.91` (GTK3)
 2. **Terminal Widget**
 
-   * [ ] Create file `widgets/terminal.py`.
-   * [ ] Define class `VteTerminal(Gtk.Widget)` that embeds `Vte.Terminal`.
+   * [x] Create file `widgets/terminal.py`.
+   * [x] Define class `VteTerminal(Gtk.Widget)` that embeds `Vte.Terminal`.
 3. **Spawn Function**
 
-   * [ ] Implement method `spawn_shell(self, argv=None)`, uses `spawn_async()`.
-   * [ ] `$SHELL` as default, fallback `/bin/bash`.
+   * [x] Implement method `spawn_shell(self, argv=None)`, uses `spawn_sync()`.
+   * [x] `$SHELL` as default, fallback `/bin/bash`.
 4. **Layout Integration**
 
-   * [ ] Place terminal widget centrally in `MainWindow`.
-   * [ ] Start application → terminal is displayed.
+   * [x] Place terminal widget centrally in `MainWindow`.
+   * [x] Start application → terminal is displayed.
 5. **Basic Configuration**
 
-   * [ ] Add methods for font size and scrollback length (set via property).
+   * [x] Add methods for font size and scrollback length (set via property).
    * [ ] Unit test: Terminal widget instantiable without error message.
 
 ---

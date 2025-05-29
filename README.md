@@ -36,11 +36,13 @@ See [TODO.md](TODO.md) for detailed development milestones.
 
 Once the application is functional, installation will be:
 
-### System Dependencies
+### System Dependencies (Required)
+
+**Important**: GTK, VTE, and PyGObject must be installed via system package manager, not pip.
 
 **Ubuntu/Debian:**
 ```bash
-apt install python3-dev libgirepository1.0-dev libcairo2-dev pkg-config
+sudo apt install python3-dev libgirepository1.0-dev libcairo2-dev pkg-config
 sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-vte-2.91
 ```
 
@@ -58,11 +60,15 @@ sudo pacman -S python-gobject gtk3 vte3
 
 ### Python Package
 
+After installing system dependencies:
+
 ```bash
 git clone https://github.com/tree-style-terminal/tree-style-terminal.git
 cd tree-style-terminal
 pip install -e ".[dev]"
 ```
+
+**Note**: The pyproject.toml intentionally does not include GTK/VTE dependencies as they must be installed system-wide.
 
 ## Planned Usage (Future)
 
@@ -98,7 +104,7 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-3. Install in development mode:
+3. Install system dependencies first (see Installation section above), then install in development mode:
 ```bash
 pip install -e ".[dev]"
 ```
@@ -155,26 +161,8 @@ For detailed architecture information, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Development Roadmap
-
-**Current Phase (Milestone 0-1):**
-- [ ] Complete basic infrastructure setup
-- [ ] Implement basic GTK application
-- [ ] Create minimal terminal embedding
-
-**Future Features:**
-- [ ] Tree-based session management
-- [ ] Collapsible sidebar navigation
-- [ ] Session adoption algorithm
-- [ ] Split panes (horizontal/vertical)
-- [ ] Session templates and profiles
-- [ ] Scrollback search and hyperlink navigation
-- [ ] OSC 8 support for clickable paths
-- [ ] Plugin system
-- [ ] Configuration GUI
-- [ ] Session export/import
-- [ ] Remote session support
 
 For detailed development milestones, see [TODO.md](TODO.md).

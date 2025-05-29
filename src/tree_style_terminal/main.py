@@ -8,13 +8,15 @@ This module contains the main GTK application class and window implementation.
 import sys
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 
 import gi
 
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk, Gio, GLib
+
+from .widgets.terminal import VteTerminal
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -26,6 +28,11 @@ class MainWindow(Gtk.ApplicationWindow):
         # Set up window properties
         self.set_title("Tree Style Terminal")
         self.set_default_size(1024, 768)
+        
+        # Terminal management
+        self.terminals: Dict[str, VteTerminal] = {}
+        self.terminal_counter = 0
+        self.active_terminal_id: Optional[str] = None
         
         # Create header bar
         self._setup_headerbar()
@@ -79,17 +86,14 @@ class MainWindow(Gtk.ApplicationWindow):
             self.add(main_container)
         else:
             self._create_manual_ui()
+            return
         
         # Store references to important widgets
         self.sidebar_revealer = builder.get_object("sidebar_revealer")
         self.session_tree_view = builder.get_object("session_tree_view")
         self.terminal_stack = builder.get_object("terminal_stack")
         
-        # Connect additional signals from UI file
-        sidebar_toggle_ui = builder.get_object("sidebar_toggle_button")
-        if sidebar_toggle_ui:
-            sidebar_toggle_ui.connect("clicked", self._on_sidebar_toggle_clicked)
-        
+        # Connect signals from UI file (only these, not the header bar buttons)
         new_terminal_ui = builder.get_object("new_terminal_button")
         if new_terminal_ui:
             new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
@@ -97,6 +101,15 @@ class MainWindow(Gtk.ApplicationWindow):
         welcome_new_terminal_ui = builder.get_object("welcome_new_terminal_button")
         if welcome_new_terminal_ui:
             welcome_new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
+        
+        # Set up sidebar toggle from UI file
+        sidebar_toggle_ui = builder.get_object("sidebar_toggle_button")
+        if sidebar_toggle_ui:
+            sidebar_toggle_ui.connect("clicked", self._on_sidebar_toggle_clicked)
+        
+        # Hide header bar buttons since UI file has its own buttons
+        self.sidebar_toggle_button.set_visible(False)
+        self.new_terminal_button.set_visible(False)
     
     def _create_manual_ui(self) -> None:
         """Create a basic UI manually if Glade file is not available."""
@@ -144,12 +157,11 @@ class MainWindow(Gtk.ApplicationWindow):
         welcome_button.connect("clicked", self._on_new_terminal_clicked)
         welcome_box.pack_start(welcome_button, False, False, 0)
         
-        terminal_area.pack_start(welcome_box, True, True, 0)
-        
         # Create stack for terminal switching
         self.terminal_stack = Gtk.Stack()
         self.terminal_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self.terminal_stack.add_named(welcome_box, "welcome")
+        self.terminal_stack.set_visible_child_name("welcome")
         terminal_area.pack_start(self.terminal_stack, True, True, 0)
         
         # Add separator
@@ -185,8 +197,90 @@ class MainWindow(Gtk.ApplicationWindow):
     
     def _on_new_terminal_clicked(self, button: Gtk.Button) -> None:
         """Handle new terminal button click."""
-        # TODO: Implement terminal creation in later milestones
-        print("New terminal requested")
+        self._create_new_terminal()
+    
+    def _create_new_terminal(self, cwd: Optional[str] = None) -> str:
+        """
+        Create a new terminal session.
+        
+        Args:
+            cwd: Working directory for the new terminal.
+            
+        Returns:
+            Terminal ID of the newly created terminal.
+        """
+        # Generate unique terminal ID
+        self.terminal_counter += 1
+        terminal_id = f"terminal_{self.terminal_counter}"
+        
+        try:
+            # Create new VTE terminal widget
+            terminal_widget = VteTerminal()
+            
+            # Spawn shell in the terminal
+            if not terminal_widget.spawn_shell(cwd=cwd):
+                print(f"Failed to spawn shell in terminal {terminal_id}")
+                # Clean up failed terminal
+                terminal_widget.destroy()
+                return terminal_id
+            
+            # Store terminal reference
+            self.terminals[terminal_id] = terminal_widget
+            
+            # Show the terminal widget first
+            terminal_widget.show_all()
+            
+            # Add to stack
+            self.terminal_stack.add_named(terminal_widget, terminal_id)
+            
+            # Switch to the new terminal
+            self._switch_to_terminal(terminal_id)
+            
+            print(f"Created new terminal: {terminal_id}")
+            return terminal_id
+            
+        except Exception as e:
+            print(f"Error creating terminal {terminal_id}: {e}")
+            return terminal_id
+    
+    def _switch_to_terminal(self, terminal_id: str) -> None:
+        """Switch to the specified terminal."""
+        if terminal_id in self.terminals:
+            self.terminal_stack.set_visible_child_name(terminal_id)
+            self.active_terminal_id = terminal_id
+            
+            # Update window title with terminal info
+            terminal = self.terminals[terminal_id]
+            title = terminal.get_window_title()
+            self.set_title(f"Tree Style Terminal - {title}")
+            
+            print(f"Switched to terminal: {terminal_id}")
+        else:
+            print(f"Terminal {terminal_id} not found")
+    
+    def _close_terminal(self, terminal_id: str) -> None:
+        """Close the specified terminal."""
+        if terminal_id in self.terminals:
+            terminal = self.terminals[terminal_id]
+            terminal.close()
+            
+            # Remove from stack and dict
+            self.terminal_stack.remove(terminal)
+            del self.terminals[terminal_id]
+            
+            # If this was the active terminal, switch to another or welcome
+            if self.active_terminal_id == terminal_id:
+                if self.terminals:
+                    # Switch to the first available terminal
+                    next_terminal_id = next(iter(self.terminals.keys()))
+                    self._switch_to_terminal(next_terminal_id)
+                else:
+                    # No terminals left, show welcome page
+                    self.terminal_stack.set_visible_child_name("welcome")
+                    self.active_terminal_id = None
+                    self.set_title("Tree Style Terminal")
+            
+            print(f"Closed terminal: {terminal_id}")
 
 
 class TreeStyleTerminalApp(Gtk.Application):

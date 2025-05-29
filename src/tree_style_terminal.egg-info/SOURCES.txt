@@ -20,3 +20,4 @@ src/tree_style_terminal/ui/main_window.ui
 src/tree_style_terminal/widgets/__init__.py
 src/tree_style_terminal/widgets/sidebar.py
 src/tree_style_terminal/widgets/terminal.py
+tests/test_basic.py
