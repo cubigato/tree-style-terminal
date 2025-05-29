@@ -1,0 +1,2 @@
+[console_scripts]
+tree-style-terminal = tree_style_terminal.main:main

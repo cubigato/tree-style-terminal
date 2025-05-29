@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tree-style-terminal"
+version = "0.1.0"
+description = "A Python/GTK3 terminal application featuring a collapsible tree-based session navigator instead of traditional tabs"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Tree Style Terminal Contributors" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Terminals",
+    "Topic :: System :: Shells",
+]
+requires-python = ">=3.11"
+dependencies = ["pycairo>=1.20.0"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+    "black>=23.0",
+    "isort>=5.0",
+    "mypy>=1.0",
+    "pre-commit>=3.0",
+]
+
+[project.scripts]
+tree-style-terminal = "tree_style_terminal.main:main"
+
+[project.urls]
+Homepage = "https://github.com/tree-style-terminal/tree-style-terminal"
+Repository = "https://github.com/tree-style-terminal/tree-style-terminal"
+Issues = "https://github.com/tree-style-terminal/tree-style-terminal/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"tree_style_terminal" = ["ui/*.ui", "resources/**/*"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = ["E", "W", "F", "I", "N", "B", "UP", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
