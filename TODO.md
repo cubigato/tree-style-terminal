@@ -104,21 +104,21 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
 
 1. **TreeStore Setup**
 
-   * [ ] In `controllers/sidebar.py` `Gtk.TreeStore` with columns \[`object`, `title`].
-   * [ ] Bind `SessionTree` events (`node-added`, `node-removed`) to TreeStore updates.
+   * [x] In `controllers/sidebar.py` `Gtk.TreeStore` with columns \[`object`, `title`].
+   * [x] Bind `SessionTree` events (`node-added`, `node-removed`) to TreeStore updates.
 2. **Gtk.TreeView**
 
-   * [ ] `widgets/sidebar.py`: Class `SessionSidebar(Gtk.Box)` with `Gtk.TreeView`.
-   * [ ] Display column for `title`.
+   * [x] `widgets/sidebar.py`: Class `SessionSidebar(Gtk.Box)` with `Gtk.TreeView`.
+   * [x] Display column for `title`.
 3. **Revealer & Paned**
 
-   * [ ] Layout in `MainWindow`: `Gtk.Paned` with sidebar and terminal area.
-   * [ ] `Gtk.Revealer` to make sidebar collapsible.
-   * [ ] Button in HeaderBar for expanding/collapsing.
+   * [x] Layout in `MainWindow`: `Gtk.Paned` with sidebar and terminal area.
+   * [x] `Gtk.Revealer` to make sidebar collapsible.
+   * [x] Button in HeaderBar for expanding/collapsing.
 4. **Selection & Focus**
 
-   * [ ] Callback for row selection: Focus switches to corresponding `TerminalSession`.
-   * [ ] Show active session in terminal area.
+   * [x] Callback for row selection: Focus switches to corresponding `TerminalSession`.
+   * [x] Show active session in terminal area.
 
 ---
 

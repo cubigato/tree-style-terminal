@@ -6,7 +6,6 @@ This module contains the main GTK application class and window implementation.
 """
 
 import sys
-import os
 from pathlib import Path
 from typing import Optional, Dict
 
@@ -17,6 +16,11 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GLib
 
 from .widgets.terminal import VteTerminal
+from .widgets.sidebar import SessionSidebar
+from .controllers.sidebar import SidebarController
+from .controllers.session_manager import SessionManager
+from .models.session import TerminalSession
+from .models.tree import SessionTree
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -29,7 +33,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.set_title("Tree Style Terminal")
         self.set_default_size(1024, 768)
         
-        # Terminal management
+        # Initialize domain models
+        self.session_tree = SessionTree()
+        self.session_manager = SessionManager(self.session_tree)
+        self.sidebar_controller = SidebarController(self.session_tree)
+        
+        # Legacy terminal management (will be phased out)
         self.terminals: Dict[str, VteTerminal] = {}
         self.terminal_counter = 0
         self.active_terminal_id: Optional[str] = None
@@ -42,6 +51,9 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Load the UI from the Glade file
         self._load_ui()
+        
+        # Set up session management callbacks
+        self._setup_session_callbacks()
         
     def _setup_headerbar(self) -> None:
         """Set up the header bar."""
@@ -93,8 +105,23 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Store references to important widgets
         self.sidebar_revealer = builder.get_object("sidebar_revealer")
-        self.session_tree_view = builder.get_object("session_tree_view")
         self.terminal_stack = builder.get_object("terminal_stack")
+        
+        # Create and integrate the session sidebar
+        sidebar_container = builder.get_object("sidebar_scrolled")
+        if sidebar_container:
+            # Remove the existing tree view and replace with our SessionSidebar
+            old_tree_view = builder.get_object("session_tree_view")
+            if old_tree_view:
+                sidebar_container.remove(old_tree_view)
+            
+            # Create our SessionSidebar widget
+            self.session_sidebar = SessionSidebar(self.sidebar_controller)
+            self.session_sidebar.set_selection_callback(self._on_session_selected)
+            self.session_sidebar.show_all()
+            sidebar_container.add(self.session_sidebar)
+        else:
+            self.session_sidebar = None
         
         # Connect signals from UI file
         new_terminal_ui = builder.get_object("new_terminal_button")
@@ -129,15 +156,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sidebar_revealer.set_reveal_child(True)
         self.sidebar_revealer.add(sidebar_box)
         
-        # Create tree view for sessions
-        self.session_tree_view = Gtk.TreeView()
-        self.session_tree_view.set_headers_visible(False)
-        
-        # Add tree view to scrolled window
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled.add(self.session_tree_view)
-        sidebar_box.pack_start(scrolled, True, True, 0)
+        # Create session sidebar widget
+        self.session_sidebar = SessionSidebar(self.sidebar_controller)
+        self.session_sidebar.set_selection_callback(self._on_session_selected)
+        sidebar_box.pack_start(self.session_sidebar, True, True, 0)
         
         # Create terminal area
         terminal_area = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -210,7 +232,10 @@ class MainWindow(Gtk.ApplicationWindow):
     
     def _on_new_terminal_clicked(self, button: Gtk.Button) -> None:
         """Handle new terminal button click."""
-        self._create_new_terminal()
+        # Use the new session manager to create sessions
+        session = self.session_manager.new_session()
+        if session:
+            print(f"Created new session via SessionManager: {session.title}")
     
     def _create_new_terminal(self, cwd: Optional[str] = None) -> str:
         """
@@ -309,6 +334,90 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.set_title("Tree Style Terminal")
             
             print(f"Closed terminal: {terminal_id}")
+    
+    def _setup_session_callbacks(self) -> None:
+        """Set up callbacks for session management."""
+        self.session_manager.set_session_created_callback(self._on_session_created)
+        self.session_manager.set_session_closed_callback(self._on_session_closed)
+        self.session_manager.set_session_selected_callback(self._on_session_selected_by_manager)
+    
+    def _on_session_created(self, session: TerminalSession, terminal_widget: VteTerminal) -> None:
+        """
+        Handle session creation.
+        
+        Args:
+            session: The created session
+            terminal_widget: The VTE terminal widget
+        """
+        # Add terminal to the stack
+        terminal_id = f"session_{session.pid}"
+        terminal_widget.show()
+        self.terminal_stack.add_named(terminal_widget, terminal_id)
+        
+        # Switch to the new terminal
+        self.terminal_stack.set_visible_child_name(terminal_id)
+        
+        # Update sidebar
+        if self.session_sidebar:
+            self.session_sidebar.refresh()
+        
+        print(f"Session created: {session.title}")
+    
+    def _on_session_closed(self, session: TerminalSession) -> None:
+        """
+        Handle session closure.
+        
+        Args:
+            session: The closed session
+        """
+        # Remove from terminal stack
+        terminal_id = f"session_{session.pid}"
+        
+        # Find and remove the terminal widget
+        for child in self.terminal_stack.get_children():
+            if self.terminal_stack.get_child_name(child) == terminal_id:
+                self.terminal_stack.remove(child)
+                break
+        
+        # Update sidebar
+        if self.session_sidebar:
+            self.session_sidebar.refresh()
+        
+        # Show welcome page if no sessions left
+        if not self.session_manager.get_all_sessions():
+            self.terminal_stack.set_visible_child_name("welcome")
+            self.set_title("Tree Style Terminal")
+        
+        print(f"Session closed: {session.title}")
+    
+    def _on_session_selected(self, session: TerminalSession) -> None:
+        """
+        Handle session selection from sidebar.
+        
+        Args:
+            session: The selected session
+        """
+        self.session_manager.select_session(session)
+    
+    def _on_session_selected_by_manager(self, session: TerminalSession) -> None:
+        """
+        Handle session selection by the session manager.
+        
+        Args:
+            session: The selected session
+        """
+        # Switch to the terminal
+        terminal_id = f"session_{session.pid}"
+        self.terminal_stack.set_visible_child_name(terminal_id)
+        
+        # Update window title
+        self.set_title(f"Tree Style Terminal - {session.title}")
+        
+        # Update sidebar selection
+        if self.session_sidebar:
+            self.session_sidebar.select_session(session)
+        
+        print(f"Switched to session: {session.title}")
 
 
 class TreeStyleTerminalApp(Gtk.Application):
