@@ -86,17 +86,17 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
 
 1. **Session Object**
 
-   * [ ] `models/session.py`: `@dataclass TerminalSession` with fields `pid`, `pty_fd`, `cwd`, `title`, `children`.
-   * [ ] `__post_init__` initially sets `title` to `cwd`.
+   * [x] `models/session.py`: `@dataclass TerminalSession` with fields `pid`, `pty_fd`, `cwd`, `title`, `children`.
+   * [x] `__post_init__` initially sets `title` to `cwd`.
 2. **SessionTree**
 
-   * [ ] `models/tree.py`: Class `SessionTree`, holds root nodes and methods `add_node`, `remove_node`.
-   * [ ] Implement adoption: When removing, parent adopts the children.
+   * [x] `models/tree.py`: Class `SessionTree`, holds root nodes and methods `add_node`, `remove_node`.
+   * [x] Implement adoption: When removing, parent adopts the children.
 3. **Unit Tests**
 
-   * [ ] Scenario: Remove root with children → children become new roots.
-   * [ ] Scenario: Remove leaf → no side effects.
-   * [ ] Scenario: Deep nesting removed → structure remains consistent.
+   * [x] Scenario: Remove root with children → children become new roots.
+   * [x] Scenario: Remove leaf → no side effects.
+   * [x] Scenario: Deep nesting removed → structure remains consistent.
 
 ---
 

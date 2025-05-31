@@ -21,3 +21,6 @@ src/tree_style_terminal/widgets/__init__.py
 src/tree_style_terminal/widgets/sidebar.py
 src/tree_style_terminal/widgets/terminal.py
 tests/test_basic.py
+tests/test_imports.py
+tests/test_main_window.py
+tests/test_terminal_widget.py
