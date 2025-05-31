@@ -36,6 +36,7 @@ dev = [
 
 [project.scripts]
 tree-style-terminal = "tree_style_terminal.main:main"
+ttt = "tree_style_terminal.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
