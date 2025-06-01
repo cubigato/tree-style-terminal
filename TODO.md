@@ -132,12 +132,12 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
    * [x] Set up `Gtk.ShortcutController`, map key combinations to actions.
 3. **UI Integration**
 
-   * [ ] Buttons in HeaderBar or Toolbar for new and close.
-   * [ ] Connect actions with tree and terminal controller.
+   * [x] Buttons in HeaderBar or Toolbar for new and close.
+   * [x] Connect actions with tree and terminal controller.
 4. **Test Behavior**
 
-   * [ ] `new_child` under active session creates child node.
-   * [ ] `close_session` removes node and adopts children.
+   * [x] `new_child` under active session creates child node.
+   * [x] `close_session` removes node and adopts children.
 
 ---
 

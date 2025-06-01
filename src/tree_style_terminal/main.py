@@ -74,18 +74,31 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sidebar_toggle_button.set_image(
             Gtk.Image.new_from_icon_name("view-sidebar-symbolic", Gtk.IconSize.BUTTON)
         )
-        self.sidebar_toggle_button.set_tooltip_text("Toggle sidebar")
+        self.sidebar_toggle_button.set_tooltip_text("Toggle sidebar (F9)")
         self.sidebar_toggle_button.connect("clicked", self._on_sidebar_toggle_clicked)
         self.headerbar.pack_start(self.sidebar_toggle_button)
         
-        # Add new terminal button
-        self.new_terminal_button = Gtk.Button()
-        self.new_terminal_button.set_image(
+        # Create button container for session actions
+        session_buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        session_buttons_box.get_style_context().add_class("linked")
+        
+        # Add new sibling button (was new_terminal_button)
+        self.new_sibling_button = Gtk.Button()
+        self.new_sibling_button.set_image(
             Gtk.Image.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
         )
-        self.new_terminal_button.set_tooltip_text("New terminal (Ctrl+Shift+T)")
-        self.new_terminal_button.connect("clicked", self._on_new_terminal_clicked)
-        self.headerbar.pack_start(self.new_terminal_button)
+        self.new_sibling_button.set_tooltip_text("New sibling session (Ctrl+Shift+T)")
+        self.new_sibling_button.connect("clicked", self._on_new_terminal_clicked)  # Use existing callback
+        session_buttons_box.pack_start(self.new_sibling_button, False, False, 0)
+        
+        # Add new child button  
+        self.new_child_button = Gtk.Button()
+        self.new_child_button.set_image(
+            Gtk.Image.new_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.new_child_button.set_tooltip_text("New child session (Ctrl+Alt+T)")
+        self.new_child_button.connect("clicked", self._on_new_child_clicked)
+        session_buttons_box.pack_start(self.new_child_button, False, False, 0)
         
         # Add close session button
         self.close_session_button = Gtk.Button()
@@ -94,7 +107,13 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         self.close_session_button.set_tooltip_text("Close session (Ctrl+Q)")
         self.close_session_button.connect("clicked", self._on_close_session_clicked)
-        self.headerbar.pack_start(self.close_session_button)
+        session_buttons_box.pack_start(self.close_session_button, False, False, 0)
+        
+        # Add the button box to header bar
+        self.headerbar.pack_start(session_buttons_box)
+        
+        # Keep reference to old new_terminal_button for compatibility
+        self.new_terminal_button = self.new_sibling_button
         
     def _load_ui(self) -> None:
         """Load the UI from the Glade file."""
@@ -260,6 +279,28 @@ class MainWindow(Gtk.ApplicationWindow):
         if action:
             action.activate(None)
     
+    def _on_new_child_clicked(self, button: Gtk.Button) -> None:
+        """Handle new child button click."""
+        # Use shortcut controller action for consistency
+        action = self.shortcut_controller.get_action("new_child")
+        if action:
+            action.activate(None)
+    
+    def _update_button_states(self) -> None:
+        """Update button states based on current session state."""
+        has_current_session = self.session_manager.current_session is not None
+        
+        # Update HeaderBar buttons if they exist
+        if hasattr(self, 'new_sibling_button'):
+            self.new_sibling_button.set_sensitive(True)  # Always available
+        if hasattr(self, 'new_child_button'):
+            self.new_child_button.set_sensitive(True)  # Always available  
+        if hasattr(self, 'close_session_button'):
+            self.close_session_button.set_sensitive(has_current_session)
+        
+        # Update shortcut controller action states
+        self.shortcut_controller.update_action_states()
+    
     def _create_new_terminal(self, cwd: Optional[str] = None) -> str:
         """
         Create a new terminal session.
@@ -384,6 +425,9 @@ class MainWindow(Gtk.ApplicationWindow):
         if self.session_sidebar:
             self.session_sidebar.refresh()
         
+        # Update button states
+        self._update_button_states()
+        
         print(f"Session created: {session.title}")
     
     def _on_session_closed(self, session: TerminalSession) -> None:
@@ -405,6 +449,9 @@ class MainWindow(Gtk.ApplicationWindow):
         # Update sidebar
         if self.session_sidebar:
             self.session_sidebar.refresh()
+        
+        # Update button states
+        self._update_button_states()
         
         # Show welcome page if no sessions left
         if not self.session_manager.get_all_sessions():
@@ -439,6 +486,9 @@ class MainWindow(Gtk.ApplicationWindow):
         # Update sidebar selection
         if self.session_sidebar:
             self.session_sidebar.select_session(session)
+        
+        # Update button states
+        self._update_button_states()
         
         print(f"Switched to session: {session.title}")
 
