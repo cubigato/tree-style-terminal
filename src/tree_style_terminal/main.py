@@ -19,6 +19,7 @@ from .widgets.terminal import VteTerminal
 from .widgets.sidebar import SessionSidebar
 from .controllers.sidebar import SidebarController
 from .controllers.session_manager import SessionManager
+from .controllers.shortcuts import ShortcutController
 from .models.session import TerminalSession
 from .models.tree import SessionTree
 
@@ -38,6 +39,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.session_manager = SessionManager(self.session_tree)
         self.sidebar_controller = SidebarController(self.session_tree)
         
+        # Initialize shortcut controller
+        self.shortcut_controller = ShortcutController(self.session_manager, self)
+        
         # Legacy terminal management (will be phased out)
         self.terminals: Dict[str, VteTerminal] = {}
         self.terminal_counter = 0
@@ -54,6 +58,9 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Set up session management callbacks
         self._setup_session_callbacks()
+        
+        # Create initial session
+        self.session_manager.new_session()
         
     def _setup_headerbar(self) -> None:
         """Set up the header bar."""
@@ -76,9 +83,18 @@ class MainWindow(Gtk.ApplicationWindow):
         self.new_terminal_button.set_image(
             Gtk.Image.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
         )
-        self.new_terminal_button.set_tooltip_text("New terminal")
+        self.new_terminal_button.set_tooltip_text("New terminal (Ctrl+Shift+T)")
         self.new_terminal_button.connect("clicked", self._on_new_terminal_clicked)
         self.headerbar.pack_start(self.new_terminal_button)
+        
+        # Add close session button
+        self.close_session_button = Gtk.Button()
+        self.close_session_button.set_image(
+            Gtk.Image.new_from_icon_name("window-close-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.close_session_button.set_tooltip_text("Close session (Ctrl+Q)")
+        self.close_session_button.connect("clicked", self._on_close_session_clicked)
+        self.headerbar.pack_start(self.close_session_button)
         
     def _load_ui(self) -> None:
         """Load the UI from the Glade file."""
@@ -232,10 +248,17 @@ class MainWindow(Gtk.ApplicationWindow):
     
     def _on_new_terminal_clicked(self, button: Gtk.Button) -> None:
         """Handle new terminal button click."""
-        # Use the new session manager to create sessions
-        session = self.session_manager.new_session()
-        if session:
-            print(f"Created new session via SessionManager: {session.title}")
+        # Use shortcut controller action for consistency
+        action = self.shortcut_controller.get_action("new_sibling")
+        if action:
+            action.activate(None)
+    
+    def _on_close_session_clicked(self, button: Gtk.Button) -> None:
+        """Handle close session button click."""
+        # Use shortcut controller action for consistency
+        action = self.shortcut_controller.get_action("close_session")
+        if action:
+            action.activate(None)
     
     def _create_new_terminal(self, cwd: Optional[str] = None) -> str:
         """
@@ -418,6 +441,29 @@ class MainWindow(Gtk.ApplicationWindow):
             self.session_sidebar.select_session(session)
         
         print(f"Switched to session: {session.title}")
+
+    def toggle_sidebar(self) -> None:
+        """Toggle sidebar visibility."""
+        if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
+            current_state = self.sidebar_revealer.get_reveal_child()
+            self.sidebar_revealer.set_reveal_child(not current_state)
+            self._sidebar_collapsed = not current_state
+            print(f"Sidebar {'hidden' if current_state else 'shown'}")
+
+    def focus_terminal(self) -> None:
+        """Focus the currently active terminal."""
+        if self.session_manager.current_session:
+            terminal_widget = self.session_manager.get_terminal_widget(self.session_manager.current_session)
+            if terminal_widget and hasattr(terminal_widget, 'grab_focus'):
+                terminal_widget.grab_focus()
+                print("Focused terminal")
+
+    def focus_sidebar(self) -> None:
+        """Focus the sidebar tree view."""
+        if hasattr(self, 'session_sidebar') and self.session_sidebar:
+            if hasattr(self.session_sidebar, 'grab_focus'):
+                self.session_sidebar.grab_focus()
+                print("Focused sidebar")
 
 
 class TreeStyleTerminalApp(Gtk.Application):

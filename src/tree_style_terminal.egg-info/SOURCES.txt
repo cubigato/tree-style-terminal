@@ -11,6 +11,7 @@ src/tree_style_terminal.egg-info/entry_points.txt
 src/tree_style_terminal.egg-info/requires.txt
 src/tree_style_terminal.egg-info/top_level.txt
 src/tree_style_terminal/controllers/__init__.py
+src/tree_style_terminal/controllers/session_manager.py
 src/tree_style_terminal/controllers/shortcuts.py
 src/tree_style_terminal/controllers/sidebar.py
 src/tree_style_terminal/models/__init__.py

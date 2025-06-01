@@ -112,24 +112,29 @@ class VteTerminal(Gtk.Box):
             # Convert environment to the format expected by spawn_async
             envv = [f"{key}={value}" for key, value in env.items()]
             
-            # Spawn the process using the sync version for GTK3
-            success, pid = self.terminal.spawn_sync(
-                Vte.PtyFlags.DEFAULT,  # pty_flags
-                cwd,                   # working_directory
-                argv,                  # argv
-                envv,                  # envv
-                GLib.SpawnFlags.DEFAULT,  # spawn_flags
-                None,                  # child_setup
-                None                   # child_setup_data
+            # Create a new PTY for the terminal
+            pty = Vte.Pty.new_sync(Vte.PtyFlags.DEFAULT)
+            self.terminal.set_pty(pty)
+            
+            # Store spawn arguments for the async callback
+            self._spawn_argv = argv
+            self._spawn_cwd = cwd
+            
+            # Spawn the process using the modern async method
+            pty.spawn_async(
+                cwd,                     # working_directory
+                argv,                    # argv
+                envv,                    # envv
+                GLib.SpawnFlags.DEFAULT, # spawn_flags
+                None,                    # child_setup
+                None,                    # child_setup_data
+                -1,                      # timeout (-1 = no timeout)
+                None,                    # cancellable
+                self._on_spawn_complete  # callback
             )
             
-            if success:
-                self.pid = pid
-                logger.info(f"Spawned shell with PID {pid} in directory {cwd}")
-                return True
-            else:
-                logger.error("Failed to spawn shell")
-                return False
+            # Return True immediately - actual success is handled in callback
+            return True
                 
         except Exception as e:
             logger.error(f"Error spawning shell: {e}")
@@ -181,6 +186,32 @@ class VteTerminal(Gtk.Box):
         # Emit a custom signal that can be caught by parent widgets
         # For now, we'll just log it
         
+    def _on_spawn_complete(self, pty: Vte.Pty, task: object) -> None:
+        """Callback when spawning is complete."""
+        try:
+            success = pty.spawn_finish(task)
+            if success:
+                # Store the PTY file descriptor for reference
+                self.pty_fd = pty.get_fd()
+                # Note: spawn_async doesn't directly provide PID like spawn_sync did
+                # The actual child PID is managed internally by VTE
+                self.pid = None  # Will be set by VTE's child-exited signal if needed
+                logger.info(f"Successfully spawned shell in directory {self._spawn_cwd}")
+            else:
+                logger.error("Failed to spawn shell")
+                self.pid = None
+                self.pty_fd = None
+        except Exception as e:
+            logger.error(f"Error in spawn completion: {e}")
+            self.pid = None
+            self.pty_fd = None
+        
+        # Clean up temporary spawn arguments
+        if hasattr(self, '_spawn_argv'):
+            delattr(self, '_spawn_argv')
+        if hasattr(self, '_spawn_cwd'):
+            delattr(self, '_spawn_cwd')
+    
     def _on_title_changed(self, terminal: Vte.Terminal) -> None:
         """Handle terminal title change."""
         title = self.get_window_title()

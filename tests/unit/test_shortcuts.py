@@ -39,7 +39,7 @@ class TestShortcutController:
     def test_initialization(self, shortcut_controller):
         """Test that ShortcutController initializes correctly."""
         assert shortcut_controller.session_manager is not None
-        assert len(shortcut_controller._actions) == 3
+        assert len(shortcut_controller._actions) == 8
     
     def test_actions_created(self, shortcut_controller):
         """Test that all required actions are created."""
@@ -115,9 +115,12 @@ class TestShortcutController:
     def test_close_session_action_with_current_session(self, shortcut_controller, session_manager):
         """Test close_session action when there is a current session."""
         mock_session = TerminalSession(pid=123, pty_fd=456, cwd="/test", title="test")
+        mock_session2 = TerminalSession(pid=124, pty_fd=457, cwd="/test2", title="test2")
         session_manager.current_session = mock_session
         
-        with patch.object(session_manager, 'close_current_session') as mock_close:
+        # Mock get_all_sessions to return multiple sessions so close_current_session gets called
+        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session, mock_session2]) as mock_get_all, \
+             patch.object(session_manager, 'close_current_session') as mock_close:
             action = shortcut_controller.get_action("close_session")
             action.activate(None)
             
@@ -136,9 +139,12 @@ class TestShortcutController:
     def test_close_session_action_exception(self, shortcut_controller, session_manager):
         """Test close_session action handles exceptions gracefully."""
         mock_session = TerminalSession(pid=123, pty_fd=456, cwd="/test", title="test")
+        mock_session2 = TerminalSession(pid=124, pty_fd=457, cwd="/test2", title="test2")
         session_manager.current_session = mock_session
         
-        with patch.object(session_manager, 'close_current_session', side_effect=Exception("Test error")) as mock_close:
+        # Mock get_all_sessions to return multiple sessions so close_current_session gets called
+        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session, mock_session2]) as mock_get_all, \
+             patch.object(session_manager, 'close_current_session', side_effect=Exception("Test error")) as mock_close:
             action = shortcut_controller.get_action("close_session")
             # Should not raise exception
             action.activate(None)
@@ -186,7 +192,7 @@ class TestShortcutController:
         shortcut_controller.add_actions_to_widget(mock_widget)
         
         # Should have called add_action for each action
-        assert mock_widget.add_action.call_count == 3
+        assert mock_widget.add_action.call_count == 8
     
     def test_add_actions_to_widget_without_support(self, shortcut_controller):
         """Test adding actions to a widget that doesn't support actions."""
@@ -199,9 +205,11 @@ class TestShortcutController:
     def test_update_action_states_with_current_session(self, shortcut_controller, session_manager):
         """Test updating action states when there is a current session."""
         mock_session = TerminalSession(pid=123, pty_fd=456, cwd="/test", title="test")
+        mock_session2 = TerminalSession(pid=124, pty_fd=457, cwd="/test2", title="test2")
         session_manager.current_session = mock_session
         
-        shortcut_controller.update_action_states()
+        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session, mock_session2]):
+            shortcut_controller.update_action_states()
         
         # All actions should be enabled
         assert shortcut_controller.get_action("new_child").get_enabled()
@@ -212,9 +220,42 @@ class TestShortcutController:
         """Test updating action states when there is no current session."""
         session_manager.current_session = None
         
-        shortcut_controller.update_action_states()
+        with patch.object(session_manager, 'get_all_sessions', return_value=[]):
+            shortcut_controller.update_action_states()
         
         # new_child and new_sibling should be enabled, close_session should be disabled
         assert shortcut_controller.get_action("new_child").get_enabled()
         assert shortcut_controller.get_action("new_sibling").get_enabled()
         assert not shortcut_controller.get_action("close_session").get_enabled()
+    
+    def test_close_session_action_last_session(self, shortcut_controller, session_manager):
+        """Test close_session action when it's the last session (should quit app)."""
+        mock_session = TerminalSession(pid=123, pty_fd=456, cwd="/test", title="test")
+        session_manager.current_session = mock_session
+        
+        # Mock main_window and get_all_sessions to simulate last session
+        mock_main_window = Mock()
+        mock_app = Mock()
+        mock_main_window.get_application.return_value = mock_app
+        shortcut_controller.main_window = mock_main_window
+        
+        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session]) as mock_get_all:
+            action = shortcut_controller.get_action("close_session")
+            action.activate(None)
+            
+            mock_app.quit.assert_called_once()
+    
+    def test_additional_actions_exist(self, shortcut_controller):
+        """Test that all additional actions are created."""
+        assert shortcut_controller.get_action("toggle_sidebar") is not None
+        assert shortcut_controller.get_action("focus_terminal") is not None
+        assert shortcut_controller.get_action("focus_sidebar") is not None
+        assert shortcut_controller.get_action("next_session") is not None
+        assert shortcut_controller.get_action("prev_session") is not None
+        
+        # Verify they are Gio.SimpleAction instances
+        assert isinstance(shortcut_controller.get_action("toggle_sidebar"), Gio.SimpleAction)
+        assert isinstance(shortcut_controller.get_action("focus_terminal"), Gio.SimpleAction)
+        assert isinstance(shortcut_controller.get_action("focus_sidebar"), Gio.SimpleAction)
+        assert isinstance(shortcut_controller.get_action("next_session"), Gio.SimpleAction)
+        assert isinstance(shortcut_controller.get_action("prev_session"), Gio.SimpleAction)

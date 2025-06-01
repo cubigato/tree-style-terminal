@@ -279,3 +279,45 @@ class SessionManager:
     def set_session_selected_callback(self, callback: Callable[[TerminalSession], None]) -> None:
         """Set callback for when a session is selected."""
         self._session_selected_callback = callback
+    
+    def select_next_session(self) -> None:
+        """Select the next session in the session list."""
+        all_sessions = self.get_all_sessions()
+        if len(all_sessions) <= 1:
+            return
+        
+        if not self.current_session:
+            if all_sessions:
+                self.select_session(all_sessions[0])
+            return
+        
+        try:
+            current_index = all_sessions.index(self.current_session)
+            next_index = (current_index + 1) % len(all_sessions)
+            self.select_session(all_sessions[next_index])
+            logger.debug(f"Selected next session: {all_sessions[next_index].title}")
+        except ValueError:
+            logger.warning("Current session not found in session list")
+    
+    def select_previous_session(self) -> None:
+        """Select the previous session in the session list."""
+        all_sessions = self.get_all_sessions()
+        if len(all_sessions) <= 1:
+            return
+        
+        if not self.current_session:
+            if all_sessions:
+                self.select_session(all_sessions[-1])
+            return
+        
+        try:
+            current_index = all_sessions.index(self.current_session)
+            prev_index = (current_index - 1) % len(all_sessions)
+            self.select_session(all_sessions[prev_index])
+            logger.debug(f"Selected previous session: {all_sessions[prev_index].title}")
+        except ValueError:
+            logger.warning("Current session not found in session list")
+    
+    def get_session_count(self) -> int:
+        """Get the number of active sessions."""
+        return len(self._session_terminals)

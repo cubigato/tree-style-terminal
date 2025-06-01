@@ -126,10 +126,10 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
 
 1. **Define Actions**
 
-   * [ ] Create `new_sibling`, `new_child`, `close_session` in `controllers/shortcuts.py`.
+   * [x] Create `new_sibling`, `new_child`, `close_session` in `controllers/shortcuts.py`.
 2. **ShortcutController**
 
-   * [ ] Set up `Gtk.ShortcutController`, map key combinations to actions.
+   * [x] Set up `Gtk.ShortcutController`, map key combinations to actions.
 3. **UI Integration**
 
    * [ ] Buttons in HeaderBar or Toolbar for new and close.
