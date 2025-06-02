@@ -265,22 +265,59 @@ class SessionManager:
         # Auto-close the session when terminal exits
         GLib.idle_add(lambda: self.close_session(session))
     
-    def _on_terminal_title_changed(self, terminal: VteTerminal, session: TerminalSession) -> None:
+    def _on_terminal_title_changed(self, vte_terminal, session: TerminalSession) -> None:
         """
-        Handle terminal title changes.
+        Handle terminal title changes and update session CWD.
         
         Args:
-            terminal: The VTE terminal widget
+            vte_terminal: The native VTE terminal widget
             session: The associated session
         """
-        new_title = terminal.get_window_title()
-        if new_title and new_title != session.title:
-            session.title = new_title
-            logger.debug(f"Updated session title: {new_title}")
+        # Get our VteTerminal wrapper from the session
+        terminal_widget = self._session_terminals.get(session)
+        if not terminal_widget:
+            logger.warning(f"Terminal widget not found for session: {session}")
+            return
+        
+        # Update terminal title
+        raw_title = terminal_widget.get_window_title()
+        if raw_title:
+            # Parse and format the terminal title
+            parsed_title = session.parse_terminal_title(raw_title)
+            title_changed = parsed_title != session.title
+            if title_changed:
+                session.title = parsed_title
+                logger.debug(f"Updated session title: {parsed_title}")
+        else:
+            title_changed = False
+        
+        # Update current working directory
+        current_dir = terminal_widget.get_current_directory()
+        cwd_changed = current_dir and current_dir != session.cwd
+        if cwd_changed:
+            session.cwd = current_dir
+            logger.debug(f"Updated session CWD: {current_dir}")
+            
+            # If no terminal title was processed, update title from CWD
+            if not raw_title:
+                new_dir_title = session._get_short_path_title(current_dir)
+                if new_dir_title != session.title:
+                    session.title = new_dir_title
+                    title_changed = True
+                    logger.debug(f"Updated session title from CWD: {new_dir_title}")
+        
+        # Notify sidebar of changes if any updates occurred
+        if title_changed or cwd_changed:
+            if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
+                self.session_changed_callback(session)
     
     def set_session_created_callback(self, callback: Callable[[TerminalSession, VteTerminal], None]) -> None:
         """Set callback for when a session is created."""
         self._session_created_callback = callback
+    
+    def set_session_changed_callback(self, callback: Callable[[TerminalSession], None]) -> None:
+        """Set callback for when a session's properties change."""
+        self.session_changed_callback = callback
     
     def set_session_closed_callback(self, callback: Callable[[TerminalSession, list[TerminalSession], Optional[TerminalSession]], None]) -> None:
         """Set callback for when a session is closed."""

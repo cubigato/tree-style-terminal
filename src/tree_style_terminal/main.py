@@ -668,6 +668,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.session_manager.set_session_created_callback(self._on_session_created)
         self.session_manager.set_session_closed_callback(self._on_session_closed)
         self.session_manager.set_session_selected_callback(self._on_session_selected_by_manager)
+        self.session_manager.set_session_changed_callback(self._on_session_changed)
     
     def _on_session_created(self, session: TerminalSession, terminal_widget: VteTerminal) -> None:
         """
@@ -729,6 +730,23 @@ class MainWindow(Gtk.ApplicationWindow):
             self.set_title("Tree Style Terminal")
         
         print(f"Session closed: {session.title}")
+    
+    def _on_session_changed(self, session: TerminalSession) -> None:
+        """
+        Handle session property changes (e.g., CWD, title updates).
+        
+        Args:
+            session: The session that changed
+        """
+        # Update sidebar display
+        if self.session_sidebar:
+            self.session_sidebar.controller.update_session(session)
+        
+        # Update window title if this is the current session
+        if self.session_manager.current_session == session:
+            self.set_title(f"Tree Style Terminal - {session.title}")
+        
+        print(f"Session changed: {session.title}")
     
     def _on_session_selected(self, session: TerminalSession) -> None:
         """

@@ -163,10 +163,17 @@ class VteTerminal(Gtk.Box):
     
     def get_current_directory(self) -> Optional[str]:
         """Get the current working directory of the terminal."""
-        # This is a simplified implementation
-        # In a real implementation, you might want to track directory changes
-        # or use OSC sequences to get the actual CWD
-        return None
+        if not self.pid:
+            return None
+        
+        try:
+            # Read the current working directory from /proc/PID/cwd
+            cwd_link = f"/proc/{self.pid}/cwd"
+            current_dir = os.readlink(cwd_link)
+            return current_dir
+        except (OSError, FileNotFoundError, PermissionError):
+            # Process might not exist or we don't have permission
+            return None
     
     def close(self) -> None:
         """Close the terminal and clean up resources."""

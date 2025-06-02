@@ -13,6 +13,7 @@ Tree Style Terminal reimagines terminal session management by organizing session
 - **Tree-based Session Management**: Organize terminal sessions in a hierarchical tree structure
 - **Collapsible Sidebar**: Toggle the session navigator to maximize terminal space
 - **Session Adoption**: When a parent session closes, child sessions are automatically adopted by the grandparent
+- **Smart Terminal Naming**: Automatically updates session names based on current working directory and shell context
 - **Modern GTK3 Interface**: Native Wayland and X11 support with CSS theming
 - **VTE Terminal Engine**: Same high-performance terminal engine used by GNOME Terminal
 - **Keyboard-First Navigation**: Comprehensive keybinding support for efficient workflow
@@ -203,6 +204,22 @@ The sidebar will display terminal sessions in a tree structure:
 - **Root Sessions**: Top-level sessions with no parent
 - **Child Sessions**: Sessions created from within other sessions
 - **Session Adoption**: When you close a session with children, those children become children of the closed session's parent
+
+### Smart Terminal Naming
+
+Terminal sessions are automatically named based on your current working directory and shell context:
+
+- **Directory-based Names**: Session names show the last two path components (e.g., `projects/myapp` for `/home/user/projects/myapp`)
+- **User Context**: When available, session names include user@host information in a clean format (e.g., `projects/myapp (user@hostname)`)
+- **Real-time Updates**: Session names automatically update when you change directories with `cd`
+- **Intelligent Parsing**: Handles various shell prompt formats and falls back gracefully
+
+**Examples:**
+- `/home/user/dev/project` → `dev/project (user@laptop)`
+- `/var/log/apache2` → `log/apache2 (root@server)`
+- `/home/user` → `user (user@desktop)`
+
+This makes it easy to identify and navigate between different terminal sessions at a glance.
 
 ## Development
 

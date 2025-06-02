@@ -288,6 +288,23 @@ class SidebarController:
         
         logger.debug(f"Updated session title: {new_title}")
     
+    def update_session(self, session: TerminalSession) -> None:
+        """
+        Update a session's display in the TreeStore (title and other properties).
+        
+        Args:
+            session: The session to update
+        """
+        tree_iter = self._session_to_iter.get(session)
+        if tree_iter is None:
+            logger.warning(f"Session not found in TreeStore: {session}")
+            return
+        
+        # Update the title in the TreeStore
+        self.tree_store.set_value(tree_iter, self.COL_TITLE, session.title)
+        
+        logger.debug(f"Updated session: {session.title}")
+    
     def get_tree_store(self) -> Gtk.TreeStore:
         """Get the underlying TreeStore."""
         return self.tree_store
