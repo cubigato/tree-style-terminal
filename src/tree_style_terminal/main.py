@@ -421,9 +421,12 @@ class MainWindow(Gtk.ApplicationWindow):
         # Switch to the new terminal
         self.terminal_stack.set_visible_child_name(terminal_id)
         
-        # Update sidebar
+        # Update sidebar - ADD ONLY THE NEW SESSION instead of full refresh
         if self.session_sidebar:
-            self.session_sidebar.refresh()
+            parent = self.session_manager.session_tree.get_parent(session)
+            self.session_sidebar.controller.add_session(session, parent)
+            # Select the new session in the sidebar
+            self.session_sidebar.select_session(session)
         
         # Update button states
         self._update_button_states()
@@ -446,9 +449,9 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.terminal_stack.remove(child)
                 break
         
-        # Update sidebar
+        # Update sidebar - REMOVE ONLY THE CLOSED SESSION instead of full refresh
         if self.session_sidebar:
-            self.session_sidebar.refresh()
+            self.session_sidebar.controller.remove_session(session)
         
         # Update button states
         self._update_button_states()
