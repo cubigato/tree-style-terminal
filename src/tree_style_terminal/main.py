@@ -24,6 +24,7 @@ from .controllers.session_manager import SessionManager
 from .controllers.shortcuts import ShortcutController
 from .models.session import TerminalSession
 from .models.tree import SessionTree
+from .config import config_manager, ConfigError
 
 
 class CSSLoader:
@@ -33,7 +34,19 @@ class CSSLoader:
         self.css_provider = Gtk.CssProvider()
         self.theme_provider = Gtk.CssProvider()
         self.system_css_provider = Gtk.CssProvider()
-        self.current_theme = self._detect_system_theme()
+        
+        # Load configuration for theme detection
+        try:
+            config_manager.load_config()
+            config_theme = config_manager.get("theme", "automatic")
+            if config_theme == "automatic":
+                self.current_theme = self._detect_system_theme()
+            else:
+                self.current_theme = config_theme
+        except ConfigError as e:
+            print(f"Configuration error: {e}")
+            raise
+        
         self._override_dpi = override_dpi
         
     def load_base_css(self):
@@ -57,24 +70,36 @@ class CSSLoader:
     def _load_system_css(self):
         """Generate CSS based on system settings for better scaling."""
         try:
-            # Check for manual DPI override via environment variable or command line
-            manual_dpi = getattr(self, '_override_dpi', None) or os.environ.get('TST_DPI')
-            if manual_dpi:
-                try:
-                    actual_dpi = float(manual_dpi)
-                    print(f"Using manual DPI override: {actual_dpi}")
-                except ValueError:
-                    print(f"Invalid DPI value: {manual_dpi}, falling back to system detection")
-                    manual_dpi = None
+            # Check for manual scale override via config, environment variable or command line
+            config_scale = config_manager.get("display.dpi_scale", "auto")
+            scale_factor = 1.0  # Default fallback
+            actual_dpi = 96.0  # For logging purposes
             
-            if not manual_dpi:
-                # Get system settings
-                settings = Gtk.Settings.get_default()
+            if config_scale != "auto":
+                scale_factor = float(config_scale)
+                actual_dpi = scale_factor * 96.0  # Calculate equivalent DPI for logging
+                print(f"Using config scale factor: {scale_factor} (equivalent to {actual_dpi:.1f} DPI)")
+            else:
+                # Check command line or environment override (these are still DPI values)
+                override_dpi = getattr(self, '_override_dpi', None) or os.environ.get('TST_DPI')
+                if override_dpi:
+                    try:
+                        actual_dpi = float(override_dpi)
+                        scale_factor = actual_dpi / 96.0
+                        print(f"Using manual DPI override: {actual_dpi} (scale factor: {scale_factor:.2f})")
+                    except ValueError:
+                        print(f"Invalid DPI value: {override_dpi}, falling back to system detection")
+                        override_dpi = None
                 
-                # Get system font and size
-                font_name = settings.get_property("gtk-font-name") or "Sans 10"
-                dpi = settings.get_property("gtk-xft-dpi") or 96 * 1024  # DPI is in 1/1024 units
-                actual_dpi = dpi / 1024.0
+                if not override_dpi:
+                    # Get system settings
+                    settings = Gtk.Settings.get_default()
+                    
+                    # Get system font and size
+                    font_name = settings.get_property("gtk-font-name") or "Sans 10"
+                    dpi = settings.get_property("gtk-xft-dpi") or 96 * 1024  # DPI is in 1/1024 units
+                    actual_dpi = dpi / 1024.0
+                    scale_factor = actual_dpi / 96.0
             
             # Parse font size from font name (e.g., "Sans 10" -> 10)
             settings = Gtk.Settings.get_default()
@@ -85,14 +110,14 @@ class CSSLoader:
             except (ValueError, IndexError):
                 base_font_size = 10.0  # fallback
             
-            # Calculate scaling factor for high DPI displays
-            scale_factor = actual_dpi / 96.0  # 96 DPI is standard
+            # Ensure minimum scale factor
             if scale_factor < 1.0:
                 scale_factor = 1.0  # Don't scale down
                 
-            # Apply boost for more comfortable font sizes
+            # Apply boost for more comfortable font sizes (only if not using config override)
             # This makes fonts larger than strict DPI scaling would suggest
-            scale_factor = scale_factor * 1.3  # Boost factor for comfortable reading
+            if config_scale == "auto":
+                scale_factor = scale_factor * 1.3  # Boost factor for comfortable reading
             
             # For very high DPI (4K+), ensure minimum readable sizes
             if actual_dpi >= 180:  # Typical 4K at normal viewing distance
@@ -152,7 +177,7 @@ treeview {{
             self.system_css_provider.load_from_data(system_css.encode('utf-8'))
             self._add_provider_to_screen(self.system_css_provider)
             
-            print(f"Applied system font scaling - Base: {base_font_size}px, UI: {ui_font_size}px, Terminal: {terminal_font_size}px (DPI: {actual_dpi:.1f}, Scale: {scale_factor:.2f})")
+            print(f"Applied system font scaling - Base: {base_font_size}px, UI: {ui_font_size}px, Terminal: {terminal_font_size}px (Scale: {scale_factor:.2f}, Equiv DPI: {actual_dpi:.1f})")
             
         except Exception as e:
             print(f"Warning: Could not detect system font settings: {e}")
@@ -267,6 +292,13 @@ class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, application: "TreeStyleTerminalApp"):
         super().__init__(application=application)
         
+        # Load configuration
+        try:
+            config_manager.load_config()
+        except ConfigError as e:
+            print(f"Configuration error: {e}")
+            raise
+        
         # Add CSS class to window
         self.get_style_context().add_class("main-window")
         
@@ -292,6 +324,9 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Create header bar
         self._setup_headerbar()
+        
+        # Update theme button icon based on current theme
+        self._update_theme_button_icon()
         
         # Load the UI from the Glade file
         self._load_ui()
@@ -395,7 +430,7 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Initialize sidebar state tracking for UI file compatibility
         self._sidebar_collapsed = False
-        self._saved_sidebar_width = 250
+        self._saved_sidebar_width = config_manager.get("ui.sidebar_width", 250)
         
         # Connect paned position changes if main_container is a Paned
         if hasattr(self.main_paned, 'get_position') and callable(getattr(self.main_paned, 'get_position', None)):
@@ -452,9 +487,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sidebar_revealer.get_style_context().add_class("sidebar")
         self.sidebar_revealer.add(sidebar_box)
         
-        # Initialize sidebar state tracking
+        # Initialize sidebar state tracking with config
         self._sidebar_collapsed = False
-        self._saved_sidebar_width = 250  # Default width
+        self._saved_sidebar_width = config_manager.get("ui.sidebar_width", 250)
         
         # Create session sidebar widget
         self.session_sidebar = SessionSidebar(self.sidebar_controller)
@@ -535,16 +570,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self._update_terminal_themes(app.css_loader.current_theme)
         
         # Update button icon based on current theme
-        if app.css_loader.current_theme == "dark":
-            button.set_image(
-                Gtk.Image.new_from_icon_name("weather-clear-symbolic", Gtk.IconSize.BUTTON)
-            )
-            button.set_tooltip_text("Switch to Light Theme")
-        else:
-            button.set_image(
-                Gtk.Image.new_from_icon_name("weather-clear-night-symbolic", Gtk.IconSize.BUTTON)
-            )
-            button.set_tooltip_text("Switch to Dark Theme")
+        self._update_theme_button_icon()
     
     def _on_new_child_clicked(self, button: Gtk.Button) -> None:
         """Handle new child button click."""
@@ -891,6 +917,22 @@ class MainWindow(Gtk.ApplicationWindow):
             self.session_manager.set_theme(theme_name)
         
         print(f"Updated all terminals to {theme_name} theme")
+    
+    def _update_theme_button_icon(self) -> None:
+        """Update theme toggle button icon based on current theme."""
+        app = self.get_application()
+        current_theme = app.css_loader.current_theme
+        
+        if current_theme == "dark":
+            self.theme_toggle_button.set_image(
+                Gtk.Image.new_from_icon_name("weather-clear-symbolic", Gtk.IconSize.BUTTON)
+            )
+            self.theme_toggle_button.set_tooltip_text("Switch to Light Theme")
+        else:
+            self.theme_toggle_button.set_image(
+                Gtk.Image.new_from_icon_name("weather-clear-night-symbolic", Gtk.IconSize.BUTTON)
+            )
+            self.theme_toggle_button.set_tooltip_text("Switch to Dark Theme")
 
 
 class TreeStyleTerminalApp(Gtk.Application):

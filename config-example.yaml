@@ -1,0 +1,39 @@
+# Tree Style Terminal Configuration Example
+# Copy this to ~/.config/tree-style-terminal/config.yaml and customize as needed
+
+# Theme for the entire GUI: "light", "dark", or "automatic"
+# "automatic" follows system theme
+theme: "dark"
+
+terminal:
+  # Scrollback buffer size (number of lines to keep in history)
+  # Range: 100 - 100000
+  scrollback_lines: 10000
+
+ui:
+  # Initial width of the sidebar in pixels
+  # Range: 50 - 1000
+  sidebar_width: 250
+
+display:
+  # UI scaling factor (1.0 = 100%, 1.5 = 150%, etc.)
+  # Set to "auto" to use system DPI detection and apply automatic scaling
+  # Range: 0.5 - 3.0 or "auto"
+  dpi_scale: "auto"
+
+# Example configurations for different setups:
+
+# For 4K displays (200% scaling):
+# display:
+#   dpi_scale: 2.0
+
+# For larger sidebar:
+# ui:
+#   sidebar_width: 350
+
+# For more scrollback history:
+# terminal:
+#   scrollback_lines: 50000
+
+# For light theme:
+# theme: "light"

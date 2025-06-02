@@ -17,6 +17,7 @@ gi.require_version("Gdk", "3.0")
 
 from gi.repository import Gtk, Vte, GLib, Gdk
 
+from ..config import config_manager, ConfigError
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +31,18 @@ class VteTerminal(Gtk.Box):
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         
+        # Load configuration
+        try:
+            config_manager.load_config()
+        except ConfigError as e:
+            logger.error(f"Configuration error: {e}")
+            raise
+            
         # Create the VTE terminal
         self.terminal = Vte.Terminal()
         
-        # Current theme (default to dark)
-        self._current_theme = "dark"
+        # Get theme from config (fallback to dark)
+        self._current_theme = config_manager.get("theme", "dark")
         
         # Set up basic terminal properties
         self._configure_terminal()
@@ -68,8 +76,9 @@ class VteTerminal(Gtk.Box):
         # Set default font
         self.set_font_size(12)
         
-        # Set scrollback length
-        self.set_scrollback_length(10000)
+        # Set scrollback length from config
+        scrollback_lines = config_manager.get("terminal.scrollback_lines", 10000)
+        self.set_scrollback_length(scrollback_lines)
         
         # Set cursor settings
         self.terminal.set_cursor_blink_mode(Vte.CursorBlinkMode.SYSTEM)
