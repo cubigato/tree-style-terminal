@@ -531,6 +531,9 @@ class MainWindow(Gtk.ApplicationWindow):
         app = self.get_application()
         app.css_loader.toggle_theme()
         
+        # Update all terminals with the new theme
+        self._update_terminal_themes(app.css_loader.current_theme)
+        
         # Update button icon based on current theme
         if app.css_loader.current_theme == "dark":
             button.set_image(
@@ -582,6 +585,11 @@ class MainWindow(Gtk.ApplicationWindow):
         try:
             # Create new VTE terminal widget
             terminal_widget = VteTerminal()
+            
+            # Apply current theme to the new terminal
+            app = self.get_application()
+            if app and hasattr(app, 'css_loader'):
+                terminal_widget.apply_theme(app.css_loader.current_theme)
             
             # Spawn shell in the terminal
             if not terminal_widget.spawn_shell(cwd=cwd):
@@ -669,6 +677,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self.session_manager.set_session_closed_callback(self._on_session_closed)
         self.session_manager.set_session_selected_callback(self._on_session_selected_by_manager)
         self.session_manager.set_session_changed_callback(self._on_session_changed)
+        
+        # Set initial theme in session manager
+        app = self.get_application()
+        if app and hasattr(app, 'css_loader'):
+            self.session_manager.set_theme(app.css_loader.current_theme)
     
     def _on_session_created(self, session: TerminalSession, terminal_widget: VteTerminal) -> None:
         """
@@ -865,7 +878,19 @@ class MainWindow(Gtk.ApplicationWindow):
         if hasattr(self, 'session_sidebar') and self.session_sidebar:
             if hasattr(self.session_sidebar, 'grab_focus'):
                 self.session_sidebar.grab_focus()
-                print("Focused sidebar")
+    
+    def _update_terminal_themes(self, theme_name: str) -> None:
+        """Update all terminals to use the specified theme."""
+        # Update legacy terminals dictionary
+        for terminal_widget in self.terminals.values():
+            if hasattr(terminal_widget, 'apply_theme'):
+                terminal_widget.apply_theme(theme_name)
+        
+        # Update terminals managed by session manager
+        if hasattr(self.session_manager, 'set_theme'):
+            self.session_manager.set_theme(theme_name)
+        
+        print(f"Updated all terminals to {theme_name} theme")
 
 
 class TreeStyleTerminalApp(Gtk.Application):

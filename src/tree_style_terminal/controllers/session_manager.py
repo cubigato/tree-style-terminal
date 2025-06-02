@@ -52,6 +52,9 @@ class SessionManager:
         # Counter for generating unique session IDs
         self._session_counter = 0
         
+        # Current theme for terminals
+        self._current_theme = "dark"
+        
         logger.debug("SessionManager initialized")
     
     def new_session(
@@ -84,6 +87,9 @@ class SessionManager:
             
             # Create VTE terminal widget
             terminal_widget = VteTerminal()
+            
+            # Apply current theme to the new terminal
+            terminal_widget.apply_theme(self._current_theme)
             
             # Spawn shell in the terminal
             if not terminal_widget.spawn_shell(cwd=cwd):
@@ -368,3 +374,23 @@ class SessionManager:
     def get_session_count(self) -> int:
         """Get the number of active sessions."""
         return len(self._session_terminals)
+    
+    def set_theme(self, theme_name: str) -> None:
+        """
+        Set the theme for all terminal sessions.
+        
+        Args:
+            theme_name: The theme name ('light' or 'dark')
+        """
+        self._current_theme = theme_name
+        
+        # Apply theme to all existing terminals
+        for terminal_widget in self._session_terminals.values():
+            if hasattr(terminal_widget, 'apply_theme'):
+                terminal_widget.apply_theme(theme_name)
+        
+        logger.debug(f"Applied {theme_name} theme to all sessions")
+    
+    def get_current_theme(self) -> str:
+        """Get the current theme name."""
+        return self._current_theme

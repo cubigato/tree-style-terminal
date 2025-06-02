@@ -13,8 +13,9 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Vte", "2.91")
+gi.require_version("Gdk", "3.0")
 
-from gi.repository import Gtk, Vte, GLib
+from gi.repository import Gtk, Vte, GLib, Gdk
 
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,9 @@ class VteTerminal(Gtk.Box):
         
         # Create the VTE terminal
         self.terminal = Vte.Terminal()
+        
+        # Current theme (default to dark)
+        self._current_theme = "dark"
         
         # Set up basic terminal properties
         self._configure_terminal()
@@ -76,6 +80,9 @@ class VteTerminal(Gtk.Box):
         
         # Set word char exceptions
         self.terminal.set_word_char_exceptions("-A-Za-z0-9,./?%&#:_=+@~")
+        
+        # Apply initial theme
+        self.apply_theme(self._current_theme)
         
     def spawn_shell(self, argv: Optional[List[str]] = None, cwd: Optional[str] = None) -> bool:
         """
@@ -226,3 +233,90 @@ class VteTerminal(Gtk.Box):
         
         # Emit a custom signal that can be caught by parent widgets
         # For now, we'll just log it
+    
+    def apply_theme(self, theme_name: str) -> None:
+        """Apply a color theme to the terminal."""
+        self._current_theme = theme_name
+        
+        if theme_name == "dark":
+            self._apply_dark_theme()
+        else:
+            self._apply_light_theme()
+    
+    def _apply_dark_theme(self) -> None:
+        """Apply dark theme colors to the terminal."""
+        try:
+            # Dark theme colors
+            bg_color = Gdk.RGBA()
+            bg_color.parse("#1e1e1e")  # Dark background
+            
+            fg_color = Gdk.RGBA()
+            fg_color.parse("#ffffff")  # White text
+            
+            # Standard 16-color palette for dark theme
+            palette = [
+                Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(),
+                Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(),
+                Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(),
+                Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA()
+            ]
+            
+            # Dark theme color palette
+            colors = [
+                "#2e3436", "#cc0000", "#4e9a06", "#c4a000",
+                "#3465a4", "#75507b", "#06989a", "#d3d7cf",
+                "#555753", "#ef2929", "#8ae234", "#fce94f",
+                "#729fcf", "#ad7fa8", "#34e2e2", "#eeeeec"
+            ]
+            
+            for i, color_str in enumerate(colors):
+                palette[i].parse(color_str)
+            
+            # Apply colors to terminal
+            self.terminal.set_colors(fg_color, bg_color, palette)
+            
+            logger.debug("Applied dark theme to terminal")
+            
+        except Exception as e:
+            logger.warning(f"Failed to apply dark theme: {e}")
+    
+    def _apply_light_theme(self) -> None:
+        """Apply light theme colors to the terminal."""
+        try:
+            # Light theme colors
+            bg_color = Gdk.RGBA()
+            bg_color.parse("#ffffff")  # White background
+            
+            fg_color = Gdk.RGBA()
+            fg_color.parse("#000000")  # Black text
+            
+            # Standard 16-color palette for light theme
+            palette = [
+                Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(),
+                Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(),
+                Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(),
+                Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA(), Gdk.RGBA()
+            ]
+            
+            # Light theme color palette
+            colors = [
+                "#000000", "#cc0000", "#4e9a06", "#c4a000",
+                "#3465a4", "#75507b", "#06989a", "#2e3436",
+                "#555753", "#ef2929", "#8ae234", "#fce94f",
+                "#729fcf", "#ad7fa8", "#34e2e2", "#d3d7cf"
+            ]
+            
+            for i, color_str in enumerate(colors):
+                palette[i].parse(color_str)
+            
+            # Apply colors to terminal
+            self.terminal.set_colors(fg_color, bg_color, palette)
+            
+            logger.debug("Applied light theme to terminal")
+            
+        except Exception as e:
+            logger.warning(f"Failed to apply light theme: {e}")
+    
+    def get_current_theme(self) -> str:
+        """Get the current theme name."""
+        return self._current_theme
