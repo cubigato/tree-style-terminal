@@ -51,12 +51,21 @@ headerbar button {
 /* Paned Widget */
 paned separator {
     background-color: #cccccc;
-    min-width: 1px;
+    min-width: 6px;
     min-height: 1px;
+}
+
+paned separator:hover {
+    background-color: #0066cc;
 }
 
 .main-paned separator {
     background-color: #cccccc;
+    min-width: 6px;
+}
+
+.main-paned separator:hover {
+    background-color: #0066cc;
 }
 
 /* Button styling */

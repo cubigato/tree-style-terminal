@@ -2,10 +2,14 @@
 <!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <object class="GtkBox" id="main_container">
+  <object class="GtkPaned" id="main_container">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">horizontal</property>
+    <property name="position">250</property>
+    <style>
+      <class name="main-paned"/>
+    </style>
     <child>
       <object class="GtkRevealer" id="sidebar_revealer">
         <property name="visible">True</property>
@@ -18,7 +22,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
-            <property name="width_request">250</property>
+
             <style>
               <class name="sidebar"/>
             </style>
@@ -134,25 +138,8 @@
         </child>
       </object>
       <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkSeparator" id="sidebar_separator">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="width_request">1</property>
-        <style>
-          <class name="sidebar-separator"/>
-        </style>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="resize">False</property>
+        <property name="shrink">False</property>
       </packing>
     </child>
     <child>
@@ -335,9 +322,8 @@
         </child>
       </object>
       <packing>
-        <property name="expand">True</property>
-        <property name="fill">True</property>
-        <property name="position">2</property>
+        <property name="resize">True</property>
+        <property name="shrink">True</property>
       </packing>
     </child>
   </object>

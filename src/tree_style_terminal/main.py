@@ -365,8 +365,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.new_terminal_button = self.new_sibling_button
         
     def _load_ui(self) -> None:
-        """Load the UI from the Glade file."""
-        # Get the path to the UI file
+        """Load the UI from Glade file or create manually."""
         ui_path = self._get_ui_file_path()
         
         # Create a builder and load the UI
@@ -382,6 +381,9 @@ class MainWindow(Gtk.ApplicationWindow):
         # Get the main container from the UI
         main_container = builder.get_object("main_container")
         if main_container:
+            # For UI file compatibility, set main_paned to main_container
+            # This allows toggle functions to work with both UI types
+            self.main_paned = main_container
             self.add(main_container)
         else:
             self._create_manual_ui()
@@ -390,6 +392,14 @@ class MainWindow(Gtk.ApplicationWindow):
         # Store references to important widgets
         self.sidebar_revealer = builder.get_object("sidebar_revealer")
         self.terminal_stack = builder.get_object("terminal_stack")
+        
+        # Initialize sidebar state tracking for UI file compatibility
+        self._sidebar_collapsed = False
+        self._saved_sidebar_width = 250
+        
+        # Connect paned position changes if main_container is a Paned
+        if hasattr(self.main_paned, 'get_position') and callable(getattr(self.main_paned, 'get_position', None)):
+            self.main_paned.connect("notify::position", self._on_paned_position_changed)
         
         # Create and integrate the session sidebar
         sidebar_container = builder.get_object("sidebar_scrolled")
@@ -426,12 +436,13 @@ class MainWindow(Gtk.ApplicationWindow):
     
     def _create_manual_ui(self) -> None:
         """Create a basic UI manually if Glade file is not available."""
-        # Create main horizontal box
-        main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        # Create main horizontal paned for resizable sidebar
+        self.main_paned = Gtk.HPaned()
+        self.main_paned.get_style_context().add_class("main-paned")
         
         # Create sidebar area
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        sidebar_box.set_size_request(250, -1)
+        # Remove fixed width - let paned handle sizing
         
         # Create sidebar revealer
         self.sidebar_revealer = Gtk.Revealer()
@@ -440,6 +451,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sidebar_revealer.set_reveal_child(True)
         self.sidebar_revealer.get_style_context().add_class("sidebar")
         self.sidebar_revealer.add(sidebar_box)
+        
+        # Initialize sidebar state tracking
+        self._sidebar_collapsed = False
+        self._saved_sidebar_width = 250  # Default width
         
         # Create session sidebar widget
         self.session_sidebar = SessionSidebar(self.sidebar_controller)
@@ -474,16 +489,17 @@ class MainWindow(Gtk.ApplicationWindow):
         self.terminal_stack.set_visible_child_name("welcome")
         terminal_area.pack_start(self.terminal_stack, True, True, 0)
         
-        # Add separator
-        separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        # Pack into paned widget (no separator needed - paned has built-in handle)
+        self.main_paned.pack1(self.sidebar_revealer, resize=False, shrink=False)
+        self.main_paned.pack2(terminal_area, resize=True, shrink=True)
         
-        # Pack everything into main box
-        main_box.get_style_context().add_class("main-paned")
-        main_box.pack_start(self.sidebar_revealer, False, False, 0)
-        main_box.pack_start(separator, False, False, 0)
-        main_box.pack_start(terminal_area, True, True, 0)
+        # Set initial sidebar width
+        self.main_paned.set_position(self._saved_sidebar_width)
         
-        self.add(main_box)
+        # Connect to position changes for width constraints
+        self.main_paned.connect("notify::position", self._on_paned_position_changed)
+        
+        self.add(self.main_paned)
     
     def _get_ui_file_path(self) -> Path:
         """Get the path to the UI file."""
@@ -494,28 +510,7 @@ class MainWindow(Gtk.ApplicationWindow):
     
     def _on_sidebar_toggle_clicked(self, button: Gtk.Button) -> None:
         """Handle sidebar toggle button click."""
-        if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
-            print(f"Sidebar toggle: collapsed={self._sidebar_collapsed} -> {not self._sidebar_collapsed}")
-            
-            if not self._sidebar_collapsed:  # Currently expanded, so collapse
-                # Simply force the revealer to collapse and take no space
-                self.sidebar_revealer.set_reveal_child(False)
-                self.sidebar_revealer.set_size_request(0, -1)
-                self.sidebar_revealer.set_visible(False)
-                
-                self._sidebar_collapsed = True
-                print("Sidebar collapsed (forced invisible)")
-            else:  # Currently collapsed, so expand
-                # Restore the revealer
-                self.sidebar_revealer.set_visible(True)
-                self.sidebar_revealer.set_size_request(-1, -1)
-                self.sidebar_revealer.set_reveal_child(True)
-                
-                self._sidebar_collapsed = False
-                print("Sidebar expanded (forced visible)")
-            
-            # Force immediate layout update
-            GLib.idle_add(lambda: self.queue_resize())
+        self.toggle_sidebar()
     
     def _on_new_terminal_clicked(self, button: Gtk.Button) -> None:
         """Handle new terminal button click."""
@@ -770,10 +765,74 @@ class MainWindow(Gtk.ApplicationWindow):
     def toggle_sidebar(self) -> None:
         """Toggle sidebar visibility."""
         if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
-            current_state = self.sidebar_revealer.get_reveal_child()
-            self.sidebar_revealer.set_reveal_child(not current_state)
-            self._sidebar_collapsed = not current_state
-            print(f"Sidebar {'hidden' if current_state else 'shown'}")
+            print(f"Sidebar toggle: collapsed={self._sidebar_collapsed} -> {not self._sidebar_collapsed}")
+            
+            if not self._sidebar_collapsed:  # Currently expanded, so collapse
+                self._collapse_sidebar()
+            else:  # Currently collapsed, so expand
+                self._expand_sidebar()
+
+    def _collapse_sidebar(self) -> None:
+        """Collapse the sidebar."""
+        if self._is_paned_layout():
+            # Save current width before collapsing (Paned layout)
+            self._saved_sidebar_width = max(150, self.main_paned.get_position())
+            
+            # Hide the revealer completely to make it disappear from paned
+            self.sidebar_revealer.set_reveal_child(False)
+            self.sidebar_revealer.set_visible(False)
+            
+            print(f"Sidebar collapsed (paned, saved width: {self._saved_sidebar_width})")
+        else:
+            # Box layout - use revealer properties
+            self.sidebar_revealer.set_reveal_child(False)
+            self.sidebar_revealer.set_size_request(0, -1)
+            self.sidebar_revealer.set_visible(False)
+            print("Sidebar collapsed (box layout)")
+        
+        self._sidebar_collapsed = True
+
+    def _expand_sidebar(self) -> None:
+        """Expand the sidebar."""
+        if self._is_paned_layout():
+            # First make revealer visible and restore position
+            self.sidebar_revealer.set_visible(True)
+            self.main_paned.set_position(self._saved_sidebar_width)
+            
+            # Then show the revealer content
+            # Use idle_add to ensure position is set before revealing content
+            GLib.idle_add(lambda: self.sidebar_revealer.set_reveal_child(True))
+            
+            print(f"Sidebar expanded (paned, restored width: {self._saved_sidebar_width})")
+        else:
+            # Box layout - restore revealer properties
+            self.sidebar_revealer.set_visible(True)
+            self.sidebar_revealer.set_size_request(-1, -1)
+            self.sidebar_revealer.set_reveal_child(True)
+            print("Sidebar expanded (box layout)")
+        
+        self._sidebar_collapsed = False
+
+    def _is_paned_layout(self) -> bool:
+        """Check if we're using Paned layout (manual UI) vs Box layout (UI file)."""
+        return hasattr(self.main_paned, 'get_position') and callable(getattr(self.main_paned, 'get_position', None))
+
+    def _on_paned_position_changed(self, paned: Gtk.HPaned, param_spec: object) -> None:
+        """Handle paned position changes to enforce width constraints."""
+        if not hasattr(self, '_sidebar_collapsed') or self._sidebar_collapsed:
+            return
+            
+        current_position = paned.get_position()
+        
+        # Define min/max constraints
+        min_width = 150
+        max_width = 500
+        
+        # Enforce constraints
+        if current_position < min_width and current_position > 0:
+            paned.set_position(min_width)
+        elif current_position > max_width:
+            paned.set_position(max_width)
 
     def focus_terminal(self) -> None:
         """Focus the currently active terminal."""
