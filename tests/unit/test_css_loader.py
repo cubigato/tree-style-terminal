@@ -23,7 +23,8 @@ class TestCSSLoader(unittest.TestCase):
         """Test CSS loader initializes correctly."""
         self.assertIsNotNone(self.css_loader.css_provider)
         self.assertIsNotNone(self.css_loader.theme_provider)
-        self.assertEqual(self.css_loader.current_theme, "light")
+        # Theme is automatically detected from system, so just check it's set
+        self.assertIn(self.css_loader.current_theme, ["light", "dark"])
     
     @patch('tree_style_terminal.main.Path.exists')
     @patch('tree_style_terminal.main.print')
@@ -34,9 +35,11 @@ class TestCSSLoader(unittest.TestCase):
         # Should not raise exception
         self.css_loader.load_base_css()
         
-        # Should print warning
-        mock_print.assert_called_once()
-        self.assertIn("Warning", mock_print.call_args[0][0])
+        # Should print font scaling info and warning (2 calls)
+        self.assertEqual(mock_print.call_count, 2)
+        # Check that one of the calls contains the warning
+        call_args = [call[0][0] for call in mock_print.call_args_list]
+        self.assertTrue(any("Warning" in arg for arg in call_args))
     
     @patch('tree_style_terminal.main.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
@@ -50,9 +53,12 @@ class TestCSSLoader(unittest.TestCase):
         self.css_loader.load_base_css()
         
         mock_provider.load_from_path.assert_called_once()
-        mock_add_provider.assert_called_once_with(mock_provider)
-        mock_print.assert_called_once()
-        self.assertIn("Loaded base CSS", mock_print.call_args[0][0])
+        # Should be called twice: once for system CSS, once for base CSS
+        self.assertEqual(mock_add_provider.call_count, 2)
+        # Should print font scaling info and success message (2 calls)
+        self.assertEqual(mock_print.call_count, 2)
+        call_args = [call[0][0] for call in mock_print.call_args_list]
+        self.assertTrue(any("Loaded base CSS" in arg for arg in call_args))
     
     @patch('tree_style_terminal.main.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
@@ -66,8 +72,10 @@ class TestCSSLoader(unittest.TestCase):
         
         self.css_loader.load_base_css()
         
-        mock_print.assert_called_once()
-        self.assertIn("Error loading base CSS", mock_print.call_args[0][0])
+        # Should print font scaling info and error message (2 calls)
+        self.assertEqual(mock_print.call_count, 2)
+        call_args = [call[0][0] for call in mock_print.call_args_list]
+        self.assertTrue(any("Error loading base CSS" in arg for arg in call_args))
     
     @patch('tree_style_terminal.main.Path.exists')
     @patch('tree_style_terminal.main.print')

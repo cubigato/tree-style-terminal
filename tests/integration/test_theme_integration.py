@@ -36,7 +36,8 @@ class TestThemeIntegration(unittest.TestCase):
         self.app._on_startup(self.app)
         
         mock_load_base.assert_called_once()
-        mock_load_theme.assert_called_once_with("light")
+        # Theme is automatically detected, so we just check it was called once
+        mock_load_theme.assert_called_once()
     
     @patch('tree_style_terminal.main.CSSLoader.load_base_css')
     @patch('tree_style_terminal.main.CSSLoader.load_theme')
@@ -95,7 +96,16 @@ class TestThemeIntegration(unittest.TestCase):
     @patch('tree_style_terminal.main.CSSLoader.load_theme')
     def test_sidebar_has_css_classes(self, mock_load_theme, mock_load_base):
         """Test that sidebar elements have proper CSS classes."""
-        self.skipTest("Skipping UI-specific CSS class test - varies by configuration")
+        self.app._on_startup(self.app)
+        self.window = MainWindow(self.app)
+        
+        # Check session sidebar has the sidebar-tree CSS class (added by SessionSidebar itself)
+        session_sidebar_context = self.window.session_sidebar.get_style_context()
+        self.assertTrue(session_sidebar_context.has_class("sidebar-tree"))
+        
+        # Verify sidebar elements exist (basic structure test)
+        self.assertIsNotNone(self.window.sidebar_revealer)
+        self.assertIsNotNone(self.window.session_sidebar)
 
 
 if __name__ == '__main__':

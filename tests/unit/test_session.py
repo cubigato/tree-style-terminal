@@ -35,7 +35,7 @@ class TestTerminalSession:
             cwd="/home/user/projects"
         )
         
-        assert session.title == "projects"
+        assert session.title == "user/projects"
 
     def test_session_title_auto_generation_root_dir(self):
         """Test title generation for root directory."""
@@ -94,13 +94,13 @@ class TestTerminalSession:
 
     def test_session_cwd_edge_cases(self):
         """Test various edge cases for cwd and title generation."""
-        # Trailing slash - os.path.basename returns empty, so falls back to full cwd
+        # Trailing slash - gets normalized to show last two components
         session = TerminalSession(pid=123, pty_fd=456, cwd="/home/user/")
-        assert session.title == "/home/user/"
+        assert session.title == "home/user"
         
         # No leading slash
         session = TerminalSession(pid=123, pty_fd=456, cwd="relative/path")
-        assert session.title == "path"
+        assert session.title == "relative/path"
         
         # Single directory
         session = TerminalSession(pid=123, pty_fd=456, cwd="single")
