@@ -33,7 +33,7 @@ class CSSLoader:
         self.css_provider = Gtk.CssProvider()
         self.theme_provider = Gtk.CssProvider()
         self.system_css_provider = Gtk.CssProvider()
-        self.current_theme = "light"  # default
+        self.current_theme = self._detect_system_theme()
         self._override_dpi = override_dpi
         
     def load_base_css(self):
@@ -232,6 +232,33 @@ treeview {{
             provider, 
             priority
         )
+    
+    def _detect_system_theme(self):
+        """Detect the system's preferred theme (light/dark)."""
+        try:
+            settings = Gtk.Settings.get_default()
+            
+            # Try to get the dark theme preference
+            prefer_dark = settings.get_property("gtk-application-prefer-dark-theme")
+            if prefer_dark:
+                print("Detected system preference: dark theme")
+                return "dark"
+            
+            # Fallback: check the theme name for dark indicators
+            theme_name = settings.get_property("gtk-theme-name") or ""
+            theme_name_lower = theme_name.lower()
+            
+            if any(dark_indicator in theme_name_lower for dark_indicator in ["dark", "noir", "black", "adwaita-dark"]):
+                print(f"Detected dark theme from theme name: {theme_name}")
+                return "dark"
+            
+            print(f"Detected light theme (theme name: {theme_name})")
+            return "light"
+            
+        except Exception as e:
+            print(f"Could not detect system theme preference: {e}")
+            print("Falling back to light theme")
+            return "light"
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -792,7 +819,7 @@ class TreeStyleTerminalApp(Gtk.Application):
         
         # Load CSS styles
         self.css_loader.load_base_css()
-        self.css_loader.load_theme("light")  # Default theme
+        self.css_loader.load_theme(self.css_loader.current_theme)  # Use detected system theme
     
     def _print_system_info(self) -> None:
         """Print system information for debugging font scaling."""
