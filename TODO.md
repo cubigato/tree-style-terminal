@@ -145,8 +145,8 @@ A fine-grained roadmap: Each task is small, clearly defined and can be worked on
 
 1. **CSS Foundation**
 
-   * [ ] `resources/css/style.css` with variables for Light/Dark.
-   * [ ] Load CSS in `main.py`.
+   * [x] `resources/css/style.css` with variables for Light/Dark.
+   * [x] Load CSS in `main.py`.
 2. **pip Wheel**
 
    * [ ] Configure `setup.cfg` or `pyproject.toml` so that `pip wheel .` works.

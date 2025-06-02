@@ -6,6 +6,8 @@ This module contains the main GTK application class and window implementation.
 """
 
 import sys
+import os
+import argparse
 from pathlib import Path
 from typing import Optional, Dict
 
@@ -13,7 +15,7 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 
-from gi.repository import Gtk, Gio, GLib
+from gi.repository import Gtk, Gio, GLib, Gdk
 
 from .widgets.terminal import VteTerminal
 from .widgets.sidebar import SessionSidebar
@@ -24,11 +26,222 @@ from .models.session import TerminalSession
 from .models.tree import SessionTree
 
 
+class CSSLoader:
+    """Handles CSS loading and theme management for the application."""
+    
+    def __init__(self, override_dpi=None):
+        self.css_provider = Gtk.CssProvider()
+        self.theme_provider = Gtk.CssProvider()
+        self.system_css_provider = Gtk.CssProvider()
+        self.current_theme = "light"  # default
+        self._override_dpi = override_dpi
+        
+    def load_base_css(self):
+        """Load the base CSS styles with system font detection."""
+        # First load system-aware CSS
+        self._load_system_css()
+        
+        css_dir = Path(__file__).parent / "resources" / "css"
+        base_css_path = css_dir / "style.css"
+        
+        if base_css_path.exists():
+            try:
+                self.css_provider.load_from_path(str(base_css_path))
+                self._add_provider_to_screen(self.css_provider)
+                print(f"Loaded base CSS from {base_css_path}")
+            except GLib.Error as e:
+                print(f"Error loading base CSS: {e}")
+        else:
+            print(f"Warning: Base CSS file not found at {base_css_path}")
+    
+    def _load_system_css(self):
+        """Generate CSS based on system settings for better scaling."""
+        try:
+            # Check for manual DPI override via environment variable or command line
+            manual_dpi = getattr(self, '_override_dpi', None) or os.environ.get('TST_DPI')
+            if manual_dpi:
+                try:
+                    actual_dpi = float(manual_dpi)
+                    print(f"Using manual DPI override: {actual_dpi}")
+                except ValueError:
+                    print(f"Invalid DPI value: {manual_dpi}, falling back to system detection")
+                    manual_dpi = None
+            
+            if not manual_dpi:
+                # Get system settings
+                settings = Gtk.Settings.get_default()
+                
+                # Get system font and size
+                font_name = settings.get_property("gtk-font-name") or "Sans 10"
+                dpi = settings.get_property("gtk-xft-dpi") or 96 * 1024  # DPI is in 1/1024 units
+                actual_dpi = dpi / 1024.0
+            
+            # Parse font size from font name (e.g., "Sans 10" -> 10)
+            settings = Gtk.Settings.get_default()
+            font_name = settings.get_property("gtk-font-name") or "Sans 10"
+            font_parts = font_name.split()
+            try:
+                base_font_size = float(font_parts[-1])
+            except (ValueError, IndexError):
+                base_font_size = 10.0  # fallback
+            
+            # Calculate scaling factor for high DPI displays
+            scale_factor = actual_dpi / 96.0  # 96 DPI is standard
+            if scale_factor < 1.0:
+                scale_factor = 1.0  # Don't scale down
+                
+            # Apply boost for more comfortable font sizes
+            # This makes fonts larger than strict DPI scaling would suggest
+            scale_factor = scale_factor * 1.3  # Boost factor for comfortable reading
+            
+            # For very high DPI (4K+), ensure minimum readable sizes
+            if actual_dpi >= 180:  # Typical 4K at normal viewing distance
+                min_ui_size = 14
+                min_terminal_size = 15
+            else:
+                min_ui_size = 10
+                min_terminal_size = 11
+            
+            # Apply scaling to font sizes
+            ui_font_size = max(int(base_font_size * scale_factor), min_ui_size)
+            terminal_font_size = max(int((base_font_size + 1) * scale_factor), min_terminal_size)
+            
+            # Get monospace font
+            try:
+                monospace_font = settings.get_property("gtk-monospace-font-name")
+            except:
+                try:
+                    monospace_font = settings.get_property("gtk-monospace-font")
+                except:
+                    monospace_font = None
+            
+            monospace_font = monospace_font or "Monospace 10"
+            mono_parts = monospace_font.split()
+            mono_family = " ".join(mono_parts[:-1]) if len(mono_parts) > 1 else "Monospace"
+            
+            # Generate system-aware CSS
+            system_css = f"""
+/* System-aware font scaling for high DPI displays */
+window {{
+    font-size: {ui_font_size}px;
+}}
+
+.terminal {{
+    font-family: "{mono_family}", monospace;
+    font-size: {terminal_font_size}px;
+}}
+
+headerbar {{
+    font-size: {ui_font_size}px;
+}}
+
+.sidebar {{
+    font-size: {ui_font_size}px;
+}}
+
+button {{
+    font-size: {ui_font_size}px;
+}}
+
+treeview {{
+    font-size: {ui_font_size}px;
+}}
+"""
+            
+            # Load the generated CSS
+            self.system_css_provider.load_from_data(system_css.encode('utf-8'))
+            self._add_provider_to_screen(self.system_css_provider)
+            
+            print(f"Applied system font scaling - Base: {base_font_size}px, UI: {ui_font_size}px, Terminal: {terminal_font_size}px (DPI: {actual_dpi:.1f}, Scale: {scale_factor:.2f})")
+            
+        except Exception as e:
+            print(f"Warning: Could not detect system font settings: {e}")
+            # Fallback to reasonable defaults for high DPI
+            ui_font_size = 14
+            terminal_font_size = 15
+            mono_family = "Monospace"
+            
+            fallback_css = f"""
+/* Fallback CSS for high DPI displays */
+window {{
+    font-size: {ui_font_size}px;
+}}
+
+.terminal {{
+    font-family: "{mono_family}", monospace;
+    font-size: {terminal_font_size}px;
+}}
+
+headerbar {{
+    font-size: {ui_font_size}px;
+}}
+
+.sidebar {{
+    font-size: {ui_font_size}px;
+}}
+
+button {{
+    font-size: {ui_font_size}px;
+}}
+
+treeview {{
+    font-size: {ui_font_size}px;
+}}
+"""
+            self.system_css_provider.load_from_data(fallback_css.encode('utf-8'))
+            self._add_provider_to_screen(self.system_css_provider)
+            print(f"Applied fallback font scaling - UI: {ui_font_size}px, Terminal: {terminal_font_size}px")
+    
+    def load_theme(self, theme_name: str):
+        """Load a specific theme (light/dark)."""
+        css_dir = Path(__file__).parent / "resources" / "css"
+        theme_css_path = css_dir / f"{theme_name}-theme.css"
+        
+        if theme_css_path.exists():
+            try:
+                # Remove old theme provider
+                screen = Gdk.Screen.get_default()
+                context = Gtk.StyleContext()
+                context.remove_provider_for_screen(screen, self.theme_provider)
+                
+                # Load new theme
+                self.theme_provider = Gtk.CssProvider()
+                self.theme_provider.load_from_path(str(theme_css_path))
+                self._add_provider_to_screen(self.theme_provider)
+                
+                self.current_theme = theme_name
+                print(f"Loaded {theme_name} theme from {theme_css_path}")
+            except GLib.Error as e:
+                print(f"Error loading {theme_name} theme: {e}")
+        else:
+            print(f"Warning: Theme file not found at {theme_css_path}")
+    
+    def toggle_theme(self):
+        """Toggle between light and dark theme."""
+        new_theme = "dark" if self.current_theme == "light" else "light"
+        self.load_theme(new_theme)
+    
+    def _add_provider_to_screen(self, provider):
+        """Helper to add CSS provider to screen."""
+        screen = Gdk.Screen.get_default()
+        context = Gtk.StyleContext()
+        # Use higher priority for system CSS to ensure it overrides base styles
+        priority = Gtk.STYLE_PROVIDER_PRIORITY_USER if provider == self.system_css_provider else Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        context.add_provider_for_screen(
+            screen, 
+            provider, 
+            priority
+        )
+
+
 class MainWindow(Gtk.ApplicationWindow):
     """Main application window with tree-style terminal layout."""
     
     def __init__(self, application: "TreeStyleTerminalApp"):
         super().__init__(application=application)
+        
+        # Add CSS class to window
+        self.get_style_context().add_class("main-window")
         
         # Set up window properties
         self.set_title("Tree Style Terminal")
@@ -112,6 +325,15 @@ class MainWindow(Gtk.ApplicationWindow):
         # Add the button box to header bar
         self.headerbar.pack_start(session_buttons_box)
         
+        # Add theme toggle button
+        self.theme_toggle_button = Gtk.Button()
+        self.theme_toggle_button.set_image(
+            Gtk.Image.new_from_icon_name("weather-clear-night-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.theme_toggle_button.set_tooltip_text("Toggle Dark/Light Theme")
+        self.theme_toggle_button.connect("clicked", self._on_theme_toggle_clicked)
+        self.headerbar.pack_end(self.theme_toggle_button)
+        
         # Keep reference to old new_terminal_button for compatibility
         self.new_terminal_button = self.new_sibling_button
         
@@ -189,11 +411,13 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sidebar_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_RIGHT)
         self.sidebar_revealer.set_transition_duration(200)
         self.sidebar_revealer.set_reveal_child(True)
+        self.sidebar_revealer.get_style_context().add_class("sidebar")
         self.sidebar_revealer.add(sidebar_box)
         
         # Create session sidebar widget
         self.session_sidebar = SessionSidebar(self.sidebar_controller)
         self.session_sidebar.set_selection_callback(self._on_session_selected)
+        self.session_sidebar.get_style_context().add_class("sidebar")
         sidebar_box.pack_start(self.session_sidebar, True, True, 0)
         
         # Create terminal area
@@ -227,6 +451,7 @@ class MainWindow(Gtk.ApplicationWindow):
         separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
         
         # Pack everything into main box
+        main_box.get_style_context().add_class("main-paned")
         main_box.pack_start(self.sidebar_revealer, False, False, 0)
         main_box.pack_start(separator, False, False, 0)
         main_box.pack_start(terminal_area, True, True, 0)
@@ -278,6 +503,23 @@ class MainWindow(Gtk.ApplicationWindow):
         action = self.shortcut_controller.get_action("close_session")
         if action:
             action.activate(None)
+    
+    def _on_theme_toggle_clicked(self, button: Gtk.Button) -> None:
+        """Handle theme toggle button click."""
+        app = self.get_application()
+        app.css_loader.toggle_theme()
+        
+        # Update button icon based on current theme
+        if app.css_loader.current_theme == "dark":
+            button.set_image(
+                Gtk.Image.new_from_icon_name("weather-clear-symbolic", Gtk.IconSize.BUTTON)
+            )
+            button.set_tooltip_text("Switch to Light Theme")
+        else:
+            button.set_image(
+                Gtk.Image.new_from_icon_name("weather-clear-night-symbolic", Gtk.IconSize.BUTTON)
+            )
+            button.set_tooltip_text("Switch to Dark Theme")
     
     def _on_new_child_clicked(self, button: Gtk.Button) -> None:
         """Handle new child button click."""
@@ -525,13 +767,15 @@ class MainWindow(Gtk.ApplicationWindow):
 class TreeStyleTerminalApp(Gtk.Application):
     """Main GTK application class."""
     
-    def __init__(self):
+    def __init__(self, args=None):
         super().__init__(
             application_id="org.example.TreeStyleTerminal",
             flags=Gio.ApplicationFlags.FLAGS_NONE
         )
         
         self.window: Optional[MainWindow] = None
+        self.args = args or {}
+        self.css_loader = CSSLoader(override_dpi=self.args.get('dpi'))
         
         # Connect the activate signal
         self.connect("activate", self._on_activate)
@@ -539,9 +783,63 @@ class TreeStyleTerminalApp(Gtk.Application):
     
     def _on_startup(self, app: "TreeStyleTerminalApp") -> None:
         """Called when the application starts up."""
-        # Set up any application-wide resources here
-        pass
+        if not self.args.get('quiet'):
+            print("Tree Style Terminal starting up...")
+        
+        # Print system information for debugging (independent of quiet mode)
+        if self.args.get('show_info'):
+            self._print_system_info()
+        
+        # Load CSS styles
+        self.css_loader.load_base_css()
+        self.css_loader.load_theme("light")  # Default theme
     
+    def _print_system_info(self) -> None:
+        """Print system information for debugging font scaling."""
+        try:
+            settings = Gtk.Settings.get_default()
+            screen = Gdk.Screen.get_default()
+            
+            # System font information
+            font_name = settings.get_property("gtk-font-name")
+            try:
+                mono_font = settings.get_property("gtk-monospace-font-name")
+            except:
+                try:
+                    mono_font = settings.get_property("gtk-monospace-font")
+                except:
+                    mono_font = None
+            dpi = settings.get_property("gtk-xft-dpi")
+            
+            # Display information
+            display = screen.get_display()
+            monitor = display.get_primary_monitor() or display.get_monitor(0)
+            geometry = monitor.get_geometry()
+            width = geometry.width
+            height = geometry.height
+            width_mm = monitor.get_width_mm()
+            height_mm = monitor.get_height_mm()
+            
+            # Calculate actual DPI
+            if width_mm > 0 and height_mm > 0:
+                dpi_x = (width * 25.4) / width_mm
+                dpi_y = (height * 25.4) / height_mm
+                avg_dpi = (dpi_x + dpi_y) / 2
+            else:
+                avg_dpi = 96  # fallback
+            
+            print(f"System Information:")
+            print(f"  Display: {width}x{height} pixels, {width_mm}x{height_mm}mm")
+            print(f"  Calculated DPI: {avg_dpi:.1f}")
+            print(f"  GTK XFT DPI: {dpi/1024.0 if dpi else 'not set'}")
+            print(f"  System font: {font_name or 'not set'}")
+            print(f"  Monospace font: {mono_font or 'not set'}")
+            print(f"  Manual DPI override: {os.environ.get('TST_DPI', 'not set')}")
+            
+        except Exception as e:
+            print(f"Could not retrieve system information: {e}")
+    
+
     def _on_activate(self, app: "TreeStyleTerminalApp") -> None:
         """Called when the application is activated."""
         if not self.window:
@@ -551,11 +849,176 @@ class TreeStyleTerminalApp(Gtk.Application):
         self.window.present()
 
 
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Tree Style Terminal - Terminal with tree-based session management",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+DPI Configuration Examples:
+  %(prog)s --dpi 144           # 1.5x scaling for 1440p displays
+  %(prog)s --dpi 192           # 2x scaling for 4K displays  
+  %(prog)s --dpi 240           # 2.5x scaling for high-DPI 4K
+  %(prog)s --show-info         # Show system font information
+  %(prog)s --show-info --dpi 180  # Test DPI settings without starting GUI
+
+Environment Variables:
+  TST_DPI=192                  # Alternative way to set DPI
+        """
+    )
+    
+    parser.add_argument(
+        '--dpi',
+        type=float,
+        help='Override DPI for font scaling (e.g., 144, 192, 240)'
+    )
+    
+    parser.add_argument(
+        '--show-info',
+        action='store_true',
+        help='Show system display and font information'
+    )
+    
+    parser.add_argument(
+        '--test-fonts',
+        action='store_true',
+        help='Show font scaling test and exit (like font_test.py)'
+    )
+    
+    parser.add_argument(
+        '--quiet', '-q',
+        action='store_true',
+        help='Suppress startup messages'
+    )
+    
+    return parser.parse_args()
+
+def print_font_test_info(dpi_override=None):
+    """Print font scaling test information (integrated from font_test.py)."""
+    print("=== Font Scaling Information ===\n")
+    
+    try:
+        # Initialize GTK to get settings
+        Gtk.init([])
+        
+        settings = Gtk.Settings.get_default()
+        screen = Gdk.Screen.get_default()
+        
+        # System font information
+        font_name = settings.get_property("gtk-font-name")
+        try:
+            mono_font = settings.get_property("gtk-monospace-font-name")
+        except:
+            try:
+                mono_font = settings.get_property("gtk-monospace-font")
+            except:
+                mono_font = None
+        dpi = settings.get_property("gtk-xft-dpi")
+        
+        # Display information
+        display = screen.get_display()
+        monitor = display.get_primary_monitor() or display.get_monitor(0)
+        geometry = monitor.get_geometry()
+        width = geometry.width
+        height = geometry.height
+        width_mm = monitor.get_width_mm()
+        height_mm = monitor.get_height_mm()
+        
+        # Calculate actual DPI
+        if width_mm > 0 and height_mm > 0:
+            dpi_x = (width * 25.4) / width_mm
+            dpi_y = (height * 25.4) / height_mm
+            avg_dpi = (dpi_x + dpi_y) / 2
+        else:
+            avg_dpi = 96  # fallback
+        
+        print("System Information:")
+        print(f"  Display: {width}x{height} pixels")
+        print(f"  Physical size: {width_mm}x{height_mm}mm")
+        print(f"  Calculated DPI: {avg_dpi:.1f}")
+        print(f"  GTK XFT DPI: {dpi/1024.0 if dpi else 'not set'}")
+        print(f"  System font: {font_name or 'not set'}")
+        print(f"  Monospace font: {mono_font or 'not set'}")
+        
+        # Environment and argument overrides
+        env_dpi = os.environ.get('TST_DPI')
+        print(f"  Environment DPI: {env_dpi or 'not set'}")
+        print(f"  Argument DPI: {dpi_override or 'not set'}")
+        
+        print("\nFont Size Calculations:")
+        
+        # Parse system font size
+        if font_name:
+            font_parts = font_name.split()
+            try:
+                base_font_size = float(font_parts[-1])
+            except (ValueError, IndexError):
+                base_font_size = 10.0
+        else:
+            base_font_size = 10.0
+        
+        # Use argument override, then environment, then system DPI
+        effective_dpi = dpi_override or (float(env_dpi) if env_dpi else (dpi/1024.0 if dpi else avg_dpi))
+        scale_factor = max(effective_dpi / 96.0, 1.0)
+        
+        # Calculate scaled sizes (same logic as in CSSLoader)
+        if effective_dpi >= 180:
+            min_ui_size = 14
+            min_terminal_size = 15
+        else:
+            min_ui_size = 10
+            min_terminal_size = 11
+        
+        ui_font_size = max(int(base_font_size * scale_factor), min_ui_size)
+        terminal_font_size = max(int((base_font_size + 1) * scale_factor), min_terminal_size)
+        
+        print(f"  Base font size: {base_font_size}px")
+        print(f"  Effective DPI: {effective_dpi:.1f}")
+        print(f"  Scale factor: {scale_factor:.2f}")
+        print(f"  UI font size: {ui_font_size}px")
+        print(f"  Terminal font size: {terminal_font_size}px")
+        
+        # Recommendations
+        print("\nRecommendations:")
+        if avg_dpi >= 180:
+            print("  High DPI display detected (4K+ resolution)")
+            if not dpi_override and not env_dpi:
+                print("  Consider using --dpi argument for custom scaling")
+                print(f"  Example: tree-style-terminal --dpi {avg_dpi:.0f}")
+        elif avg_dpi >= 120:
+            print("  Medium-high DPI display detected")
+        else:
+            print("  Standard DPI display")
+        
+        if ui_font_size < 12:
+            print("  Warning: UI fonts may be too small for comfortable reading")
+        if terminal_font_size < 12:
+            print("  Warning: Terminal fonts may be too small for comfortable reading")
+            
+    except Exception as e:
+        print(f"Error retrieving system information: {e}")
+
 def main() -> int:
     """Main entry point for the application."""
-    # Create and run the application
-    app = TreeStyleTerminalApp()
-    return app.run(sys.argv)
+    args = parse_arguments()
+    
+    # Handle special modes that don't need the full GUI
+    if args.test_fonts:
+        print_font_test_info(args.dpi)
+        return 0
+    
+    # Create application with parsed arguments
+    app_args = {
+        'dpi': args.dpi,
+        'show_info': args.show_info,
+        'quiet': args.quiet
+    }
+    
+    # Create filtered argv for GTK (remove our custom arguments)
+    gtk_argv = [sys.argv[0]]  # Keep program name
+    
+    app = TreeStyleTerminalApp(app_args)
+    return app.run(gtk_argv)
 
 
 if __name__ == "__main__":

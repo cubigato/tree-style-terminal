@@ -20,15 +20,105 @@ Tree Style Terminal reimagines terminal session management by organizing session
 
 ## Current Status
 
-This project is in early development (Milestone 0-1). The core application is not yet functional. Currently available:
+This project is in early development (Milestone 0-6). The core application is not yet functional. Currently available:
 
 - ✅ Project structure and configuration
 - ✅ Architecture documentation
 - ✅ Development environment setup
-- ⏳ Basic GTK application (in progress)
-- ❌ Terminal embedding
+- ✅ Basic GTK application with theming support
+- ✅ CSS Foundation with Light/Dark themes
+- ⏳ Terminal embedding (in progress)
 - ❌ Session management
 - ❌ Tree-based navigation
+
+See [TODO.md](TODO.md) for detailed development milestones.
+</edits>
+
+## Display and Font Scaling
+
+Tree Style Terminal automatically detects your system's DPI and font settings to provide optimal scaling on high-resolution displays like 4K monitors.
+
+### Automatic Font Scaling
+
+The application automatically:
+- Detects your system's DPI settings
+- Uses your system's default font preferences
+- Scales fonts appropriately for high-DPI displays
+- Ensures minimum readable font sizes on 4K+ displays
+
+### Manual DPI Override
+
+If fonts appear too small or large, you can override the DPI detection using command-line arguments or environment variables:
+
+```bash
+# Using command-line arguments (recommended)
+python -m tree_style_terminal --dpi 144    # 1.5x scaling for 1440p displays
+python -m tree_style_terminal --dpi 192    # 2x scaling for 4K displays
+python -m tree_style_terminal --dpi 240    # 2.5x scaling for high-DPI 4K
+
+# Using environment variables
+TST_DPI=192 python -m tree_style_terminal
+```
+
+### Testing Font Scaling
+
+Check your system's font scaling and test different DPI values:
+
+```bash
+# Show system font information with the GUI
+python -m tree_style_terminal --show-info
+
+# Test font scaling without starting the GUI
+python -m tree_style_terminal --test-fonts
+python -m tree_style_terminal --test-fonts --dpi 192
+
+# Quick system check (standalone utility)
+python font_test.py
+TST_DPI=180 python font_test.py
+```
+
+### Complete Command-Line Reference
+
+```bash
+python -m tree_style_terminal --help              # Show all options and examples
+python -m tree_style_terminal                     # Launch with automatic scaling
+python -m tree_style_terminal --dpi 192           # Set DPI for font scaling
+python -m tree_style_terminal --show-info         # Display system font information
+python -m tree_style_terminal --test-fonts        # Show font scaling test and exit
+python -m tree_style_terminal --quiet             # Suppress startup messages
+
+# Combined options
+python -m tree_style_terminal --dpi 180 --quiet   # Launch with custom DPI, no messages
+python -m tree_style_terminal --show-info --dpi 240  # Test DPI without starting GUI
+
+# Environment variable alternative
+TST_DPI=192 python -m tree_style_terminal          # Set DPI via environment
+```
+
+## Theming
+
+Tree Style Terminal supports light and dark themes through GTK CSS:
+
+- **Default**: Light theme
+- **Toggle**: Click the theme button (🌙/☀️ icon) in the header bar or use keyboard shortcut
+- **Custom CSS**: Place custom styles in `~/.config/tree-style-terminal/custom.css` (planned)
+
+### CSS Variables
+
+The application uses CSS custom properties for consistent theming:
+
+- `--bg-primary`, `--bg-secondary`: Background colors
+- `--fg-primary`, `--fg-secondary`: Foreground colors  
+- `--accent-color`: Highlight color
+- `--terminal-bg`, `--terminal-fg`: Terminal colors
+- `--sidebar-bg`, `--sidebar-selected`: Sidebar colors
+
+### Theme Files
+
+CSS themes are located in `src/tree_style_terminal/resources/css/`:
+- `style.css`: Base styles and CSS variables
+- `light-theme.css`: Light theme color overrides
+- `dark-theme.css`: Dark theme color overrides
 
 See [TODO.md](TODO.md) for detailed development milestones.
 
@@ -70,9 +160,35 @@ pip install -e ".[dev]"
 
 **Note**: The pyproject.toml intentionally does not include GTK/VTE dependencies as they must be installed system-wide.
 
-## Planned Usage (Future)
+## Current Usage
 
-### Basic Operations (Planned)
+### Basic Application Launch
+
+```bash
+# Standard launch with automatic font scaling
+python -m tree_style_terminal
+
+# Launch with custom DPI for 4K displays
+python -m tree_style_terminal --dpi 192
+
+# Quiet launch (suppress startup messages)
+python -m tree_style_terminal --quiet
+```
+
+### Font and Display Testing
+
+```bash
+# Show system font and display information
+python -m tree_style_terminal --show-info
+
+# Test font scaling without starting GUI
+python -m tree_style_terminal --test-fonts
+
+# Test specific DPI settings
+python -m tree_style_terminal --test-fonts --dpi 180
+```
+
+### Planned Operations (Future)
 
 - **New Child Session**: `Ctrl+Shift+N` - Create a new session as a child of the current session
 - **New Sibling Session**: `Ctrl+Alt+N` - Create a new session at the same level as the current session

@@ -1,0 +1,108 @@
+/* Dark Theme for Tree Style Terminal - GTK 3 compatible */
+
+/* Main window and background colors */
+window {
+    background-color: #2d2d2d;
+    color: #ffffff;
+}
+
+.main-window {
+    background-color: #2d2d2d;
+}
+
+/* Sidebar styling */
+.sidebar {
+    background-color: #252525;
+    border-right: 1px solid #404040;
+}
+
+.sidebar treeview {
+    background-color: transparent;
+}
+
+.sidebar treeview:selected {
+    background-color: #4a9eff;
+    color: white;
+}
+
+.sidebar treeview row:hover {
+    background-color: rgba(74, 158, 255, 0.15);
+}
+
+.sidebar revealer {
+    background-color: #252525;
+}
+
+/* Terminal colors */
+.terminal {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+/* HeaderBar */
+headerbar {
+    background: linear-gradient(to bottom, #3a3a3a, #2d2d2d);
+    border-bottom: 1px solid #1a1a1a;
+    color: #ffffff;
+}
+
+headerbar button {
+    color: #ffffff;
+}
+
+/* TreeView general styling */
+treeview {
+    background-color: #2d2d2d;
+    color: #ffffff;
+}
+
+treeview:selected {
+    background-color: #4a9eff;
+    color: white;
+}
+
+treeview row:hover {
+    background-color: rgba(74, 158, 255, 0.15);
+}
+
+/* Scrollbar styling */
+scrollbar {
+    background-color: #1a1a1a;
+}
+
+scrollbar slider {
+    background-color: #606060;
+    border-radius: 6px;
+}
+
+scrollbar slider:hover {
+    background-color: #4a9eff;
+}
+
+/* Button styling */
+button:hover {
+    background-color: #4a9eff;
+    color: white;
+}
+
+/* Separators */
+paned separator,
+.main-paned separator {
+    background-color: #555555;
+}
+
+/* Better contrast for dark theme text */
+label {
+    color: #ffffff;
+}
+
+/* Entry widgets */
+entry {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border: 1px solid #404040;
+}
+
+entry:focus {
+    border-color: #4a9eff;
+}

@@ -1,0 +1,107 @@
+/* Base styles for Tree Style Terminal - GTK 3 compatible */
+
+/* GTK Widget-specific Styles */
+window {
+    background-color: #ffffff;
+    color: #000000;
+    font-family: "Liberation Sans", sans-serif;
+    /* font-size set by system CSS loader */
+}
+
+/* Sidebar Styling */
+.sidebar {
+    background-color: #f5f5f5;
+    border-right: 1px solid #cccccc;
+    padding: 12px;
+    /* font-size set by system CSS loader */
+}
+
+.sidebar treeview {
+    background-color: transparent;
+}
+
+.sidebar treeview:selected {
+    background-color: #0066cc;
+    color: white;
+}
+
+.sidebar revealer {
+    background-color: #f5f5f5;
+}
+
+/* Terminal Styling */
+.terminal {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: "Liberation Mono", monospace;
+    /* font-size and font-family set by system CSS loader */
+}
+
+/* HeaderBar */
+headerbar {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #cccccc;
+    /* font-size set by system CSS loader */
+}
+
+headerbar button {
+    padding: 6px 8px;
+}
+
+/* Paned Widget */
+paned separator {
+    background-color: #cccccc;
+    min-width: 1px;
+    min-height: 1px;
+}
+
+.main-paned separator {
+    background-color: #cccccc;
+}
+
+/* Button styling */
+button {
+    padding: 6px 12px;
+    border-radius: 4px;
+    /* font-size set by system CSS loader */
+}
+
+button:hover {
+    background-color: #0066cc;
+    color: white;
+}
+
+/* TreeView styling */
+treeview {
+    background-color: #ffffff;
+    color: #000000;
+    /* font-size set by system CSS loader */
+}
+
+treeview:selected {
+    background-color: #0066cc;
+    color: white;
+}
+
+treeview row:hover {
+    background-color: rgba(0, 102, 204, 0.1);
+}
+
+/* Scrollbar styling */
+scrollbar {
+    background-color: #f5f5f5;
+}
+
+scrollbar slider {
+    background-color: #cccccc;
+    border-radius: 6px;
+}
+
+scrollbar slider:hover {
+    background-color: #0066cc;
+}
+
+/* Main window styling */
+.main-window {
+    background-color: #ffffff;
+}
