@@ -128,8 +128,9 @@ class SidebarController:
         # Remove from TreeStore (this also removes all children)
         self.tree_store.remove(tree_iter)
         
-        # Clean up mapping for this session and all its descendants
-        self._cleanup_session_mapping(session)
+        # Clean up mapping ONLY for this session (children will be moved separately)
+        if session in self._session_to_iter:
+            del self._session_to_iter[session]
         
         logger.debug(f"Removed session from TreeStore: {session.title}")
     
@@ -148,6 +149,126 @@ class SidebarController:
         for child in session.children:
             self._cleanup_session_mapping(child)
     
+    def move_session(self, session: TerminalSession, new_parent: Optional[TerminalSession] = None) -> None:
+        """
+        Move a session to a new parent in the TreeStore.
+        
+        Args:
+            session: The session to move
+            new_parent: The new parent session, or None for root level
+        """
+        # Get current tree iterator
+        current_iter = self._session_to_iter.get(session)
+        if current_iter is None:
+            logger.warning(f"Session not found in TreeStore for move: {session}")
+            return
+        
+        # Get new parent iterator
+        if new_parent is None:
+            parent_iter = None
+        else:
+            parent_iter = self._session_to_iter.get(new_parent)
+            if parent_iter is None:
+                logger.warning(f"New parent session not found in TreeStore: {new_parent}")
+                return
+        
+        # Create new tree iterator at new location
+        new_iter = self.tree_store.append(parent_iter, [session, session.title])
+        
+        # Update mapping
+        self._session_to_iter[session] = new_iter
+        
+        # Remove old iterator (but not children - they should be moved separately)
+        self.tree_store.remove(current_iter)
+        
+        logger.debug(f"Moved session in TreeStore: {session.title}")
+
+    def _extract_children_data(self, parent_iter: Gtk.TreeIter) -> list[tuple[TerminalSession, str]]:
+        """
+        Extract children data from TreeStore before parent removal.
+        
+        Args:
+            parent_iter: TreeIter of the parent whose children to extract
+            
+        Returns:
+            List of tuples containing (session, title) for each child
+        """
+        children_data = []
+        
+        # Get first child
+        child_iter = self.tree_store.iter_children(parent_iter)
+        
+        while child_iter is not None:
+            # Extract session object and title from the current child
+            session = self.tree_store.get_value(child_iter, self.COL_OBJECT)
+            title = self.tree_store.get_value(child_iter, self.COL_TITLE)
+            children_data.append((session, title))
+            
+            # Move to next sibling
+            child_iter = self.tree_store.iter_next(child_iter)
+        
+        return children_data
+
+    def _restore_children_data(self, children_data: list[tuple[TerminalSession, str]], new_parent_iter: Optional[Gtk.TreeIter]) -> None:
+        """
+        Restore children data to TreeStore at new parent location.
+        
+        Args:
+            children_data: List of (session, title) tuples to restore
+            new_parent_iter: TreeIter of new parent, or None for root level
+        """
+        for session, title in children_data:
+            # Add child at new location
+            new_iter = self.tree_store.append(new_parent_iter, [session, title])
+            
+            # Update mapping
+            self._session_to_iter[session] = new_iter
+            
+            logger.debug(f"Restored child session in TreeStore: {title}")
+
+    def remove_session_with_adoption(self, session: TerminalSession, adopted_children: list[TerminalSession], new_parent: Optional[TerminalSession] = None) -> None:
+        """
+        Remove a session and handle adoption of its children.
+        
+        Args:
+            session: The session to remove
+            adopted_children: Children that need to be moved to new parent
+            new_parent: The new parent session, or None for root level
+        """
+        tree_iter = self._session_to_iter.get(session)
+        if tree_iter is None:
+            logger.warning(f"Session not found in TreeStore: {session}")
+            return
+        
+        # Extract children data before removal
+        children_data = []
+        for child_session in adopted_children:
+            child_iter = self._session_to_iter.get(child_session)
+            if child_iter is not None:
+                title = self.tree_store.get_value(child_iter, self.COL_TITLE)
+                children_data.append((child_session, title))
+        
+        # Remove from TreeStore (this removes all children too)
+        self.tree_store.remove(tree_iter)
+        
+        # Clean up mapping for the removed session
+        if session in self._session_to_iter:
+            del self._session_to_iter[session]
+        
+        # Get new parent iterator
+        if new_parent is None:
+            new_parent_iter = None
+        else:
+            new_parent_iter = self._session_to_iter.get(new_parent)
+            if new_parent_iter is None:
+                logger.warning(f"New parent session not found in TreeStore: {new_parent}")
+                new_parent_iter = None  # Fallback to root level
+        
+        # Restore children at new location
+        self._restore_children_data(children_data, new_parent_iter)
+        
+        logger.debug(f"Removed session with adoption: {session.title}")
+
     def update_session_title(self, session: TerminalSession, new_title: str) -> None:
         """
         Update the title of a session in the TreeStore.

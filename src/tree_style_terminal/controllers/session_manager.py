@@ -46,7 +46,7 @@ class SessionManager:
         
         # Callbacks for session events
         self._session_created_callback: Optional[Callable[[TerminalSession, VteTerminal], None]] = None
-        self._session_closed_callback: Optional[Callable[[TerminalSession], None]] = None
+        self._session_closed_callback: Optional[Callable[[TerminalSession, list[TerminalSession], Optional[TerminalSession]], None]] = None
         self._session_selected_callback: Optional[Callable[[TerminalSession], None]] = None
         
         # Counter for generating unique session IDs
@@ -174,6 +174,10 @@ class SessionManager:
             session: The session to close
         """
         try:
+            # Collect adoption information BEFORE removing from tree
+            children_to_adopt = session.children.copy() if session.children else []
+            parent_session = self.session_tree.get_parent(session)
+            
             # Get terminal widget
             terminal_widget = self._session_terminals.get(session)
             if terminal_widget:
@@ -186,16 +190,22 @@ class SessionManager:
             
             # Update current session if needed
             if self.current_session == session:
-                # Try to select a sibling or parent
-                roots = self.session_tree.get_roots()
-                if roots:
-                    self.select_session(roots[0])
+                # Try to select the best alternative session
+                # Priority order: 1) Parent, 2) First child, 3) Any root
+                if parent_session and parent_session in self._session_terminals:
+                    self.select_session(parent_session)
+                elif children_to_adopt and children_to_adopt[0] in self._session_terminals:
+                    self.select_session(children_to_adopt[0])
                 else:
-                    self.current_session = None
+                    roots = self.session_tree.get_roots()
+                    if roots:
+                        self.select_session(roots[0])
+                    else:
+                        self.current_session = None
             
-            # Notify callbacks
+            # Notify callbacks with adoption information
             if self._session_closed_callback:
-                self._session_closed_callback(session)
+                self._session_closed_callback(session, children_to_adopt, parent_session)
             
             logger.info(f"Closed session: {session.title}")
             
@@ -272,7 +282,7 @@ class SessionManager:
         """Set callback for when a session is created."""
         self._session_created_callback = callback
     
-    def set_session_closed_callback(self, callback: Callable[[TerminalSession], None]) -> None:
+    def set_session_closed_callback(self, callback: Callable[[TerminalSession, list[TerminalSession], Optional[TerminalSession]], None]) -> None:
         """Set callback for when a session is closed."""
         self._session_closed_callback = callback
     

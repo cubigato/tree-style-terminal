@@ -59,8 +59,8 @@ class MainWindow(Gtk.ApplicationWindow):
         # Set up session management callbacks
         self._setup_session_callbacks()
         
-        # Create initial session
-        self.session_manager.new_session()
+        # Don't create initial session in constructor to allow clean testing
+        # Initial session will be created when needed
         
     def _setup_headerbar(self) -> None:
         """Set up the header bar."""
@@ -433,25 +433,28 @@ class MainWindow(Gtk.ApplicationWindow):
         
         print(f"Session created: {session.title}")
     
-    def _on_session_closed(self, session: TerminalSession) -> None:
+    def _on_session_closed(self, session: TerminalSession, children_to_adopt: list[TerminalSession], parent_session: Optional[TerminalSession]) -> None:
         """
         Handle session closure.
         
         Args:
             session: The closed session
+            children_to_adopt: Children that were adopted during closure
+            parent_session: The parent session that adopted the children (or None for root level)
         """
+        
         # Remove from terminal stack
         terminal_id = f"session_{session.pid}"
         
         # Find and remove the terminal widget
         for child in self.terminal_stack.get_children():
-            if self.terminal_stack.get_child_name(child) == terminal_id:
+            if self.terminal_stack.child_get_property(child, "name") == terminal_id:
                 self.terminal_stack.remove(child)
                 break
         
-        # Update sidebar - REMOVE ONLY THE CLOSED SESSION instead of full refresh
+        # Update sidebar - remove session and handle adoption
         if self.session_sidebar:
-            self.session_sidebar.controller.remove_session(session)
+            self.session_sidebar.controller.remove_session_with_adoption(session, children_to_adopt, parent_session)
         
         # Update button states
         self._update_button_states()
