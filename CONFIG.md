@@ -64,8 +64,22 @@ display:
 
 **Options:**
 - `dpi_scale`: Controls UI scaling factor for high-DPI displays
-  - `"auto"` - Automatic system detection with comfort scaling (default)
+  - `"auto"` - Intelligent automatic detection with comfort scaling (default)
+    - Prioritizes monitor DPI over conservative system settings
+    - **Calibrated 2.0x scaling for ~250 DPI displays (MacBook-style retina)**
+    - Ensures minimum 1.8x scaling for other 4K+ displays (≥180 DPI)
+    - Ensures minimum 1.25x scaling for 1440p displays (≥120 DPI)
+    - Standard 1.0x scaling for 96 DPI displays
   - Float value: 0.5 - 3.0 (1.0 = normal size, 1.5 = 150% size, 2.0 = 200% size, etc.)
+
+**Font Scaling Priority:**
+DPI scaling follows this priority order (highest to lowest):
+1. Command-line `--dpi` argument
+2. `TST_DPI` environment variable
+3. `display.dpi_scale` config file setting
+4. Automatic system detection
+
+This allows temporary overrides while maintaining persistent config preferences.
 
 ## Example Configurations
 

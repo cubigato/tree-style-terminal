@@ -1,7 +1,7 @@
 # Bug #001: Sidebar transparency not working with terminal transparency
 
 **Date Reported:** 2025-06-03
-**Reporter:** User
+**Reporter:** kiney
 **Severity:** Medium
 **Status:** Open
 
