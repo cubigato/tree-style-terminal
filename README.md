@@ -275,6 +275,12 @@ The application uses the Model-View-Controller pattern with GTK3 widgets as view
 - PyCairo
 - PyYAML
 
+## Author & Contact
+
+**Author:** Jannik Winkel  
+**Copyright:** cubigato GmbH  
+**Contact:** See imprint on [cubigato.de](https://cubigato.de)
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
