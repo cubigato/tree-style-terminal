@@ -114,3 +114,39 @@ scrollbar slider:hover {
 .main-window {
     background-color: #ffffff;
 }
+
+/* Minimal transparent sidebar fix with visual debugging */
+.sidebar-tree {
+    background-color: transparent;
+}
+
+.sidebar-tree treeview {
+    background-color: transparent;
+}
+
+.sidebar-tree scrolledwindow,
+.transparent-scroll {
+    background-color: transparent;
+}
+
+.sidebar-tree viewport {
+    background-color: transparent;
+}
+
+.transparent-tree {
+    background-color: transparent;
+}
+
+/* Selection styling */
+.sidebar-tree row:selected {
+    background-color: #0066cc;
+}
+
+.sidebar-tree cell:selected {
+    background-color: #0066cc;
+}
+
+/* Transparent sidebar container */
+.sidebar {
+    background-color: transparent;
+}

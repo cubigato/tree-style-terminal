@@ -11,6 +11,8 @@ DEFAULT_CONFIG = {
     "terminal": {
         # Scrollback buffer size (number of lines to keep in history)
         "scrollback_lines": 10000,
+        # Terminal transparency (0.0 = fully transparent, 1.0 = fully opaque)
+        "transparency": 1.0,
     },
     
     "ui": {
@@ -37,6 +39,8 @@ DEFAULT_CONFIG_TEMPLATE = """# Tree Style Terminal Configuration
 #terminal:
 #  # Scrollback buffer size (number of lines to keep in history)
 #  scrollback_lines: 10000
+#  # Terminal transparency (0.0 = fully transparent, 1.0 = fully opaque)
+#  transparency: 1.0
 
 #ui:
 #  # Initial width of the sidebar in pixels
@@ -60,6 +64,12 @@ VALIDATION_RULES = {
         "min_value": 100,
         "max_value": 100000,
         "description": "Scrollback lines must be between 100 and 100000"
+    },
+    "terminal.transparency": {
+        "type": float,
+        "min_value": 0.0,
+        "max_value": 1.0,
+        "description": "Terminal transparency must be between 0.0 and 1.0"
     },
     "ui.sidebar_width": {
         "type": int,

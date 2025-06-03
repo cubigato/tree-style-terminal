@@ -35,8 +35,8 @@ class TestCSSLoader(unittest.TestCase):
         # Should not raise exception
         self.css_loader.load_base_css()
         
-        # Should print font scaling info and warning (2 calls)
-        self.assertEqual(mock_print.call_count, 2)
+        # Should print warning (1 call since system CSS is disabled)
+        self.assertEqual(mock_print.call_count, 1)
         # Check that one of the calls contains the warning
         call_args = [call[0][0] for call in mock_print.call_args_list]
         self.assertTrue(any("Warning" in arg for arg in call_args))
@@ -53,10 +53,10 @@ class TestCSSLoader(unittest.TestCase):
         self.css_loader.load_base_css()
         
         mock_provider.load_from_path.assert_called_once()
-        # Should be called twice: once for system CSS, once for base CSS
-        self.assertEqual(mock_add_provider.call_count, 2)
-        # Should print font scaling info and success message (2 calls)
-        self.assertEqual(mock_print.call_count, 2)
+        # Should be called once for base CSS (system CSS is disabled)
+        self.assertEqual(mock_add_provider.call_count, 1)
+        # Should print success message (1 call since system CSS is disabled)
+        self.assertEqual(mock_print.call_count, 1)
         call_args = [call[0][0] for call in mock_print.call_args_list]
         self.assertTrue(any("Loaded base CSS" in arg for arg in call_args))
     
@@ -72,8 +72,8 @@ class TestCSSLoader(unittest.TestCase):
         
         self.css_loader.load_base_css()
         
-        # Should print font scaling info and error message (2 calls)
-        self.assertEqual(mock_print.call_count, 2)
+        # Should print error message (1 call since system CSS is disabled)
+        self.assertEqual(mock_print.call_count, 1)
         call_args = [call[0][0] for call in mock_print.call_args_list]
         self.assertTrue(any("Error loading base CSS" in arg for arg in call_args))
     
@@ -116,7 +116,9 @@ class TestCSSLoader(unittest.TestCase):
             mock_screen_instance, old_provider
         )
         mock_new_provider.load_from_path.assert_called_once()
-        mock_add_provider.assert_called_once_with(mock_new_provider)
+        # Should be called once for theme (system CSS reload does nothing)
+        self.assertEqual(mock_add_provider.call_count, 1)
+        mock_add_provider.assert_any_call(mock_new_provider)
         self.assertEqual(self.css_loader.current_theme, "dark")
         mock_print.assert_called_once()
         self.assertIn("Loaded dark theme", mock_print.call_args[0][0])

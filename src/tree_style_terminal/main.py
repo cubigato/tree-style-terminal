@@ -68,154 +68,8 @@ class CSSLoader:
             print(f"Warning: Base CSS file not found at {base_css_path}")
     
     def _load_system_css(self):
-        """Generate CSS based on system settings for better scaling."""
-        try:
-            # Check for manual scale override via config, environment variable or command line
-            config_scale = config_manager.get("display.dpi_scale", "auto")
-            scale_factor = 1.0  # Default fallback
-            actual_dpi = 96.0  # For logging purposes
-            
-            if config_scale != "auto":
-                scale_factor = float(config_scale)
-                actual_dpi = scale_factor * 96.0  # Calculate equivalent DPI for logging
-                print(f"Using config scale factor: {scale_factor} (equivalent to {actual_dpi:.1f} DPI)")
-            else:
-                # Check command line or environment override (these are still DPI values)
-                override_dpi = getattr(self, '_override_dpi', None) or os.environ.get('TST_DPI')
-                if override_dpi:
-                    try:
-                        actual_dpi = float(override_dpi)
-                        scale_factor = actual_dpi / 96.0
-                        print(f"Using manual DPI override: {actual_dpi} (scale factor: {scale_factor:.2f})")
-                    except ValueError:
-                        print(f"Invalid DPI value: {override_dpi}, falling back to system detection")
-                        override_dpi = None
-                
-                if not override_dpi:
-                    # Get system settings
-                    settings = Gtk.Settings.get_default()
-                    
-                    # Get system font and size
-                    font_name = settings.get_property("gtk-font-name") or "Sans 10"
-                    dpi = settings.get_property("gtk-xft-dpi") or 96 * 1024  # DPI is in 1/1024 units
-                    actual_dpi = dpi / 1024.0
-                    scale_factor = actual_dpi / 96.0
-            
-            # Parse font size from font name (e.g., "Sans 10" -> 10)
-            settings = Gtk.Settings.get_default()
-            font_name = settings.get_property("gtk-font-name") or "Sans 10"
-            font_parts = font_name.split()
-            try:
-                base_font_size = float(font_parts[-1])
-            except (ValueError, IndexError):
-                base_font_size = 10.0  # fallback
-            
-            # Ensure minimum scale factor
-            if scale_factor < 1.0:
-                scale_factor = 1.0  # Don't scale down
-                
-            # Apply boost for more comfortable font sizes (only if not using config override)
-            # This makes fonts larger than strict DPI scaling would suggest
-            if config_scale == "auto":
-                scale_factor = scale_factor * 1.3  # Boost factor for comfortable reading
-            
-            # For very high DPI (4K+), ensure minimum readable sizes
-            if actual_dpi >= 180:  # Typical 4K at normal viewing distance
-                min_ui_size = 14
-                min_terminal_size = 15
-            else:
-                min_ui_size = 10
-                min_terminal_size = 11
-            
-            # Apply scaling to font sizes
-            ui_font_size = max(int(base_font_size * scale_factor), min_ui_size)
-            terminal_font_size = max(int((base_font_size + 1) * scale_factor), min_terminal_size)
-            
-            # Get monospace font
-            try:
-                monospace_font = settings.get_property("gtk-monospace-font-name")
-            except:
-                try:
-                    monospace_font = settings.get_property("gtk-monospace-font")
-                except:
-                    monospace_font = None
-            
-            monospace_font = monospace_font or "Monospace 10"
-            mono_parts = monospace_font.split()
-            mono_family = " ".join(mono_parts[:-1]) if len(mono_parts) > 1 else "Monospace"
-            
-            # Generate system-aware CSS
-            system_css = f"""
-/* System-aware font scaling for high DPI displays */
-window {{
-    font-size: {ui_font_size}px;
-}}
-
-.terminal {{
-    font-family: "{mono_family}", monospace;
-    font-size: {terminal_font_size}px;
-}}
-
-headerbar {{
-    font-size: {ui_font_size}px;
-}}
-
-.sidebar {{
-    font-size: {ui_font_size}px;
-}}
-
-button {{
-    font-size: {ui_font_size}px;
-}}
-
-treeview {{
-    font-size: {ui_font_size}px;
-}}
-"""
-            
-            # Load the generated CSS
-            self.system_css_provider.load_from_data(system_css.encode('utf-8'))
-            self._add_provider_to_screen(self.system_css_provider)
-            
-            print(f"Applied system font scaling - Base: {base_font_size}px, UI: {ui_font_size}px, Terminal: {terminal_font_size}px (Scale: {scale_factor:.2f}, Equiv DPI: {actual_dpi:.1f})")
-            
-        except Exception as e:
-            print(f"Warning: Could not detect system font settings: {e}")
-            # Fallback to reasonable defaults for high DPI
-            ui_font_size = 14
-            terminal_font_size = 15
-            mono_family = "Monospace"
-            
-            fallback_css = f"""
-/* Fallback CSS for high DPI displays */
-window {{
-    font-size: {ui_font_size}px;
-}}
-
-.terminal {{
-    font-family: "{mono_family}", monospace;
-    font-size: {terminal_font_size}px;
-}}
-
-headerbar {{
-    font-size: {ui_font_size}px;
-}}
-
-.sidebar {{
-    font-size: {ui_font_size}px;
-}}
-
-button {{
-    font-size: {ui_font_size}px;
-}}
-
-treeview {{
-    font-size: {ui_font_size}px;
-}}
-"""
-            self.system_css_provider.load_from_data(fallback_css.encode('utf-8'))
-            self._add_provider_to_screen(self.system_css_provider)
-            print(f"Applied fallback font scaling - UI: {ui_font_size}px, Terminal: {terminal_font_size}px")
+        """Dynamic CSS generation disabled; using static style.css only."""
+        return
     
     def load_theme(self, theme_name: str):
         """Load a specific theme (light/dark)."""
@@ -234,6 +88,9 @@ treeview {{
                 self.theme_provider.load_from_path(str(theme_css_path))
                 self._add_provider_to_screen(self.theme_provider)
                 
+                # Reload system CSS after theme to ensure transparency overrides
+                self._load_system_css()
+                
                 self.current_theme = theme_name
                 print(f"Loaded {theme_name} theme from {theme_css_path}")
             except GLib.Error as e:
@@ -250,8 +107,8 @@ treeview {{
         """Helper to add CSS provider to screen."""
         screen = Gdk.Screen.get_default()
         context = Gtk.StyleContext()
-        # Use higher priority for system CSS to ensure it overrides base styles
-        priority = Gtk.STYLE_PROVIDER_PRIORITY_USER if provider == self.system_css_provider else Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        # Use APPLICATION priority (800) which is higher than theme (600) to ensure our CSS overrides Adwaita
+        priority = Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         context.add_provider_for_screen(
             screen, 
             provider, 
@@ -299,8 +156,18 @@ class MainWindow(Gtk.ApplicationWindow):
             print(f"Configuration error: {e}")
             raise
         
+        # Check transparency requirements and enable RGBA visual if needed
+        transparency = config_manager.get("terminal.transparency", 1.0)
+        if transparency < 1.0:
+            self._setup_transparency()
+        
         # Add CSS class to window
         self.get_style_context().add_class("main-window")
+        
+        # Add theme class to window for CSS targeting
+        app = application
+        if hasattr(app, 'css_loader') and hasattr(app.css_loader, 'current_theme'):
+            self.get_style_context().add_class(app.css_loader.current_theme)
         
         # Set up window properties
         self.set_title("Tree Style Terminal")
@@ -336,6 +203,28 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Don't create initial session in constructor to allow clean testing
         # Initial session will be created when needed
+    
+
+    def _setup_transparency(self) -> None:
+        """Set up RGBA visual for terminal transparency support."""
+        screen = self.get_screen()
+        
+        # Check if compositing is available
+        if not screen.is_composited():
+            print("Error: Terminal transparency requires a compositing window manager, but none is available.")
+            print("Please disable transparency in the configuration or enable a compositing manager.")
+            exit(1)
+        
+        # Get RGBA visual
+        visual = screen.get_rgba_visual()
+        if visual is None:
+            print("Error: RGBA visual not available for terminal transparency.")
+            print("Please disable transparency in the configuration.")
+            exit(1)
+        
+        # Enable RGBA visual and app paintable
+        self.set_visual(visual)
+        self.set_app_paintable(True)
         
     def _setup_headerbar(self) -> None:
         """Set up the header bar."""
@@ -568,6 +457,9 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Update all terminals with the new theme
         self._update_terminal_themes(app.css_loader.current_theme)
+        
+        # Update window CSS class for theme
+        self._update_window_theme_class(app.css_loader.current_theme)
         
         # Update button icon based on current theme
         self._update_theme_button_icon()
@@ -917,6 +809,18 @@ class MainWindow(Gtk.ApplicationWindow):
             self.session_manager.set_theme(theme_name)
         
         print(f"Updated all terminals to {theme_name} theme")
+    
+    def _update_window_theme_class(self, theme_name: str) -> None:
+        """Update window CSS class for theme targeting."""
+        style_context = self.get_style_context()
+        
+        # Remove old theme classes
+        style_context.remove_class("light")
+        style_context.remove_class("dark")
+        
+        # Add new theme class
+        style_context.add_class(theme_name)
+        print(f"Updated window theme class to {theme_name}")
     
     def _update_theme_button_icon(self) -> None:
         """Update theme toggle button icon based on current theme."""

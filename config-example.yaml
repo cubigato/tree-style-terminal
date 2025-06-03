@@ -9,6 +9,10 @@ terminal:
   # Scrollback buffer size (number of lines to keep in history)
   # Range: 100 - 100000
   scrollback_lines: 10000
+  
+  # Terminal transparency (0.0 = fully transparent, 1.0 = fully opaque)
+  # Range: 0.0 - 1.0
+  transparency: 1.0
 
 ui:
   # Initial width of the sidebar in pixels
@@ -34,6 +38,10 @@ display:
 # For more scrollback history:
 # terminal:
 #   scrollback_lines: 50000
+
+# For semi-transparent terminal:
+# terminal:
+#   transparency: 0.8
 
 # For light theme:
 # theme: "light"

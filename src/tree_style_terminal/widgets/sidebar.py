@@ -12,7 +12,7 @@ from typing import Optional, Callable
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 
 from ..models.session import TerminalSession
 from ..controllers.sidebar import SidebarController
@@ -63,9 +63,21 @@ class SessionSidebar(Gtk.Box):
         
         # Pack into the box
         self.pack_start(scrolled, True, True, 0)
+
+        # Add CSS classes for styling and remove view class for transparency
+        ctx = self.get_style_context()
+        ctx.add_class("sidebar-tree")
+        ctx.remove_class("view")  # critical for transparency
         
-        # Add CSS class for styling
-        self.get_style_context().add_class("sidebar-tree")
+        # Add specific CSS class to TreeView and remove view class (most important)
+        tree_ctx = self.tree_view.get_style_context()
+        tree_ctx.add_class("transparent-tree")  # specific class for TreeView transparency
+        tree_ctx.remove_class("view")  # critical for TreeView transparency
+        
+        # Add CSS class to scrolled window for better targeting
+        scrolled_ctx = scrolled.get_style_context()
+        scrolled_ctx.add_class("transparent-scroll")
+        scrolled_ctx.remove_class("view")  # remove if present
         
         logger.debug("SessionSidebar initialized")
     

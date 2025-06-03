@@ -90,6 +90,10 @@ class VteTerminal(Gtk.Box):
         # Set word char exceptions
         self.terminal.set_word_char_exceptions("-A-Za-z0-9,./?%&#:_=+@~")
         
+        # Set transparency from config
+        transparency = config_manager.get("terminal.transparency", 1.0)
+        self.set_transparency(transparency)
+        
         # Apply initial theme
         self.apply_theme(self._current_theme)
         
@@ -255,9 +259,13 @@ class VteTerminal(Gtk.Box):
     def _apply_dark_theme(self) -> None:
         """Apply dark theme colors to the terminal."""
         try:
-            # Dark theme colors
+            # Get transparency value
+            alpha = getattr(self, '_transparency', 1.0)
+            
+            # Dark theme colors with transparency
             bg_color = Gdk.RGBA()
             bg_color.parse("#1e1e1e")  # Dark background
+            bg_color.alpha = alpha  # Apply transparency
             
             fg_color = Gdk.RGBA()
             fg_color.parse("#ffffff")  # White text
@@ -292,9 +300,13 @@ class VteTerminal(Gtk.Box):
     def _apply_light_theme(self) -> None:
         """Apply light theme colors to the terminal."""
         try:
-            # Light theme colors
+            # Get transparency value
+            alpha = getattr(self, '_transparency', 1.0)
+            
+            # Light theme colors with transparency
             bg_color = Gdk.RGBA()
             bg_color.parse("#ffffff")  # White background
+            bg_color.alpha = alpha  # Apply transparency
             
             fg_color = Gdk.RGBA()
             fg_color.parse("#000000")  # Black text
@@ -326,6 +338,28 @@ class VteTerminal(Gtk.Box):
         except Exception as e:
             logger.warning(f"Failed to apply light theme: {e}")
     
+    def set_transparency(self, value: float) -> None:
+        """
+        Set the terminal transparency.
+        
+        Args:
+            value: Transparency value between 0.0 (fully transparent) and 1.0 (fully opaque)
+        """
+        if not (0.0 <= value <= 1.0):
+            logger.warning(f"Invalid transparency value {value}, must be between 0.0 and 1.0")
+            return
+        
+        self._transparency = value
+        logger.debug(f"Set terminal transparency to {value}")
+        
+        # Re-apply current theme with new transparency
+        self.apply_theme(self._current_theme)
+    
+    def get_transparency(self) -> float:
+        """Get the current transparency value."""
+        return getattr(self, '_transparency', 1.0)
+    
     def get_current_theme(self) -> str:
         """Get the current theme name."""
         return self._current_theme
+    
