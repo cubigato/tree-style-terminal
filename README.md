@@ -277,9 +277,9 @@ The application uses the Model-View-Controller pattern with GTK3 widgets as view
 
 ## Author & Contact
 
-**Author:** Jannik Winkel  
-**Copyright:** cubigato GmbH  
-**Contact:** See imprint on [cubigato.de](https://cubigato.de)
+**Author:** Jannik Winkel
+**Copyright:** cubigato GmbH
+**Contact:** See imprint on [cubigato.de](https://cubigato.de/impressum/)
 
 ## License
 
