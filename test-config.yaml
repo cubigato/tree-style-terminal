@@ -1,7 +1,0 @@
-theme: "dark"
-display:
-  dpi_scale: "auto"
-terminal:
-  scrollback_lines: 5000
-ui:
-  sidebar_width: 300

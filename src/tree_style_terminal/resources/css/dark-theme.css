@@ -2,30 +2,30 @@
 
 /* Main window and background colors */
 window {
-    background-color: rgba(45, 45, 45, 1.0);
+    background-color: rgba(45, 45, 45, 1);
     color: #ffffff;
 }
 
 .main-window {
-    background-color: rgba(45, 45, 45, 1.0);
+    background-color: rgba(45, 45, 45, 1);
 }
 
 /* Ensure non-terminal UI elements are opaque */
 box {
-    background-color: rgba(45, 45, 45, 1.0);
+    background-color: rgba(45, 45, 45, 1);
 }
 
 stack {
-    background-color: rgba(45, 45, 45, 1.0);
+    background-color: rgba(45, 45, 45, 1);
 }
 
 .welcome-page {
-    background-color: rgba(45, 45, 45, 1.0);
+    background-color: rgba(45, 45, 45, 1);
 }
 
 /* Sidebar styling */
 .sidebar {
-    background-color: rgba(37, 37, 37, 1.0);
+    background-color: rgba(37, 37, 37, 1);
     border-right: 1px solid #404040;
 }
 
@@ -43,18 +43,22 @@ stack {
 }
 
 .sidebar revealer {
-    background-color: rgba(37, 37, 37, 1.0);
+    background-color: rgba(37, 37, 37, 1);
 }
 
 /* Terminal colors */
 .terminal {
-    background-color: #1e1e1e;
+    background-color: #ff0000;
     color: #ffffff;
 }
 
 /* HeaderBar */
 headerbar {
-    background: linear-gradient(to bottom, rgba(58, 58, 58, 1.0), rgba(45, 45, 45, 1.0));
+    background: linear-gradient(
+        to bottom,
+        rgba(58, 58, 58, 1),
+        rgba(45, 45, 45, 1)
+    );
     border-bottom: 1px solid #1a1a1a;
     color: #ffffff;
 }
@@ -65,7 +69,7 @@ headerbar button {
 
 /* TreeView general styling */
 treeview {
-    background-color: rgba(45, 45, 45, 1.0);
+    background-color: rgba(45, 45, 45, 1);
     color: #ffffff;
 }
 
@@ -80,7 +84,7 @@ treeview row:hover {
 
 /* Scrollbar styling */
 scrollbar {
-    background-color: rgba(26, 26, 26, 1.0);
+    background-color: rgba(26, 26, 26, 1);
 }
 
 scrollbar slider {
