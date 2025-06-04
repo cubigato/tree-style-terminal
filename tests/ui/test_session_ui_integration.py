@@ -195,6 +195,7 @@ class TestSessionUIIntegration:
             mock_terminal = Mock()
             mock_terminal.spawn_shell.return_value = True
             mock_terminal.terminal = Mock()
+            mock_terminal.get_current_directory.return_value = "/home/user"
             MockVteTerminal.return_value = mock_terminal
             
             # Create root session

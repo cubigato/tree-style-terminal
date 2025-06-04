@@ -94,7 +94,6 @@ class SessionManager:
             # Spawn shell in the terminal
             if not terminal_widget.spawn_shell(cwd=cwd):
                 logger.error("Failed to spawn shell for new session")
-                terminal_widget.destroy()
                 return None
             
             # Use counter as placeholder PTY fd (actual PTY is managed by VTE internally)
@@ -146,6 +145,9 @@ class SessionManager:
             logger.warning("No current session to create child under")
             return self.new_session(title=title)
         
+        # Refresh current directory before creating child
+        self._refresh_current_directory()
+        
         return self.new_session(
             parent=self.current_session,
             cwd=self.current_session.cwd,
@@ -164,6 +166,9 @@ class SessionManager:
         """
         if not self.current_session:
             return self.new_session(title=title)
+        
+        # Refresh current directory before creating sibling
+        self._refresh_current_directory()
         
         parent = self.session_tree.get_parent(self.current_session)
         return self.new_session(
@@ -394,3 +399,91 @@ class SessionManager:
     def get_current_theme(self) -> str:
         """Get the current theme name."""
         return self._current_theme
+    
+    def _refresh_current_directory(self) -> None:
+        """
+        Refresh the current working directory of the current session.
+        This method executes pwd command to get the actual current directory.
+        """
+        if not self.current_session:
+            return
+        
+        terminal_widget = self.get_terminal_widget(self.current_session)
+        if terminal_widget:
+            try:
+                # Execute pwd command and capture output
+                current_dir = self._execute_pwd_command(terminal_widget)
+                if current_dir and current_dir != self.current_session.cwd:
+                    logger.debug(f"Updating session CWD from {self.current_session.cwd} to {current_dir}")
+                    self.current_session.cwd = current_dir
+                    
+                    # Update the session title to reflect the new directory
+                    new_title = self.current_session._get_short_path_title(current_dir)
+                    if new_title != self.current_session.title:
+                        self.current_session.title = new_title
+                        
+                        # Notify callbacks of the change
+                        if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
+                            self.session_changed_callback(self.current_session)
+                            
+            except Exception as e:
+                logger.debug(f"Failed to refresh current directory: {e}")
+    
+    def _execute_pwd_command(self, terminal_widget) -> Optional[str]:
+        """
+        Execute pwd command in the terminal and capture its output.
+        
+        Args:
+            terminal_widget: The terminal widget to execute the command in
+            
+        Returns:
+            The current working directory or None if failed
+        """
+        try:
+            import tempfile
+            import time
+            import uuid
+            
+            # Create a unique temporary file
+            temp_file = f"/tmp/tst_pwd_{uuid.uuid4().hex[:8]}"
+            marker = f"TST_PWD_DONE_{uuid.uuid4().hex[:8]}"
+            
+            # Send command to get pwd and write to temp file
+            command = f"pwd > {temp_file} 2>/dev/null && echo {marker} || echo {marker}\n"
+            terminal_widget.terminal.feed_child(command.encode('utf-8'))
+            
+            # Wait a bit for command to execute
+            max_wait = 1.0  # 1 second timeout
+            wait_interval = 0.1
+            waited = 0
+            
+            while waited < max_wait:
+                time.sleep(wait_interval)
+                waited += wait_interval
+                
+                # Check if temp file exists and has content
+                try:
+                    if os.path.exists(temp_file):
+                        with open(temp_file, 'r') as f:
+                            content = f.read().strip()
+                            if content and os.path.isdir(content):
+                                # Clean up temp file
+                                os.unlink(temp_file)
+                                logger.debug(f"Successfully got current directory via pwd: {content}")
+                                return content
+                except (FileNotFoundError, PermissionError, OSError):
+                    pass
+            
+            # Clean up temp file if it exists
+            try:
+                if os.path.exists(temp_file):
+                    os.unlink(temp_file)
+            except OSError:
+                pass
+                
+            logger.debug("pwd command timed out or failed")
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Failed to execute pwd command: {e}")
+            return None

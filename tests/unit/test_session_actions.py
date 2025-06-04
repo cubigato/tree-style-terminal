@@ -232,6 +232,71 @@ class TestSessionActions:
             
             action = shortcut_controller.get_action("new_sibling")
             action.activate(None)
+    def test_child_terminal_inherits_parent_directory(self, session_tree, session_manager):
+        """Test that child terminal starts in the same directory as parent terminal."""
+        # Create parent session with working directory
+        original_cwd = "/home/user/projects"
+        updated_cwd = "/home/user/projects/myapp"
+        parent_session = TerminalSession(pid=100, pty_fd=200, cwd=original_cwd, title="parent")
+        
+        # Add parent to tree and select it
+        session_tree.add_node(parent_session)
+        session_manager.current_session = parent_session
+        
+        # Mock the parent's terminal widget so get_terminal_widget can find it
+        mock_parent_terminal = Mock()
+        session_manager._session_terminals[parent_session] = mock_parent_terminal
+        
+        # Mock VTE terminal creation for new child
+        with patch('tree_style_terminal.controllers.session_manager.VteTerminal') as MockVteTerminal:
+            mock_terminal = Mock()
+            mock_terminal.spawn_shell.return_value = True
+            MockVteTerminal.return_value = mock_terminal
+            
+            # Mock the pwd command execution to return updated directory
+            with patch.object(session_manager, '_execute_pwd_command', return_value=updated_cwd):
+                # Create child session
+                child_session = session_manager.new_child()
+                
+                # Verify child session starts in parent's current directory (updated via pwd)
+                assert child_session is not None
+                assert child_session.cwd == updated_cwd
+                
+                # Verify shell was spawned with correct working directory
+                mock_terminal.spawn_shell.assert_called_once_with(cwd=updated_cwd)
+    
+    def test_child_terminal_pwd_command_failure_fallback(self, session_tree, session_manager):
+        """Test that child terminal falls back to session cwd when pwd command fails."""
+        # Create parent session with original working directory
+        original_cwd = "/home/user/projects"
+        parent_session = TerminalSession(pid=100, pty_fd=200, cwd=original_cwd, title="parent")
+        
+        # Add parent to tree and select it
+        session_tree.add_node(parent_session)
+        session_manager.current_session = parent_session
+        
+        # Mock the parent's terminal widget so get_terminal_widget can find it
+        mock_parent_terminal = Mock()
+        session_manager._session_terminals[parent_session] = mock_parent_terminal
+        
+        # Mock VTE terminal creation for new child
+        with patch('tree_style_terminal.controllers.session_manager.VteTerminal') as MockVteTerminal:
+            mock_terminal = Mock()
+            mock_terminal.spawn_shell.return_value = True
+            MockVteTerminal.return_value = mock_terminal
+            
+            # Mock the pwd command execution to return None (command failed)
+            with patch.object(session_manager, '_execute_pwd_command', return_value=None):
+                # Create child session
+                child_session = session_manager.new_child()
+                
+                # Verify child session falls back to session's original cwd
+                assert child_session is not None
+                assert child_session.cwd == original_cwd
+                
+                # Verify shell was spawned with fallback directory
+                mock_terminal.spawn_shell.assert_called_once_with(cwd=original_cwd)
+
     
     def test_complex_tree_structure_preservation(self, session_tree, session_manager):
         """Test that complex tree structures are preserved during session creation."""
