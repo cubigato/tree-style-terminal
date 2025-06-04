@@ -1,4 +1,5 @@
 PyYAML>=6.0
+PyGObject>=3.42.0
 
 [dev]
 pytest>=7.0

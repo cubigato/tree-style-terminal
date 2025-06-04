@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tree-style-terminal"
 version = "0.2.0"
-description = "A Python/GTK3 terminal application featuring a collapsible tree-based session navigator instead of traditional tabs"
+description = "A Python/GTK3 terminal application featuring a collapsible tree-based session navigator instead of traditional tabs. Requires system GTK3 and PyGObject installation."
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
 authors = [{ name = "Jannik Winkel" }, { name = "cubigato GmbH" }]
@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: System :: Shells",
 ]
 requires-python = ">=3.11"
-dependencies = ["PyYAML>=6.0"]
+dependencies = ["PyYAML>=6.0", "PyGObject>=3.42.0"]
 
 [project.optional-dependencies]
 dev = [

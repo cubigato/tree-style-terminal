@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: tree-style-terminal
 Version: 0.2.0
-Summary: A Python/GTK3 terminal application featuring a collapsible tree-based session navigator instead of traditional tabs
+Summary: A Python/GTK3 terminal application featuring a collapsible tree-based session navigator instead of traditional tabs. Requires system GTK3 and PyGObject installation.
 Author: Jannik Winkel, cubigato GmbH
 License: GPL-3.0-or-later
 Classifier: Development Status :: 4 - Beta
@@ -18,6 +18,7 @@ Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: PyYAML>=6.0
+Requires-Dist: PyGObject>=3.42.0
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0; extra == "dev"
 Requires-Dist: ruff>=0.1.0; extra == "dev"
@@ -73,23 +74,70 @@ This project is in active development. Currently implemented:
 
 ### System Dependencies (Required)
 
-**Important**: GTK, VTE, and PyGObject must be installed via system package manager, not pip.
+**Critical**: These system packages MUST be installed before attempting to install the Python package. PyGObject requires native libraries that cannot be installed via pip alone.
 
 **Ubuntu/Debian:**
+```bash
+sudo apt install python3-dev libgirepository-2.0-dev libcairo2-dev pkg-config python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-vte-2.91
+```
 
-sudo apt install python3-dev libgirepository1.0-dev libcairo2-dev pkg-config python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-vte-2.91
+**Fedora/RHEL:**
+```bash
+sudo dnf install gobject-introspection-devel cairo-devel pkg-config python3-devel gtk3-devel vte291-devel
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S gobject-introspection cairo pkgconf python gtk3 vte3
+```
 
 ### Python Package
 
-After installing system dependencies:
+After installing system dependencies, you can install Tree Style Terminal:
+
+#### Method 1: Using uv tool install
 
 ```bash
+# First install system dependencies (see above), then:
+git clone <repository-url>
+cd tree-style-terminal
+uv tool install .
+```
+
+**If you get "ModuleNotFoundError: No module named 'gi'"**: This means PyGObject compilation failed. Common causes:
+- Missing `libgirepository-2.0-dev` (newer systems need version 2.0, not 1.0)
+- Missing other system dependencies listed above
+
+Make sure all system dependencies are installed, then try:
+
+```bash
+# Clear uv cache if needed, then retry
+uv cache clean
+uv tool install .
+```
+
+#### Method 2: Using pip (Alternative)
+
+```bash
+# Install from PyPI
+pip install tree-style-terminal
+
+# Or install from source for development
 git clone <repository-url>
 cd tree-style-terminal
 pip install -e ".[dev]"
 ```
 
-**Note**: The pyproject.toml intentionally does not include GTK/VTE dependencies as they must be installed system-wide.
+#### Method 3: Using system Python (Most reliable for GTK apps)
+
+```bash
+# Use system Python which has better access to GTK libraries
+git clone <repository-url>
+cd tree-style-terminal
+python3 -m pip install --user .
+```
+
+**Note**: PyGObject (the `gi` module) requires compilation against system GTK libraries. If installation fails, ensure all system dependencies above are installed, then try Method 3.
 
 ## Configuration
 
@@ -306,9 +354,9 @@ The application uses the Model-View-Controller pattern with GTK3 widgets as view
 
 ## Author & Contact
 
-**Author:** Jannik Winkel  
-**Copyright:** cubigato GmbH  
-**Contact:** See imprint on [cubigato.de](https://cubigato.de)
+**Author:** Jannik Winkel
+**Copyright:** cubigato GmbH
+**Contact:** See imprint on [cubigato.de](https://cubigato.de/impressum/)
 
 ## License
 
