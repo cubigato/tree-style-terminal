@@ -57,12 +57,12 @@ class SessionSidebar(Gtk.Box):
         selection.connect("changed", self._on_selection_changed)
         
         # Create scrolled window
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled.add(self.tree_view)
+        self.scrolled_window = Gtk.ScrolledWindow()
+        self.scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        self.scrolled_window.add(self.tree_view)
         
         # Pack into the box
-        self.pack_start(scrolled, True, True, 0)
+        self.pack_start(self.scrolled_window, True, True, 0)
 
         # Add CSS classes for styling and remove view class for transparency
         ctx = self.get_style_context()
@@ -75,7 +75,7 @@ class SessionSidebar(Gtk.Box):
         tree_ctx.remove_class("view")  # critical for TreeView transparency
         
         # Add CSS class to scrolled window for better targeting
-        scrolled_ctx = scrolled.get_style_context()
+        scrolled_ctx = self.scrolled_window.get_style_context()
         scrolled_ctx.add_class("transparent-scroll")
         scrolled_ctx.remove_class("view")  # remove if present
         

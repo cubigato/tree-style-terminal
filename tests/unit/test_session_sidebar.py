@@ -28,6 +28,8 @@ class TestSessionSidebar:
         assert isinstance(sidebar, Gtk.Box)
         assert hasattr(sidebar, 'tree_view')
         assert isinstance(sidebar.tree_view, Gtk.TreeView)
+        assert hasattr(sidebar, 'scrolled_window')
+        assert isinstance(sidebar.scrolled_window, Gtk.ScrolledWindow)
     
     def test_tree_view_configuration(self):
         """Test TreeView is configured correctly."""
@@ -38,6 +40,10 @@ class TestSessionSidebar:
         assert not sidebar.tree_view.get_headers_visible()
         assert sidebar.tree_view.get_enable_tree_lines()
         assert sidebar.tree_view.get_show_expanders()
+
+        assert sidebar.get_style_context().has_class("sidebar-tree")
+        assert sidebar.tree_view.get_style_context().has_class("transparent-tree")
+        assert sidebar.scrolled_window.get_style_context().has_class("transparent-scroll")
     
     def test_column_setup(self):
         """Test TreeView has exactly one column that expands."""

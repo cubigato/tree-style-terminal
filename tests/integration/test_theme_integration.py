@@ -152,6 +152,20 @@ class TestThemeIntegration(unittest.TestCase):
         self.assertTrue(session_sidebar_context.has_class("sidebar-tree"),
                        "The .sidebar-tree class should be present")
 
+    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    def test_sidebar_container_has_transparency_hooks(self, mock_load_theme, mock_load_base):
+        """Test that outer sidebar containers have transparency CSS hooks."""
+        self.app._on_startup(self.app)
+        self.window = MainWindow(self.app)
+
+        self.assertTrue(
+            self.window.sidebar_revealer.get_style_context().has_class("sidebar-transparency-root")
+        )
+        self.assertTrue(
+            self.window.sidebar_revealer.get_child().get_style_context().has_class("sidebar-transparency-root")
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

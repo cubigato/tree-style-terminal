@@ -319,6 +319,7 @@ entry {{
     font-size: {ui_font_size}px;
 }}
 """
+            css_content += self._generate_sidebar_transparency_css()
             
             if scale_factor > 1.0:
                 print(f"Applied font scaling: {scale_factor:.2f}x (UI: {ui_font_size}px, Terminal: {terminal_font_size}px)")
@@ -328,6 +329,80 @@ entry {{
         except Exception as e:
             print(f"Warning: Error generating scaled CSS: {e}")
             return "/* Error generating scaled CSS */"
+
+    def _generate_sidebar_transparency_css(self):
+        """Generate runtime CSS for sidebar transparency from terminal config."""
+        try:
+            alpha = float(config_manager.get("terminal.transparency", 1.0))
+        except (TypeError, ValueError):
+            alpha = 1.0
+
+        alpha = max(0.0, min(alpha, 1.0))
+
+        if self.current_theme == "dark":
+            sidebar_rgb = (37, 37, 37)
+            border_color = "#404040"
+            selected_color = "#4a9eff"
+            hover_color = "rgba(74, 158, 255, 0.15)"
+        else:
+            sidebar_rgb = (248, 248, 248)
+            border_color = "#dddddd"
+            selected_color = "#0066cc"
+            hover_color = "rgba(0, 102, 204, 0.08)"
+
+        r, g, b = sidebar_rgb
+        return f"""
+
+/* Runtime sidebar transparency; loaded after theme CSS. */
+.sidebar,
+.sidebar-transparency-root,
+revealer.sidebar-transparency-root {{
+    background-color: rgba({r}, {g}, {b}, {alpha:.3f});
+    background-image: none;
+}}
+
+.sidebar {{
+    border-right: 1px solid {border_color};
+}}
+
+.sidebar box,
+.sidebar .sidebar-header,
+.sidebar scrolledwindow,
+.sidebar viewport,
+.sidebar treeview,
+.sidebar treeview.view,
+.sidebar .sidebar-tree,
+.sidebar .transparent-scroll,
+.sidebar .transparent-tree,
+.sidebar-tree,
+.sidebar-tree box,
+.sidebar-tree scrolledwindow,
+.sidebar-tree viewport,
+.sidebar-tree treeview,
+.sidebar-tree treeview.view,
+.transparent-scroll,
+.transparent-scroll viewport,
+.transparent-tree,
+treeview.transparent-tree,
+treeview.transparent-tree.view {{
+    background-color: transparent;
+    background-image: none;
+}}
+
+.sidebar treeview:selected,
+.sidebar treeview.view:selected,
+.sidebar treeview.view:selected:focus,
+.sidebar-tree row:selected,
+.sidebar-tree cell:selected {{
+    background-color: {selected_color};
+    color: white;
+}}
+
+.sidebar treeview row:hover,
+.sidebar treeview.view row:hover {{
+    background-color: {hover_color};
+}}
+"""
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -503,6 +578,12 @@ class MainWindow(Gtk.ApplicationWindow):
         # Store references to important widgets
         self.sidebar_revealer = builder.get_object("sidebar_revealer")
         self.terminal_stack = builder.get_object("terminal_stack")
+        self._mark_sidebar_transparency_widgets(
+            self.sidebar_revealer,
+            builder.get_object("sidebar_container"),
+            builder.get_object("sidebar_header"),
+            builder.get_object("sidebar_scrolled"),
+        )
         
         # Initialize sidebar state tracking for UI file compatibility
         self._sidebar_collapsed = False
@@ -544,6 +625,15 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Hide header bar sidebar toggle since UI file has its own
         self.sidebar_toggle_button.set_visible(False)
+
+    def _mark_sidebar_transparency_widgets(self, *widgets: Gtk.Widget) -> None:
+        """Add CSS hooks used by runtime sidebar transparency rules."""
+        for widget in widgets:
+            if widget is None:
+                continue
+            context = widget.get_style_context()
+            context.add_class("sidebar-transparency-root")
+            context.remove_class("view")
     
     def _create_manual_ui(self) -> None:
         """Create a basic UI manually if Glade file is not available."""

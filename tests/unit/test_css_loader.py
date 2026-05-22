@@ -160,6 +160,28 @@ class TestCSSLoader(unittest.TestCase):
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
 
+    @patch('tree_style_terminal.main.config_manager.get')
+    def test_sidebar_transparency_css_uses_terminal_alpha(self, mock_config_get):
+        """Test sidebar runtime CSS follows terminal transparency."""
+        mock_config_get.return_value = 0.42
+        self.css_loader.current_theme = "dark"
+
+        css = self.css_loader._generate_sidebar_transparency_css()
+
+        self.assertIn("rgba(37, 37, 37, 0.420)", css)
+        self.assertIn(".sidebar treeview.view", css)
+        self.assertIn("background-image: none", css)
+
+    @patch('tree_style_terminal.main.config_manager.get')
+    def test_sidebar_transparency_css_clamps_invalid_alpha(self, mock_config_get):
+        """Test sidebar transparency CSS clamps out-of-range alpha values."""
+        mock_config_get.return_value = 2.0
+        self.css_loader.current_theme = "light"
+
+        css = self.css_loader._generate_sidebar_transparency_css()
+
+        self.assertIn("rgba(248, 248, 248, 1.000)", css)
+
 
 if __name__ == '__main__':
     unittest.main()
