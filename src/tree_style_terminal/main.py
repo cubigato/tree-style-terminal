@@ -103,10 +103,11 @@ class CSSLoader:
                 self.theme_provider.load_from_path(str(theme_css_path))
                 self._add_provider_to_screen(self.theme_provider)
                 
+                self.current_theme = theme_name
+
                 # Reload system CSS after theme to ensure transparency overrides
                 self._load_system_css()
                 
-                self.current_theme = theme_name
                 print(f"Loaded {theme_name} theme from {theme_css_path}")
             except GLib.Error as e:
                 print(f"Error loading {theme_name} theme: {e}")

@@ -141,6 +141,30 @@ class TestCSSLoader(unittest.TestCase):
         with patch.object(self.css_loader, 'load_theme') as mock_load:
             self.css_loader.toggle_theme()
             mock_load.assert_called_once_with("light")
+
+    @patch('tree_style_terminal.main.Path.exists')
+    @patch.object(CSSLoader, '_add_provider_to_screen')
+    @patch('tree_style_terminal.main.Gdk.Screen.get_default')
+    @patch('tree_style_terminal.main.Gtk.StyleContext')
+    @patch('tree_style_terminal.main.Gtk.CssProvider')
+    def test_load_theme_updates_current_theme_before_runtime_css(self, mock_css_provider_class, mock_style_context, mock_screen, mock_add_provider, mock_exists):
+        """Test runtime CSS is regenerated with the newly loaded theme."""
+        mock_exists.return_value = True
+        mock_screen.return_value = MagicMock()
+        mock_style_context.return_value = MagicMock()
+        mock_css_provider_class.return_value = MagicMock()
+        self.css_loader.current_theme = "dark"
+
+        seen_themes = []
+
+        def capture_theme():
+            seen_themes.append(self.css_loader.current_theme)
+
+        with patch.object(self.css_loader, '_load_system_css', side_effect=capture_theme):
+            self.css_loader.load_theme("light")
+
+        self.assertEqual(seen_themes, ["light"])
+        self.assertEqual(self.css_loader.current_theme, "light")
     
     @patch('tree_style_terminal.main.Gdk.Screen.get_default')
     @patch('tree_style_terminal.main.Gtk.StyleContext')
