@@ -46,6 +46,7 @@ class VteTerminal(Gtk.Box):
 
         # Set up basic terminal properties
         self._configure_terminal()
+        self._context_menu = self._create_context_menu()
 
         # Add terminal to a scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
@@ -70,6 +71,7 @@ class VteTerminal(Gtk.Box):
         # Connect signals
         self.terminal.connect("child-exited", self._on_child_exited)
         self.terminal.connect("window-title-changed", self._on_title_changed)
+        self.terminal.connect("button-press-event", self._on_button_press)
 
     def _configure_terminal(self) -> None:
         """Configure basic terminal settings."""
@@ -96,6 +98,83 @@ class VteTerminal(Gtk.Box):
 
         # Apply initial theme
         self.apply_theme(self._current_theme)
+
+    def _create_context_menu(self) -> Gtk.Menu:
+        """Create the terminal context menu."""
+        menu = Gtk.Menu()
+
+        self._copy_menu_item = Gtk.MenuItem(label="Kopieren")
+        self._copy_menu_item.connect("activate", lambda _item: self.copy_clipboard())
+        menu.append(self._copy_menu_item)
+
+        self._paste_menu_item = Gtk.MenuItem(label="Einfügen")
+        self._paste_menu_item.connect("activate", lambda _item: self.paste_clipboard())
+        menu.append(self._paste_menu_item)
+
+        menu.append(Gtk.SeparatorMenuItem())
+
+        self._select_all_menu_item = Gtk.MenuItem(label="Alles auswählen")
+        self._select_all_menu_item.connect("activate", lambda _item: self.select_all())
+        menu.append(self._select_all_menu_item)
+
+        menu.show_all()
+        return menu
+
+    def _on_button_press(self, terminal: Vte.Terminal, event: Gdk.EventButton) -> bool:
+        """Show the terminal context menu on right click."""
+        if (
+            event.type != Gdk.EventType.BUTTON_PRESS
+            or event.button != Gdk.BUTTON_SECONDARY
+        ):
+            return False
+
+        self._popup_context_menu(event)
+        return True
+
+    def _popup_context_menu(self, event: Gdk.EventButton) -> None:
+        """Display the context menu at the pointer position."""
+        self._copy_menu_item.set_sensitive(self.has_selection())
+
+        if hasattr(self._context_menu, "popup_at_pointer"):
+            self._context_menu.popup_at_pointer(event)
+        else:
+            self._context_menu.popup(
+                None,
+                None,
+                None,
+                None,
+                event.button,
+                event.time,
+            )
+
+    def has_selection(self) -> bool:
+        """Return whether the terminal currently has selected text."""
+        try:
+            return bool(self.terminal.get_has_selection())
+        except Exception as e:
+            logger.debug(f"Failed to read terminal selection state: {e}")
+            return False
+
+    def copy_clipboard(self) -> None:
+        """Copy selected terminal text to the clipboard."""
+        try:
+            self.terminal.copy_clipboard()
+        except Exception as e:
+            logger.warning(f"Failed to copy terminal selection: {e}")
+
+    def paste_clipboard(self) -> None:
+        """Paste clipboard text into the terminal."""
+        try:
+            self.terminal.paste_clipboard()
+        except Exception as e:
+            logger.warning(f"Failed to paste into terminal: {e}")
+
+    def select_all(self) -> None:
+        """Select all visible terminal scrollback text."""
+        try:
+            self.terminal.select_all()
+        except Exception as e:
+            logger.warning(f"Failed to select terminal contents: {e}")
 
     def spawn_shell(self, argv: Optional[List[str]] = None, cwd: Optional[str] = None) -> bool:
         """

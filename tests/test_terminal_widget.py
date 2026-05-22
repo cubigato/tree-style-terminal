@@ -14,6 +14,7 @@ def test_vte_terminal_creation():
     assert hasattr(terminal, 'set_font_size')
     assert hasattr(terminal, 'set_scrollback_length')
     assert hasattr(terminal, 'spawn_shell')
+    assert hasattr(terminal, '_context_menu')
 
 
 def test_font_size_configuration():
@@ -101,6 +102,10 @@ def test_terminal_methods_exist():
         'spawn_shell',
         'set_font_size', 
         'set_scrollback_length',
+        'copy_clipboard',
+        'paste_clipboard',
+        'select_all',
+        'has_selection',
         'get_window_title',
         'get_current_directory',
         'close'

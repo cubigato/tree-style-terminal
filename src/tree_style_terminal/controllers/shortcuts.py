@@ -92,6 +92,18 @@ class ShortcutController:
         )
 
         self._create_action(
+            name="terminal_copy",
+            callback=self._on_terminal_copy,
+            enabled=True
+        )
+
+        self._create_action(
+            name="terminal_paste",
+            callback=self._on_terminal_paste,
+            enabled=True
+        )
+
+        self._create_action(
             name="next_session",
             callback=self._on_next_session,
             enabled=True
@@ -192,6 +204,41 @@ class ShortcutController:
         except Exception as e:
             logger.error(f"Error focusing sidebar: {e}")
 
+    def _get_current_terminal_widget(self):
+        """Return the VteTerminal wrapper for the current session."""
+        if not self.session_manager.current_session:
+            return None
+
+        return self.session_manager.get_terminal_widget(
+            self.session_manager.current_session
+        )
+
+    def _on_terminal_copy(
+        self,
+        action: Gio.SimpleAction,
+        parameter: GLib.Variant,
+    ) -> None:
+        """Handle terminal_copy action activation."""
+        try:
+            terminal_widget = self._get_current_terminal_widget()
+            if terminal_widget and hasattr(terminal_widget, "copy_clipboard"):
+                terminal_widget.copy_clipboard()
+        except Exception as e:
+            logger.error(f"Error copying terminal selection: {e}")
+
+    def _on_terminal_paste(
+        self,
+        action: Gio.SimpleAction,
+        parameter: GLib.Variant,
+    ) -> None:
+        """Handle terminal_paste action activation."""
+        try:
+            terminal_widget = self._get_current_terminal_widget()
+            if terminal_widget and hasattr(terminal_widget, "paste_clipboard"):
+                terminal_widget.paste_clipboard()
+        except Exception as e:
+            logger.error(f"Error pasting into terminal: {e}")
+
     def _on_next_session(self, action: Gio.SimpleAction, parameter: GLib.Variant) -> None:
         """Handle next_session action activation."""
         try:
@@ -287,6 +334,10 @@ class ShortcutController:
             ('<Control><Shift>o', 'toggle_sidebar'),  # Alternative
             ('<Control><Shift>f', 'focus_terminal'),
             ('<Control><Shift>s', 'focus_sidebar'),
+
+            # Terminal clipboard
+            ('<Control><Shift>c', 'terminal_copy'),
+            ('<Control><Shift>v', 'terminal_paste'),
             
             # Session navigation
             ('<Control><Shift>Right', 'next_session'),
@@ -341,6 +392,8 @@ class ShortcutController:
 
         # close_session requires a current session
         self.enable_action("close_session", has_current_session)
+        self.enable_action("terminal_copy", has_current_session)
+        self.enable_action("terminal_paste", has_current_session)
 
         # Navigation actions require multiple sessions
         has_multiple_sessions = len(self.session_manager.get_all_sessions()) > 1
