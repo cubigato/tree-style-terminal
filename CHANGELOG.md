@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0 - 2026-05-26
+
+### Added
+
+- Added keyboard shortcuts for session navigation, focus switching, and terminal clipboard operations.
+
+### Fixed
+
+- Fixed duplicate sidebar controls and removed an unused sidebar menu button.
+- Fixed child and sibling session creation so new terminals inherit the selected session's current working directory without echoing helper commands into the terminal.
+- Fixed sidebar selection synchronization after creating or switching sessions.
+- Fixed recursive sidebar selection callbacks that could spam session-switch messages and crash with `RecursionError`.
+
+### Changed
+
+- Changed the project license to Apache License 2.0.
+- Updated README status, keyboard shortcut, installation, theming, and development documentation.
+- Bumped the package version to 0.4.0.
+
 ## 0.3.0 - 2026-05-22
 
 ### Added
