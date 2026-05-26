@@ -1123,7 +1123,7 @@ class TreeStyleTerminalApp(Gtk.Application):
     def __init__(self, args=None):
         super().__init__(
             application_id="org.example.TreeStyleTerminal",
-            flags=Gio.ApplicationFlags.FLAGS_NONE
+            flags=Gio.ApplicationFlags.NON_UNIQUE
         )
         
         self.window: Optional[MainWindow] = None

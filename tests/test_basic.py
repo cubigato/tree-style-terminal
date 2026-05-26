@@ -24,7 +24,7 @@ class TestTreeStyleTerminalApp:
     def test_app_flags(self):
         """Test application flags are set correctly."""
         app = TreeStyleTerminalApp()
-        assert app.get_flags() == Gio.ApplicationFlags.FLAGS_NONE
+        assert app.get_flags() == Gio.ApplicationFlags.NON_UNIQUE
 
 
 class TestMainWindow:
