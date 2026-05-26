@@ -499,7 +499,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # Add sidebar toggle button
         self.sidebar_toggle_button = Gtk.Button()
         self.sidebar_toggle_button.set_image(
-            Gtk.Image.new_from_icon_name("view-sidebar-symbolic", Gtk.IconSize.BUTTON)
+            Gtk.Image.new_from_icon_name("sidebar-show-symbolic", Gtk.IconSize.BUTTON)
         )
         self.sidebar_toggle_button.set_tooltip_text("Toggle sidebar (F9)")
         self.sidebar_toggle_button.connect("clicked", self._on_sidebar_toggle_clicked)
@@ -619,14 +619,6 @@ class MainWindow(Gtk.ApplicationWindow):
         if welcome_new_terminal_ui:
             welcome_new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
         
-        # Connect sidebar toggle from UI file
-        sidebar_toggle_ui = builder.get_object("sidebar_toggle_button")
-        if sidebar_toggle_ui:
-            sidebar_toggle_ui.connect("clicked", self._on_sidebar_toggle_clicked)
-        
-        # Hide header bar sidebar toggle since UI file has its own
-        self.sidebar_toggle_button.set_visible(False)
-
     def _mark_sidebar_transparency_widgets(self, *widgets: Gtk.Widget) -> None:
         """Add CSS hooks used by runtime sidebar transparency rules."""
         for widget in widgets:
