@@ -245,6 +245,7 @@ class TestSessionActions:
         
         # Mock the parent's terminal widget so get_terminal_widget can find it
         mock_parent_terminal = Mock()
+        mock_parent_terminal.get_current_directory.return_value = updated_cwd
         session_manager._session_terminals[parent_session] = mock_parent_terminal
         
         # Mock VTE terminal creation for new child
@@ -253,17 +254,15 @@ class TestSessionActions:
             mock_terminal.spawn_shell.return_value = True
             MockVteTerminal.return_value = mock_terminal
             
-            # Mock the pwd command execution to return updated directory
-            with patch.object(session_manager, '_execute_pwd_command', return_value=updated_cwd):
-                # Create child session
-                child_session = session_manager.new_child()
-                
-                # Verify child session starts in parent's current directory (updated via pwd)
-                assert child_session is not None
-                assert child_session.cwd == updated_cwd
-                
-                # Verify shell was spawned with correct working directory
-                mock_terminal.spawn_shell.assert_called_once_with(cwd=updated_cwd)
+            # Create child session
+            child_session = session_manager.new_child()
+
+            # Verify child session starts in parent's current directory
+            assert child_session is not None
+            assert child_session.cwd == updated_cwd
+
+            # Verify shell was spawned with correct working directory
+            mock_terminal.spawn_shell.assert_called_once_with(cwd=updated_cwd)
     
     def test_child_terminal_pwd_command_failure_fallback(self, session_tree, session_manager):
         """Test that child terminal falls back to session cwd when pwd command fails."""
@@ -277,6 +276,7 @@ class TestSessionActions:
         
         # Mock the parent's terminal widget so get_terminal_widget can find it
         mock_parent_terminal = Mock()
+        mock_parent_terminal.get_current_directory.return_value = None
         session_manager._session_terminals[parent_session] = mock_parent_terminal
         
         # Mock VTE terminal creation for new child
@@ -285,17 +285,65 @@ class TestSessionActions:
             mock_terminal.spawn_shell.return_value = True
             MockVteTerminal.return_value = mock_terminal
             
-            # Mock the pwd command execution to return None (command failed)
-            with patch.object(session_manager, '_execute_pwd_command', return_value=None):
-                # Create child session
-                child_session = session_manager.new_child()
-                
-                # Verify child session falls back to session's original cwd
-                assert child_session is not None
-                assert child_session.cwd == original_cwd
-                
-                # Verify shell was spawned with fallback directory
-                mock_terminal.spawn_shell.assert_called_once_with(cwd=original_cwd)
+            # Create child session
+            child_session = session_manager.new_child()
+
+            # Verify child session falls back to session's original cwd
+            assert child_session is not None
+            assert child_session.cwd == original_cwd
+
+            # Verify shell was spawned with fallback directory
+            mock_terminal.spawn_shell.assert_called_once_with(cwd=original_cwd)
+
+    def test_child_terminal_uses_selected_parent_directory_after_siblings(self, session_tree, session_manager):
+        """Test child creation uses the selected parent's directory after sibling creation."""
+        parent_cwd = "/work/project"
+        sibling_cwd = "/home/user"
+
+        with patch('tree_style_terminal.controllers.session_manager.VteTerminal') as MockVteTerminal:
+            root_terminal = Mock()
+            root_terminal.spawn_shell.return_value = True
+            root_terminal.terminal = Mock()
+            root_terminal.get_current_directory.return_value = parent_cwd
+
+            sibling_one_terminal = Mock()
+            sibling_one_terminal.spawn_shell.return_value = True
+            sibling_one_terminal.terminal = Mock()
+            sibling_one_terminal.get_current_directory.return_value = sibling_cwd
+
+            sibling_two_terminal = Mock()
+            sibling_two_terminal.spawn_shell.return_value = True
+            sibling_two_terminal.terminal = Mock()
+            sibling_two_terminal.get_current_directory.return_value = sibling_cwd
+
+            child_terminal = Mock()
+            child_terminal.spawn_shell.return_value = True
+            child_terminal.terminal = Mock()
+            child_terminal.get_current_directory.return_value = parent_cwd
+
+            MockVteTerminal.side_effect = [
+                root_terminal,
+                sibling_one_terminal,
+                sibling_two_terminal,
+                child_terminal,
+            ]
+
+            root_session = session_manager.new_session(cwd=parent_cwd)
+            assert root_session is not None
+
+            first_sibling = session_manager.new_sibling()
+            assert first_sibling is not None
+
+            second_sibling = session_manager.new_sibling()
+            assert second_sibling is not None
+
+            session_manager.select_session(root_session)
+            child_session = session_manager.new_child()
+
+            assert child_session is not None
+            assert session_tree.get_parent(child_session) == root_session
+            assert child_session.cwd == parent_cwd
+            child_terminal.spawn_shell.assert_called_once_with(cwd=parent_cwd)
 
     
     def test_complex_tree_structure_preservation(self, session_tree, session_manager):

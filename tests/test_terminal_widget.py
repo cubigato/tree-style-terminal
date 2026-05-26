@@ -2,6 +2,7 @@
 
 import pytest
 import os
+from unittest.mock import Mock
 
 
 def test_vte_terminal_creation():
@@ -125,3 +126,56 @@ def test_terminal_methods_exist():
     for method_name in expected_methods:
         assert hasattr(terminal, method_name), f"Missing method: {method_name}"
         assert callable(getattr(terminal, method_name)), f"Method not callable: {method_name}"
+
+
+def test_get_current_directory_uses_vte_uri(tmp_path):
+    """Test current directory is read from VTE's tracked file URI."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    terminal.terminal.get_current_directory_uri.return_value = tmp_path.as_uri()
+
+    assert terminal.get_current_directory() == str(tmp_path)
+
+
+def test_get_current_directory_falls_back_to_spawn_cwd():
+    """Test current directory falls back when VTE has no tracked URI."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    terminal.terminal.get_current_directory_uri.return_value = None
+    terminal._last_spawn_cwd = "/fallback"
+
+    assert terminal.get_current_directory() == "/fallback"
+
+
+def test_get_current_directory_uses_child_process_cwd(tmp_path):
+    """Test current directory falls back to the spawned shell process cwd."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    terminal.terminal.get_current_directory_uri.return_value = None
+    terminal.pid = os.getpid()
+
+    assert terminal.get_current_directory() == os.getcwd()
+
+
+def test_spawn_complete_stores_child_pid():
+    """Test spawn completion records the child process id returned by VTE."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal._spawn_argv = ["/bin/bash"]
+    terminal._spawn_cwd = "/tmp"
+
+    pty = Mock()
+    pty.spawn_finish.return_value = (True, 12345)
+    pty.get_fd.return_value = 99
+
+    terminal._on_spawn_complete(pty, Mock())
+
+    assert terminal.pid == 12345
+    assert terminal.pty_fd == 99

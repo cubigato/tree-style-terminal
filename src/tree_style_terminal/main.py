@@ -8,6 +8,7 @@ This module contains the main GTK application class and window implementation.
 import sys
 import os
 import argparse
+import logging
 from pathlib import Path
 from typing import Optional, Dict
 
@@ -25,6 +26,8 @@ from .controllers.shortcuts import ShortcutController
 from .models.session import TerminalSession
 from .models.tree import SessionTree
 from .config import config_manager, ConfigError
+
+logger = logging.getLogger(__name__)
 
 
 class CSSLoader:
@@ -897,7 +900,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # Update button states
         self._update_button_states()
         
-        print(f"Session created: {session.title}")
+        logger.debug(f"Session created: {session.title}")
     
     def _on_session_closed(self, session: TerminalSession, children_to_adopt: list[TerminalSession], parent_session: Optional[TerminalSession]) -> None:
         """
@@ -930,7 +933,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.terminal_stack.set_visible_child_name("welcome")
             self.set_title("Tree Style Terminal")
         
-        print(f"Session closed: {session.title}")
+        logger.debug(f"Session closed: {session.title}")
     
     def _on_session_changed(self, session: TerminalSession) -> None:
         """
@@ -947,7 +950,7 @@ class MainWindow(Gtk.ApplicationWindow):
         if self.session_manager.current_session == session:
             self.set_title(f"Tree Style Terminal - {session.title}")
         
-        print(f"Session changed: {session.title}")
+        logger.debug(f"Session changed: {session.title}")
     
     def _on_session_selected(self, session: TerminalSession) -> None:
         """
@@ -979,7 +982,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # Update button states
         self._update_button_states()
         
-        print(f"Switched to session: {session.title}")
+        logger.debug(f"Switched to session: {session.title}")
 
     def toggle_sidebar(self) -> None:
         """Toggle sidebar visibility."""

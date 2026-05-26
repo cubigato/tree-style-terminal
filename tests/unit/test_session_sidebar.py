@@ -115,3 +115,20 @@ class TestSessionSidebar:
         model, tree_iter = selection.get_selected()
         selected_session = controller.get_session_from_iter(tree_iter)
         assert selected_session == session2
+
+    def test_programmatic_select_does_not_trigger_selection_callback(self):
+        """Test programmatic selection does not recurse through selection callbacks."""
+        tree = SessionTree()
+        controller = SidebarController(tree)
+        sidebar = SessionSidebar(controller)
+
+        session = TerminalSession(pid=1, pty_fd=10, cwd="/one")
+        tree.add_node(session)
+        controller.sync_with_session_tree()
+
+        selected_sessions = []
+        sidebar.set_selection_callback(lambda selected: selected_sessions.append(selected))
+
+        sidebar.select_session(session)
+
+        assert selected_sessions == []

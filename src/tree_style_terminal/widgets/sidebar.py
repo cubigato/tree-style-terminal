@@ -39,6 +39,7 @@ class SessionSidebar(Gtk.Box):
         
         self.controller = sidebar_controller
         self._selection_callback: Optional[Callable[[TerminalSession], None]] = None
+        self._selecting_programmatically = False
         
         # Create the tree view
         self.tree_view = Gtk.TreeView()
@@ -104,6 +105,9 @@ class SessionSidebar(Gtk.Box):
             selection: The TreeSelection object
         """
         model, tree_iter = selection.get_selected()
+        if self._selecting_programmatically:
+            return
+
         if tree_iter is not None:
             session = self.controller.get_session_from_iter(tree_iter)
             if session and self._selection_callback:
@@ -127,16 +131,22 @@ class SessionSidebar(Gtk.Box):
             session: The session to select
         """
         tree_iter = self.controller.find_iter_for_session(session)
-        if tree_iter:
-            selection = self.tree_view.get_selection()
-            selection.select_iter(tree_iter)
-            
-            # Expand parent nodes and scroll to the selection
-            path = self.controller.get_tree_store().get_path(tree_iter)
+        if tree_iter is None:
+            return
+
+        selection = self.tree_view.get_selection()
+        path = self.controller.get_tree_store().get_path(tree_iter)
+
+        self._selecting_programmatically = True
+        try:
             self.tree_view.expand_to_path(path)
+            selection.unselect_all()
+            selection.select_path(path)
             self.tree_view.scroll_to_cell(path, None, False, 0.0, 0.0)
-            
-            logger.debug(f"Selected session: {session.title}")
+        finally:
+            self._selecting_programmatically = False
+
+        logger.debug(f"Selected session: {session.title}")
     
     def expand_all(self) -> None:
         """Expand all nodes in the tree view."""

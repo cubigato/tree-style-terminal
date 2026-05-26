@@ -7,6 +7,7 @@ This module provides a VTE terminal widget wrapper with spawn functionality.
 
 import os
 import logging
+from urllib.parse import unquote, urlparse
 from typing import Optional, List
 
 import gi
@@ -218,6 +219,7 @@ class VteTerminal(Gtk.Box):
             # Store spawn arguments for the async callback
             self._spawn_argv = argv
             self._spawn_cwd = cwd
+            self._last_spawn_cwd = cwd
 
             # Spawn the process using the modern async method
             pty.spawn_async(
@@ -262,12 +264,28 @@ class VteTerminal(Gtk.Box):
 
     def get_current_directory(self) -> Optional[str]:
         """Get the current working directory of the terminal."""
-        # For now, return the spawn directory since PID tracking is unreliable
-        # The session manager will handle directory updates via title changes
-        if hasattr(self, '_spawn_cwd'):
-            return self._spawn_cwd
-            
-        return None
+        try:
+            directory_uri = self.terminal.get_current_directory_uri()
+        except Exception as e:
+            logger.debug(f"Failed to get terminal current directory URI: {e}")
+            directory_uri = None
+
+        if directory_uri:
+            parsed_uri = urlparse(directory_uri)
+            if parsed_uri.scheme == "file":
+                directory = unquote(parsed_uri.path)
+                if os.path.isdir(directory):
+                    return directory
+
+        if self.pid:
+            try:
+                directory = os.readlink(f"/proc/{self.pid}/cwd")
+                if os.path.isdir(directory):
+                    return directory
+            except OSError as e:
+                logger.debug(f"Failed to read terminal process cwd: {e}")
+
+        return getattr(self, "_last_spawn_cwd", None)
 
     def force_update_directory_tracking(self) -> None:
         """
@@ -303,20 +321,11 @@ class VteTerminal(Gtk.Box):
     def _on_spawn_complete(self, pty: Vte.Pty, task: object, user_data=None) -> None:
         """Callback when spawning is complete."""
         try:
-            success = pty.spawn_finish(task)
+            success, child_pid = pty.spawn_finish(task)
             if success:
                 # Store the PTY file descriptor for reference
                 self.pty_fd = pty.get_fd()
-                
-                # Get the child PID - use simple approach
-                try:
-                    # Try to get PID from the PTY file descriptor
-                    # For now, we'll use the PTY fd as a placeholder since VTE manages PIDs internally
-                    self.pid = pty.get_fd()  # Use PTY fd as identifier
-                    logger.debug(f"Using PTY fd as process identifier: {self.pid}")
-                except Exception as e:
-                    logger.warning(f"Failed to get PTY fd: {e}")
-                    self.pid = None
+                self.pid = child_pid
                 
                 logger.info(f"Successfully spawned shell in directory {self._spawn_cwd}")
             else:
