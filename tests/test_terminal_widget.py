@@ -91,6 +91,17 @@ def test_terminal_properties():
     assert terminal.scrolled_window is not None
 
 
+def test_context_menu_labels_are_english():
+    """Test terminal context menu labels stay consistent with the English UI."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+
+    assert terminal._copy_menu_item.get_label() == "Copy"
+    assert terminal._paste_menu_item.get_label() == "Paste"
+    assert terminal._select_all_menu_item.get_label() == "Select All"
+
+
 def test_terminal_methods_exist():
     """Test that all expected methods exist on the terminal widget."""
     from src.tree_style_terminal.widgets.terminal import VteTerminal

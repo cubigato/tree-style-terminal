@@ -323,3 +323,12 @@ class TestShortcutController:
             shortcut_controller.get_action("terminal_paste").activate(None)
 
             mock_get_terminal.assert_not_called()
+
+    def test_accelerator_action_consumes_key_event(self, shortcut_controller):
+        """Test accelerator callbacks stop the key press from reaching VTE."""
+        action = Mock()
+
+        handled = shortcut_controller._activate_accel_action(action)
+
+        action.activate.assert_called_once_with(None)
+        assert handled is True

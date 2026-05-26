@@ -362,8 +362,10 @@ class ShortcutController:
                 action = self._actions.get(action_name)
                 if action:
                     self._accel_group.connect(
-                        key, mods, Gtk.AccelFlags.VISIBLE,
-                        lambda accel_group, acceleratable, keyval, modifier, action=action: action.activate(None)
+                        key,
+                        mods,
+                        Gtk.AccelFlags.VISIBLE,
+                        lambda *args, action=action: self._activate_accel_action(action)
                     )
                     logger.debug(f"Registered shortcut: {accel_key} -> {action_name}")
                 else:
@@ -371,6 +373,11 @@ class ShortcutController:
 
             except Exception as e:
                 logger.error(f"Failed to register shortcut {accel_key} -> {action_name}: {e}")
+
+    def _activate_accel_action(self, action: Gio.SimpleAction) -> bool:
+        """Activate an accelerator action and consume the key event."""
+        action.activate(None)
+        return True
 
     def set_main_window(self, main_window: Gtk.ApplicationWindow) -> None:
         """

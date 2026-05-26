@@ -103,17 +103,17 @@ class VteTerminal(Gtk.Box):
         """Create the terminal context menu."""
         menu = Gtk.Menu()
 
-        self._copy_menu_item = Gtk.MenuItem(label="Kopieren")
+        self._copy_menu_item = Gtk.MenuItem(label="Copy")
         self._copy_menu_item.connect("activate", lambda _item: self.copy_clipboard())
         menu.append(self._copy_menu_item)
 
-        self._paste_menu_item = Gtk.MenuItem(label="Einfügen")
+        self._paste_menu_item = Gtk.MenuItem(label="Paste")
         self._paste_menu_item.connect("activate", lambda _item: self.paste_clipboard())
         menu.append(self._paste_menu_item)
 
         menu.append(Gtk.SeparatorMenuItem())
 
-        self._select_all_menu_item = Gtk.MenuItem(label="Alles auswählen")
+        self._select_all_menu_item = Gtk.MenuItem(label="Select All")
         self._select_all_menu_item.connect("activate", lambda _item: self.select_all())
         menu.append(self._select_all_menu_item)
 
