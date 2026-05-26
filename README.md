@@ -23,7 +23,9 @@ Tree Style Terminal reimagines terminal session management by organizing session
 
 ## Current Status
 
-This project is in active development. Currently implemented:
+This project is in active development.
+
+Currently implemented:
 
 - ✅ Core application structure with GTK3 interface
 - ✅ Session management system (`TerminalSession`, `SessionTree`, `SessionManager`)
@@ -35,10 +37,14 @@ This project is in active development. Currently implemented:
 - ✅ YAML configuration system with validation and automatic template creation
 - ✅ Comprehensive test suite with unit and integration tests
 - ✅ Smart terminal naming based on working directory
-- ⏳ Session persistence and tree state management (in progress)
-- ⏳ Full keyboard navigation support (in progress)
-- ⏳ Packaging and distribution (in progress)
-- ⏳ Better Quality Assurance (in progress)
+- ✅ Keyboard shortcuts for session creation, navigation, focus, and terminal clipboard
+- ✅ Terminal/sidebar transparency support via configuration
+
+Remaining work:
+
+- ⏳ Session persistence and tree state management
+- ⏳ Packaging and distribution
+- ⏳ Ongoing quality assurance and regression coverage
 
 ## Installation
 
@@ -86,16 +92,13 @@ uv cache clean
 uv tool install .
 ```
 
-#### Method 2: Using pip (Alternative)
+#### Method 2: Using uv for development
 
 ```bash
-# Install from PyPI
-pip install tree-style-terminal
-
-# Or install from source for development
+# Install from source for development
 git clone <repository-url>
 cd tree-style-terminal
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 #### Method 3: Using system Python (Most reliable for GTK apps)
@@ -163,12 +166,12 @@ If fonts appear too small or large, you can override the DPI detection:
 
 ```bash
 # Using command-line arguments (recommended)
-python -m tree_style_terminal --dpi 144    # 1.5x scaling for 1440p displays
-python -m tree_style_terminal --dpi 192    # 2x scaling for 4K displays
-python -m tree_style_terminal --dpi 240    # 2.5x scaling for high-DPI 4K
+tree-style-terminal --dpi 144    # 1.5x scaling for 1440p displays
+tree-style-terminal --dpi 192    # 2x scaling for 4K displays
+tree-style-terminal --dpi 240    # 2.5x scaling for high-DPI 4K
 
 # Using environment variables
-TST_DPI=192 python -m tree_style_terminal
+TST_DPI=192 tree-style-terminal
 ```
 
 #### Testing Font Scaling
@@ -177,66 +180,61 @@ Check your system's font scaling and test different DPI values:
 
 ```bash
 # Show system font information with the GUI
-python -m tree_style_terminal --show-info
+tree-style-terminal --show-info
 
 # Test font scaling without starting the GUI
-python -m tree_style_terminal --test-fonts
-python -m tree_style_terminal --test-fonts --dpi 192
+tree-style-terminal --test-fonts
+tree-style-terminal --test-fonts --dpi 192
 ```
 
 #### Complete Command-Line Reference
 
 ```bash
-python -m tree_style_terminal --help              # Show all options and examples
-python -m tree_style_terminal                     # Launch with automatic scaling
-python -m tree_style_terminal --dpi 192           # Set DPI for font scaling
-python -m tree_style_terminal --show-info         # Display system font information
-python -m tree_style_terminal --test-fonts        # Show font scaling test and exit
-python -m tree_style_terminal --quiet             # Suppress startup messages
+tree-style-terminal --help              # Show all options and examples
+tree-style-terminal                     # Launch with automatic scaling
+tree-style-terminal --dpi 192           # Set DPI for font scaling
+tree-style-terminal --show-info         # Display system font information
+tree-style-terminal --test-fonts        # Show font scaling test and exit
+tree-style-terminal --quiet             # Suppress startup messages
 
 # Combined options
-python -m tree_style_terminal --dpi 180 --quiet   # Launch with custom DPI, no messages
-python -m tree_style_terminal --show-info --dpi 240  # Test DPI without starting GUI
+tree-style-terminal --dpi 180 --quiet   # Launch with custom DPI, no messages
+tree-style-terminal --show-info --dpi 240  # Test DPI without starting GUI
 
 # Environment variable alternative
-TST_DPI=192 python -m tree_style_terminal          # Set DPI via environment
+TST_DPI=192 tree-style-terminal                    # Set DPI via environment
 ```
 
 ## Theming
 
 Tree Style Terminal supports light and dark themes through GTK CSS:
 
-- **Default**: Light theme
-- **Toggle**: Click the theme button (🌙/☀️ icon) in the header bar
-- **Custom CSS**: Place custom styles in `~/.config/tree-style-terminal/custom.css` (planned)
+- **Default**: Dark theme, unless configured otherwise
+- **Automatic**: Set `theme: "automatic"` to follow the detected GTK/system theme
+- **Toggle**: Click the theme button in the header bar to switch between light and dark themes
 
-### CSS Variables
+### CSS Styling
 
-The application uses CSS custom properties for consistent theming:
-
-- `--bg-primary`, `--bg-secondary`: Background colors
-- `--fg-primary`, `--fg-secondary`: Foreground colors
-- `--accent-color`: Highlight color
-- `--terminal-bg`, `--terminal-fg`: Terminal colors
-- `--sidebar-bg`, `--sidebar-selected`: Sidebar colors
+The application loads a base GTK CSS file, a light or dark theme CSS file, and runtime-generated CSS for DPI scaling and sidebar transparency.
 
 ### Theme Files
 
 CSS themes are located in `src/tree_style_terminal/resources/css/`:
-- `style.css`: Base styles and CSS variables
+- `style.css`: Base GTK widget styles
 - `light-theme.css`: Light theme color overrides
 - `dark-theme.css`: Dark theme color overrides
 
-## Session Management (Planned)
-
-The following features are planned for the session management system:
+## Session Management
 
 ### Keyboard Navigation
-- **New Child Session**: `Ctrl+Shift+N` - Create a new session as a child of the current session
-- **New Sibling Session**: `Ctrl+Alt+N` - Create a new session at the same level as the current session
-- **Close Session**: `Ctrl+Shift+W` - Close the current session (children are adopted by parent)
-- **Toggle Sidebar**: `Ctrl+Shift+E` - Show/hide the session tree sidebar
-- **Navigate Sessions**: Click on sessions in the sidebar or use `Ctrl+PageUp`/`Ctrl+PageDown`
+- **New Child Session**: `Ctrl+Alt+T` - Create a new session as a child of the current session
+- **New Sibling Session**: `Ctrl+Shift+T` - Create a new session at the same level as the current session
+- **Close Session**: `Ctrl+Q` - Close the current session (children are adopted by parent)
+- **Toggle Sidebar**: `F9` or `Ctrl+Shift+O` - Show/hide the session tree sidebar
+- **Focus Sidebar**: `Ctrl+Shift+S` - Move keyboard focus to the session tree
+- **Focus Terminal**: `Ctrl+Shift+F` - Move keyboard focus back to the terminal
+- **Navigate Sessions**: Click on sessions in the sidebar or use `Alt+Left`/`Alt+Right` or `Ctrl+Shift+Left`/`Ctrl+Shift+Right`
+- **Terminal Clipboard**: `Ctrl+Shift+C` / `Ctrl+Shift+V` - Copy/paste in the terminal
 
 ### Session Tree Navigation
 The sidebar displays terminal sessions in a tree structure:
@@ -244,11 +242,11 @@ The sidebar displays terminal sessions in a tree structure:
 - **Child Sessions**: Sessions created from within other sessions
 - **Session Adoption**: When you close a session with children, those children become children of the closed session's parent
 
-### Smart Terminal Naming (Planned)
-Terminal sessions will be automatically named based on your current working directory and shell context:
+### Smart Terminal Naming
+Terminal sessions are automatically named based on your current working directory and shell context:
 - **Directory-based Names**: Session names show the last two path components (e.g., `projects/myapp`)
 - **User Context**: Session names include user@host information when available
-- **Real-time Updates**: Session names automatically update when you change directories
+- **Real-time Updates**: Session names and working directories update when VTE reports changes
 - **Intelligent Parsing**: Handles various shell prompt formats with graceful fallbacks
 
 ## Development
@@ -259,24 +257,22 @@ Terminal sessions will be automatically named based on your current working dire
 ```bash
 git clone <repository-url>
 cd tree-style-terminal
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-2. Install system dependencies (see Installation section above), then install in development mode:
+2. Install system dependencies (see Installation section above), then install the project and development dependencies:
 ```bash
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 3. Install pre-commit hooks:
 ```bash
-pre-commit install
+uv run pre-commit install
 ```
 
 ### Running Tests
 
 ```bash
-pytest
+uv run pytest
 ```
 
 The project includes comprehensive unit and integration tests covering:
@@ -296,10 +292,10 @@ The project uses several tools to maintain code quality:
 
 Run all checks:
 ```bash
-ruff check .
-black --check .
-isort --check-only .
-mypy src/
+uv run ruff check .
+uv run black --check .
+uv run isort --check-only .
+uv run mypy src/
 ```
 
 ## Architecture
