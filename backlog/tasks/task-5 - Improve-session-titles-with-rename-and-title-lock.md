@@ -1,9 +1,10 @@
 ---
 id: TASK-5
 title: Improve session titles with rename and title lock
-status: To Do
+status: next
 assignee: []
 created_date: '2026-05-26 22:08'
+updated_date: '2026-05-27 21:47'
 labels:
   - feature
   - 'effort:small'
@@ -12,7 +13,7 @@ dependencies: []
 references:
   - 'https://iterm2.com/documentation-preferences-profiles-general.html'
 priority: high
-ordinal: 30
+ordinal: 3000
 ---
 
 ## Description

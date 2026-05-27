@@ -1,9 +1,10 @@
 ---
 id: TASK-4
 title: 'Handle hyperlinks, URLs, and file paths in terminal output'
-status: To Do
+status: next
 assignee: []
 created_date: '2026-05-26 22:08'
+updated_date: '2026-05-27 21:46'
 labels:
   - feature
   - 'effort:small'
@@ -12,7 +13,7 @@ dependencies: []
 references:
   - 'https://gnome.pages.gitlab.gnome.org/vte/gtk3/class.Terminal.html'
 priority: high
-ordinal: 20
+ordinal: 2000
 ---
 
 ## Description
