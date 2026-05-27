@@ -1,10 +1,10 @@
 ---
 id: TASK-5
 title: Improve session titles with rename and title lock
-status: next
+status: In Progress
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-05-27 21:47'
+updated_date: '2026-05-27 22:29'
 labels:
   - feature
   - 'effort:small'
@@ -12,6 +12,14 @@ labels:
 dependencies: []
 references:
   - 'https://iterm2.com/documentation-preferences-profiles-general.html'
+modified_files:
+  - src/tree_style_terminal/models/session.py
+  - src/tree_style_terminal/controllers/session_manager.py
+  - src/tree_style_terminal/widgets/sidebar.py
+  - src/tree_style_terminal/main.py
+  - tests/unit/test_session.py
+  - tests/unit/test_session_actions.py
+  - tests/unit/test_session_sidebar.py
 priority: high
 ordinal: 3000
 ---
@@ -24,7 +32,13 @@ Let users rename a session from the sidebar and optionally keep that custom titl
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A session can be renamed from the UI
-- [ ] #2 A custom title remains stable across automatic title updates
-- [ ] #3 Clearing the custom title restores automatic naming
+- [x] #1 A session can be renamed from the UI
+- [x] #2 A custom title remains stable across automatic title updates
+- [x] #3 Clearing the custom title restores automatic naming
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented sidebar session rename via context menu, custom title locking against automatic VTE/CWD title updates, and clearing custom titles to restore automatic naming. Added focused unit coverage and verified the full test suite.
+<!-- SECTION:FINAL_SUMMARY:END -->

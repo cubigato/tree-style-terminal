@@ -232,6 +232,44 @@ class TestSessionActions:
             
             action = shortcut_controller.get_action("new_sibling")
             action.activate(None)
+
+    def test_rename_session_notifies_and_locks_title(self, session_manager, mock_session):
+        """Test renaming a session stores a custom title and notifies listeners."""
+        changed_sessions = []
+        session_manager.set_session_changed_callback(changed_sessions.append)
+
+        session_manager.rename_session(mock_session, "deploy")
+
+        assert mock_session.title == "deploy"
+        assert mock_session.custom_title == "deploy"
+        assert changed_sessions == [mock_session]
+
+    def test_clear_session_title_notifies_and_restores_auto_title(self, session_manager, mock_session):
+        """Test clearing a custom session title restores automatic naming."""
+        changed_sessions = []
+        session_manager.set_session_changed_callback(changed_sessions.append)
+        mock_session.set_automatic_title("test/server")
+        mock_session.rename("deploy")
+
+        session_manager.clear_session_title(mock_session)
+
+        assert mock_session.title == "test/server"
+        assert mock_session.custom_title is None
+        assert changed_sessions == [mock_session]
+
+    def test_terminal_title_update_keeps_custom_title_visible(self, session_manager, mock_session):
+        """Test automatic terminal title updates do not overwrite a custom title."""
+        mock_terminal = Mock()
+        mock_terminal.get_window_title.return_value = "user@host: /srv/app"
+        mock_terminal.get_current_directory.return_value = "/srv/app"
+        session_manager._session_terminals[mock_session] = mock_terminal
+        session_manager.rename_session(mock_session, "deploy")
+
+        session_manager._on_terminal_title_changed(mock_terminal, mock_session)
+
+        assert mock_session.title == "deploy"
+        assert mock_session.auto_title == "srv/app (user@host)"
+
     def test_child_terminal_inherits_parent_directory(self, session_tree, session_manager):
         """Test that child terminal starts in the same directory as parent terminal."""
         # Create parent session with working directory

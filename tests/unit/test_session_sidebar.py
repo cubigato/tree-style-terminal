@@ -154,3 +154,63 @@ class TestSessionSidebar:
         sidebar.tree_view.get_selection().select_path(path)
 
         assert pointer_selection_states == [True]
+
+    def test_rename_menu_activation_calls_callback(self):
+        """Test rename menu activation forwards the entered title."""
+        tree = SessionTree()
+        controller = SidebarController(tree)
+        sidebar = SessionSidebar(controller)
+        session = TerminalSession(pid=1, pty_fd=10, cwd="/one", title="one")
+        renamed = []
+
+        sidebar.set_rename_callback(lambda selected, title: renamed.append((selected, title)))
+        sidebar._context_menu_session = session
+
+        class FakeDialog:
+            def __init__(self, *args, **kwargs):
+                self.entry = None
+
+            def add_button(self, *args, **kwargs):
+                pass
+
+            def set_default_response(self, *args, **kwargs):
+                pass
+
+            def get_content_area(self):
+                return self
+
+            def pack_start(self, entry, *args, **kwargs):
+                self.entry = entry
+
+            def show_all(self):
+                self.entry.set_text("renamed")
+
+            def run(self):
+                return Gtk.ResponseType.OK
+
+            def destroy(self):
+                pass
+
+        original_dialog = Gtk.Dialog
+        Gtk.Dialog = FakeDialog
+        try:
+            sidebar._on_rename_menu_activate(Gtk.MenuItem())
+        finally:
+            Gtk.Dialog = original_dialog
+
+        assert renamed == [(session, "renamed")]
+
+    def test_clear_title_menu_activation_calls_callback(self):
+        """Test clear-title menu activation forwards the selected session."""
+        tree = SessionTree()
+        controller = SidebarController(tree)
+        sidebar = SessionSidebar(controller)
+        session = TerminalSession(pid=1, pty_fd=10, cwd="/one", title="one")
+        cleared = []
+
+        sidebar.set_clear_title_callback(cleared.append)
+        sidebar._context_menu_session = session
+
+        sidebar._on_clear_title_menu_activate(Gtk.MenuItem())
+
+        assert cleared == [session]

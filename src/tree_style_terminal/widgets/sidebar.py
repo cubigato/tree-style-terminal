@@ -39,9 +39,12 @@ class SessionSidebar(Gtk.Box):
         
         self.controller = sidebar_controller
         self._selection_callback: Optional[Callable[[TerminalSession], None]] = None
+        self._rename_callback: Optional[Callable[[TerminalSession, str], None]] = None
+        self._clear_title_callback: Optional[Callable[[TerminalSession], None]] = None
         self._selecting_programmatically = False
         self._selection_started_by_pointer = False
         self._last_selection_was_pointer = False
+        self._context_menu_session: Optional[TerminalSession] = None
         
         # Create the tree view
         self.tree_view = Gtk.TreeView()
@@ -121,10 +124,95 @@ class SessionSidebar(Gtk.Box):
                 finally:
                     self._selection_started_by_pointer = False
 
-    def _on_button_press_event(self, _tree_view: Gtk.TreeView, _event: Gdk.EventButton) -> bool:
-        """Track that the next selection change originated from the pointer."""
+    def _on_button_press_event(self, tree_view: Gtk.TreeView, _event: Gdk.EventButton) -> bool:
+        """Track pointer selections and show the session menu on right click."""
         self._selection_started_by_pointer = True
+        if _event is not None and _event.button == Gdk.BUTTON_SECONDARY:
+            session = self._get_session_at_event(tree_view, _event)
+            if session is not None:
+                self._context_menu_session = session
+                self._popup_context_menu(_event)
+                return True
         return False
+
+    def _get_session_at_event(
+        self,
+        tree_view: Gtk.TreeView,
+        event: Gdk.EventButton,
+    ) -> Optional[TerminalSession]:
+        """Return the session under a pointer event."""
+        path_info = tree_view.get_path_at_pos(int(event.x), int(event.y))
+        if path_info is None:
+            return None
+
+        path = path_info[0]
+        tree_view.get_selection().select_path(path)
+        tree_iter = self.controller.get_tree_store().get_iter(path)
+        return self.controller.get_session_from_iter(tree_iter)
+
+    def _popup_context_menu(self, event: Gdk.EventButton) -> None:
+        """Display the per-session context menu."""
+        session = self._context_menu_session
+        if session is None:
+            return
+
+        menu = Gtk.Menu()
+
+        rename_item = Gtk.MenuItem(label="Rename")
+        rename_item.connect("activate", self._on_rename_menu_activate)
+        menu.append(rename_item)
+
+        clear_item = Gtk.MenuItem(label="Use Automatic Title")
+        clear_item.set_sensitive(session.custom_title is not None)
+        clear_item.connect("activate", self._on_clear_title_menu_activate)
+        menu.append(clear_item)
+
+        menu.show_all()
+        if hasattr(menu, "popup_at_pointer"):
+            menu.popup_at_pointer(event)
+        else:
+            menu.popup(
+                None,
+                None,
+                None,
+                None,
+                event.button,
+                event.time,
+            )
+
+    def _on_rename_menu_activate(self, _menu_item: Gtk.MenuItem) -> None:
+        """Open a small dialog for renaming the selected session."""
+        session = self._context_menu_session
+        if session is None:
+            return
+
+        dialog = Gtk.Dialog(title="Rename Session", transient_for=self.get_toplevel(), modal=True)
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        dialog.add_button("Rename", Gtk.ResponseType.OK)
+        dialog.set_default_response(Gtk.ResponseType.OK)
+
+        entry = Gtk.Entry()
+        entry.set_text(session.custom_title or session.title or "")
+        entry.set_activates_default(True)
+        entry.set_margin_top(12)
+        entry.set_margin_bottom(12)
+        entry.set_margin_start(12)
+        entry.set_margin_end(12)
+
+        dialog.get_content_area().pack_start(entry, False, False, 0)
+        dialog.show_all()
+        response = dialog.run()
+        title = entry.get_text()
+        dialog.destroy()
+
+        if response == Gtk.ResponseType.OK and self._rename_callback:
+            self._rename_callback(session, title)
+
+    def _on_clear_title_menu_activate(self, _menu_item: Gtk.MenuItem) -> None:
+        """Clear the custom title for the selected session."""
+        session = self._context_menu_session
+        if session is not None and self._clear_title_callback:
+            self._clear_title_callback(session)
 
     def last_selection_was_pointer(self) -> bool:
         """Return whether the most recent user selection started with a pointer event."""
@@ -138,6 +226,14 @@ class SessionSidebar(Gtk.Box):
             callback: Function to call with the selected TerminalSession
         """
         self._selection_callback = callback
+
+    def set_rename_callback(self, callback: Callable[[TerminalSession, str], None]) -> None:
+        """Set the callback for session rename requests."""
+        self._rename_callback = callback
+
+    def set_clear_title_callback(self, callback: Callable[[TerminalSession], None]) -> None:
+        """Set the callback for clearing custom session titles."""
+        self._clear_title_callback = callback
     
     def select_session(self, session: TerminalSession) -> None:
         """

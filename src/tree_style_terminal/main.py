@@ -619,6 +619,8 @@ class MainWindow(Gtk.ApplicationWindow):
             # Create our SessionSidebar widget
             self.session_sidebar = SessionSidebar(self.sidebar_controller)
             self.session_sidebar.set_selection_callback(self._on_session_selected)
+            self.session_sidebar.set_rename_callback(self._on_session_rename_requested)
+            self.session_sidebar.set_clear_title_callback(self._on_session_clear_title_requested)
             self.session_sidebar.show_all()
             sidebar_container.add(self.session_sidebar)
         else:
@@ -667,6 +669,8 @@ class MainWindow(Gtk.ApplicationWindow):
         # Create session sidebar widget
         self.session_sidebar = SessionSidebar(self.sidebar_controller)
         self.session_sidebar.set_selection_callback(self._on_session_selected)
+        self.session_sidebar.set_rename_callback(self._on_session_rename_requested)
+        self.session_sidebar.set_clear_title_callback(self._on_session_clear_title_requested)
         self.session_sidebar.get_style_context().add_class("sidebar")
         sidebar_box.pack_start(self.session_sidebar, True, True, 0)
         
@@ -987,6 +991,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.session_manager.select_session(session)
         if focus_terminal_after_select:
             GLib.idle_add(self.focus_terminal)
+
+    def _on_session_rename_requested(self, session: TerminalSession, title: str) -> None:
+        """Handle a session rename request from the sidebar."""
+        self.session_manager.rename_session(session, title)
+
+    def _on_session_clear_title_requested(self, session: TerminalSession) -> None:
+        """Handle a custom-title clear request from the sidebar."""
+        self.session_manager.clear_session_title(session)
     
     def _on_session_selected_by_manager(self, session: TerminalSession) -> None:
         """

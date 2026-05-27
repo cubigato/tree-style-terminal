@@ -25,6 +25,7 @@ class TestTerminalSession:
         assert session.pty_fd == 456
         assert session.cwd == "/home/user/projects"
         assert session.title == "My Terminal"
+        assert session.custom_title == "My Terminal"
         assert session.children == []
 
     def test_session_creation_without_title(self):
@@ -35,6 +36,34 @@ class TestTerminalSession:
             cwd="/home/user/projects"
         )
         
+        assert session.title == "user/projects"
+        assert session.auto_title == "user/projects"
+        assert session.custom_title is None
+
+    def test_custom_title_ignores_automatic_updates_until_cleared(self):
+        """Test custom titles remain visible until the user clears them."""
+        session = TerminalSession(pid=123, pty_fd=456, cwd="/home/user/projects")
+
+        session.rename("work")
+        changed = session.set_automatic_title("other/path")
+
+        assert not changed
+        assert session.title == "work"
+        assert session.auto_title == "other/path"
+
+        session.clear_custom_title()
+
+        assert session.custom_title is None
+        assert session.title == "other/path"
+
+    def test_blank_rename_restores_automatic_title(self):
+        """Test entering a blank rename clears the custom title."""
+        session = TerminalSession(pid=123, pty_fd=456, cwd="/home/user/projects")
+        session.rename("work")
+
+        session.rename("  ")
+
+        assert session.custom_title is None
         assert session.title == "user/projects"
 
     def test_session_title_auto_generation_root_dir(self):

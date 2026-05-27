@@ -261,6 +261,18 @@ class SessionManager:
     def get_all_sessions(self) -> list[TerminalSession]:
         """Get a list of all active sessions."""
         return list(self._session_terminals.keys())
+
+    def rename_session(self, session: TerminalSession, title: str) -> None:
+        """Set a custom visible title for a session."""
+        session.rename(title)
+        if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
+            self.session_changed_callback(session)
+
+    def clear_session_title(self, session: TerminalSession) -> None:
+        """Clear a custom title and return the session to automatic naming."""
+        session.clear_custom_title()
+        if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
+            self.session_changed_callback(session)
     
     def _on_terminal_exited(self, terminal: VteTerminal, exit_status: int, session: TerminalSession) -> None:
         """
@@ -295,9 +307,8 @@ class SessionManager:
         if raw_title:
             # Parse and format the terminal title
             parsed_title = session.parse_terminal_title(raw_title)
-            title_changed = parsed_title != session.title
+            title_changed = session.set_automatic_title(parsed_title)
             if title_changed:
-                session.title = parsed_title
                 logger.debug(f"Updated session title: {parsed_title}")
         else:
             title_changed = False
@@ -312,8 +323,7 @@ class SessionManager:
             # If no terminal title was processed, update title from CWD
             if not raw_title:
                 new_dir_title = session._get_short_path_title(current_dir)
-                if new_dir_title != session.title:
-                    session.title = new_dir_title
+                if session.set_automatic_title(new_dir_title):
                     title_changed = True
                     logger.debug(f"Updated session title from CWD: {new_dir_title}")
         
@@ -418,8 +428,7 @@ class SessionManager:
                     
                     # Update the session title to reflect the new directory
                     new_title = self.current_session._get_short_path_title(current_dir)
-                    if new_title != self.current_session.title:
-                        self.current_session.title = new_title
+                    if self.current_session.set_automatic_title(new_title):
                         
                         # Notify callbacks of the change
                         if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
