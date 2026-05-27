@@ -74,6 +74,7 @@ class TestConfigManager:
             # Check default values still present
             assert config_manager._config["terminal"]["transparency"] == 1.0
             assert config_manager._config["display"]["dpi_scale"] == "auto"
+            assert config_manager._config["shortcuts"]["terminal_search"] == "<Control><Shift>f"
     
     def test_load_config_only_loads_once(self):
         """Test that load_config only loads once unless explicitly reloaded."""
@@ -163,11 +164,20 @@ class TestConfigManager:
             "theme": "light",
             "terminal": {"scrollback_lines": 5000, "transparency": 0.8},
             "ui": {"sidebar_width": 300},
-            "display": {"dpi_scale": 1.5}
+            "display": {"dpi_scale": 1.5},
+            "shortcuts": {"terminal_search": "<Control><Alt>f"}
         }
         
         # Should not raise any exceptions
         config_manager._validate_config()
+
+    def test_validation_invalid_shortcut_type(self):
+        """Test validation rejects non-string shortcut values."""
+        config_manager = ConfigManager()
+        config_manager._config = {"shortcuts": {"terminal_search": 123}}
+
+        with pytest.raises(ConfigError, match="terminal_search.*must be of type str"):
+            config_manager._validate_config()
     
     def test_validation_invalid_theme(self):
         """Test validation rejects invalid theme values."""
@@ -282,6 +292,7 @@ class TestConfigManager:
         # Default values should be preserved
         assert merged["terminal"]["transparency"] == DEFAULT_CONFIG["terminal"]["transparency"]
         assert merged["ui"]["sidebar_width"] == DEFAULT_CONFIG["ui"]["sidebar_width"]
+        assert merged["shortcuts"]["terminal_search"] == DEFAULT_CONFIG["shortcuts"]["terminal_search"]
         
         # New sections should be added
         assert merged["new_section"]["new_value"] == "test"

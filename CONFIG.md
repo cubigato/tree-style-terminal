@@ -53,6 +53,19 @@ ui:
   - Range: 50 - 1,000 pixels
   - Default: 250 pixels
 
+### Shortcuts
+
+```yaml
+shortcuts:
+  # Open search for the active terminal scrollback
+  terminal_search: "<Control><Shift>f"
+```
+
+**Options:**
+- `terminal_search`: Keyboard shortcut that opens search for the active terminal
+  - Default: `<Control><Shift>f`
+  - Uses GTK accelerator syntax
+
 ### Display Settings
 
 ```yaml
@@ -92,6 +105,8 @@ ui:
   sidebar_width: 300
 terminal:
   scrollback_lines: 20000
+shortcuts:
+  terminal_search: "<Control><Shift>f"
 ```
 
 ### Light Theme with Large Sidebar

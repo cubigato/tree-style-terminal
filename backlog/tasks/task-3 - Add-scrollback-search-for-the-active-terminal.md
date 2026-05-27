@@ -1,10 +1,10 @@
 ---
 id: TASK-3
 title: Add scrollback search for the active terminal
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-05-27 21:46'
+updated_date: '2026-05-27 22:00'
 labels:
   - feature
   - 'effort:small'
@@ -13,7 +13,7 @@ dependencies: []
 references:
   - 'https://gnome.pages.gitlab.gnome.org/vte/gtk3/class.Terminal.html'
 priority: high
-ordinal: 1000
+ordinal: 500
 ---
 
 ## Description
@@ -24,7 +24,7 @@ Add a simple search UI for the active VTE terminal scrollback, with next/previou
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 User can open a search field for the current terminal
-- [ ] #2 Search can move to next and previous match
-- [ ] #3 Search state is cleared cleanly when closing the search UI
+- [x] #1 User can open a search field for the current terminal
+- [x] #2 Search can move to next and previous match
+- [x] #3 Search state is cleared cleanly when closing the search UI
 <!-- AC:END -->

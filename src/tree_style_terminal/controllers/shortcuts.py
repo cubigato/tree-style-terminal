@@ -17,6 +17,7 @@ gi.require_version('Gdk', '3.0')
 from gi.repository import Gio, GLib, Gtk, Gdk  # noqa: E402
 
 from .session_manager import SessionManager  # noqa: E402
+from ..config import config_manager  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,12 @@ class ShortcutController:
         self._create_action(
             name="terminal_paste",
             callback=self._on_terminal_paste,
+            enabled=True
+        )
+
+        self._create_action(
+            name="terminal_search",
+            callback=self._on_terminal_search,
             enabled=True
         )
 
@@ -239,6 +246,19 @@ class ShortcutController:
         except Exception as e:
             logger.error(f"Error pasting into terminal: {e}")
 
+    def _on_terminal_search(
+        self,
+        action: Gio.SimpleAction,
+        parameter: GLib.Variant,
+    ) -> None:
+        """Handle terminal_search action activation."""
+        try:
+            terminal_widget = self._get_current_terminal_widget()
+            if terminal_widget and hasattr(terminal_widget, "show_search"):
+                terminal_widget.show_search()
+        except Exception as e:
+            logger.error(f"Error opening terminal search: {e}")
+
     def _on_next_session(self, action: Gio.SimpleAction, parameter: GLib.Variant) -> None:
         """Handle next_session action activation."""
         try:
@@ -323,6 +343,11 @@ class ShortcutController:
         self.main_window.add_accel_group(self._accel_group)
 
         # Define shortcut mappings
+        terminal_search_shortcut = config_manager.get(
+            "shortcuts.terminal_search",
+            "<Control><Shift>f",
+        )
+
         shortcuts = [
             # Core session management - as requested
             ('<Control><Shift>t', 'new_sibling'),
@@ -332,12 +357,12 @@ class ShortcutController:
             # Navigation & UI
             ('F9', 'toggle_sidebar'),
             ('<Control><Shift>o', 'toggle_sidebar'),  # Alternative
-            ('<Control><Shift>f', 'focus_terminal'),
             ('<Control><Shift>s', 'focus_sidebar'),
 
             # Terminal clipboard
             ('<Control><Shift>c', 'terminal_copy'),
             ('<Control><Shift>v', 'terminal_paste'),
+            (terminal_search_shortcut, 'terminal_search'),
             
             # Session navigation
             ('<Control><Shift>Right', 'next_session'),
@@ -401,6 +426,7 @@ class ShortcutController:
         self.enable_action("close_session", has_current_session)
         self.enable_action("terminal_copy", has_current_session)
         self.enable_action("terminal_paste", has_current_session)
+        self.enable_action("terminal_search", has_current_session)
 
         # Navigation actions require multiple sessions
         has_multiple_sessions = len(self.session_manager.get_all_sessions()) > 1

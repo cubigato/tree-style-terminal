@@ -541,6 +541,17 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Add the button box to header bar
         self.headerbar.pack_start(session_buttons_box)
+
+        # Add active-terminal search button
+        self.search_button = Gtk.Button()
+        self.search_button.set_image(
+            Gtk.Image.new_from_icon_name("edit-find-symbolic", Gtk.IconSize.BUTTON)
+        )
+        search_shortcut = config_manager.get("shortcuts.terminal_search", "<Control><Shift>f")
+        self.search_button.set_tooltip_text(f"Search active terminal ({search_shortcut})")
+        self.search_button.connect("clicked", self._on_search_clicked)
+        self.search_button.set_sensitive(False)
+        self.headerbar.pack_end(self.search_button)
         
         # Add theme toggle button
         self.theme_toggle_button = Gtk.Button()
@@ -743,6 +754,12 @@ class MainWindow(Gtk.ApplicationWindow):
         action = self.shortcut_controller.get_action("new_child")
         if action:
             action.activate(None)
+
+    def _on_search_clicked(self, button: Gtk.Button) -> None:
+        """Handle terminal search button click."""
+        action = self.shortcut_controller.get_action("terminal_search")
+        if action:
+            action.activate(None)
     
     def _update_button_states(self) -> None:
         """Update button states based on current session state."""
@@ -755,6 +772,8 @@ class MainWindow(Gtk.ApplicationWindow):
             self.new_child_button.set_sensitive(True)  # Always available  
         if hasattr(self, 'close_session_button'):
             self.close_session_button.set_sensitive(has_current_session)
+        if hasattr(self, 'search_button'):
+            self.search_button.set_sensitive(has_current_session)
         
         # Update shortcut controller action states
         self.shortcut_controller.update_action_states()

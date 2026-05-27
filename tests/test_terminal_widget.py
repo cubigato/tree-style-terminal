@@ -2,7 +2,7 @@
 
 import pytest
 import os
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 
 def test_vte_terminal_creation():
@@ -114,6 +114,10 @@ def test_terminal_methods_exist():
         'spawn_shell',
         'set_font_size', 
         'set_scrollback_length',
+        'show_search',
+        'hide_search',
+        'search_next',
+        'search_previous',
         'copy_clipboard',
         'paste_clipboard',
         'select_all',
@@ -179,3 +183,75 @@ def test_spawn_complete_stores_child_pid():
 
     assert terminal.pid == 12345
     assert terminal.pty_fd == 99
+
+
+def test_terminal_search_sets_literal_regex():
+    """Test terminal search configures VTE search with literal text."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+
+    terminal._set_search_text("a.b[")
+
+    terminal.terminal.search_set_regex.assert_called_once()
+    terminal.terminal.search_set_wrap_around.assert_called_once_with(True)
+    terminal.terminal.search_find_next.assert_called_once()
+
+
+def test_terminal_search_clear_removes_vte_regex():
+    """Test clearing search removes VTE search state."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+
+    terminal._set_search_text("")
+
+    terminal.terminal.search_set_regex.assert_called_once_with(None, 0)
+
+
+def test_terminal_search_navigation_uses_vte_api():
+    """Test search navigation delegates to VTE."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+
+    terminal.search_next()
+    terminal.search_previous()
+
+    terminal.terminal.search_find_next.assert_called_once()
+    terminal.terminal.search_find_previous.assert_called_once()
+
+
+def test_terminal_search_escape_closes_search():
+    """Test Escape closes the terminal search UI."""
+    from gi.repository import Gdk
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    event = Mock()
+    event.keyval = Gdk.KEY_Escape
+
+    with patch.object(terminal, "hide_search") as mock_hide_search:
+        handled = terminal._on_search_key_press(terminal.search_entry, event)
+
+    mock_hide_search.assert_called_once()
+    assert handled is True
+
+
+def test_terminal_search_non_escape_key_is_not_handled():
+    """Test non-Escape keys keep normal entry handling."""
+    from gi.repository import Gdk
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    event = Mock()
+    event.keyval = Gdk.KEY_a
+
+    with patch.object(terminal, "hide_search") as mock_hide_search:
+        handled = terminal._on_search_key_press(terminal.search_entry, event)
+
+    mock_hide_search.assert_not_called()
+    assert handled is False

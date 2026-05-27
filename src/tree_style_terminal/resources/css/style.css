@@ -37,6 +37,11 @@ window {
     /* font-size and font-family set by system CSS loader */
 }
 
+.terminal-search-bar {
+    padding: 6px;
+    border-bottom: 1px solid #cccccc;
+}
+
 /* HeaderBar */
 headerbar {
     background-color: #f5f5f5;

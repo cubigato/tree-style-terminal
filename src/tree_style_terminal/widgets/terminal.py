@@ -7,6 +7,7 @@ This module provides a VTE terminal widget wrapper with spawn functionality.
 
 import os
 import logging
+import re
 from urllib.parse import unquote, urlparse
 from typing import Optional, List
 
@@ -49,6 +50,9 @@ class VteTerminal(Gtk.Box):
         self._configure_terminal()
         self._context_menu = self._create_context_menu()
 
+        # Add a lightweight search bar for the active terminal scrollback.
+        self._setup_search_bar()
+
         # Add terminal to a scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
         self.scrolled_window.set_policy(
@@ -58,11 +62,14 @@ class VteTerminal(Gtk.Box):
         self.scrolled_window.add(self.terminal)
 
         # Pack into the box
+        self.pack_start(self.search_revealer, False, False, 0)
         self.pack_start(self.scrolled_window, True, True, 0)
 
         # Show the terminal widgets explicitly
         self.terminal.show()
         self.scrolled_window.show()
+        self.search_revealer.show()
+        self.search_bar.show_all()
         self.show()
 
         # Store process information
@@ -77,6 +84,103 @@ class VteTerminal(Gtk.Box):
     def grab_focus(self) -> None:
         """Focus the underlying VTE widget instead of the wrapper box."""
         self.terminal.grab_focus()
+
+    def _setup_search_bar(self) -> None:
+        """Create the hidden search controls for terminal scrollback."""
+        self.search_revealer = Gtk.Revealer()
+        self.search_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN)
+        self.search_revealer.set_transition_duration(120)
+        self.search_revealer.set_reveal_child(False)
+
+        self.search_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self.search_bar.get_style_context().add_class("terminal-search-bar")
+
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_placeholder_text("Search")
+        self.search_entry.connect("search-changed", self._on_search_changed)
+        self.search_entry.connect("activate", lambda _entry: self.search_next())
+        self.search_entry.connect("key-press-event", self._on_search_key_press)
+        self.search_bar.pack_start(self.search_entry, True, True, 0)
+
+        self.search_previous_button = Gtk.Button()
+        self.search_previous_button.set_image(
+            Gtk.Image.new_from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.search_previous_button.set_tooltip_text("Previous match")
+        self.search_previous_button.connect("clicked", lambda _button: self.search_previous())
+        self.search_bar.pack_start(self.search_previous_button, False, False, 0)
+
+        self.search_next_button = Gtk.Button()
+        self.search_next_button.set_image(
+            Gtk.Image.new_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.search_next_button.set_tooltip_text("Next match")
+        self.search_next_button.connect("clicked", lambda _button: self.search_next())
+        self.search_bar.pack_start(self.search_next_button, False, False, 0)
+
+        self.search_close_button = Gtk.Button()
+        self.search_close_button.set_image(
+            Gtk.Image.new_from_icon_name("window-close-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.search_close_button.set_tooltip_text("Close search")
+        self.search_close_button.connect("clicked", lambda _button: self.hide_search())
+        self.search_bar.pack_start(self.search_close_button, False, False, 0)
+
+        self.search_revealer.add(self.search_bar)
+
+    def show_search(self) -> None:
+        """Open the scrollback search UI for this terminal."""
+        self.search_revealer.set_reveal_child(True)
+        self.search_entry.grab_focus()
+        self.search_entry.select_region(0, -1)
+
+    def hide_search(self) -> None:
+        """Close search and clear VTE search state."""
+        self.search_entry.set_text("")
+        self.terminal.search_set_regex(None, 0)
+        self.search_revealer.set_reveal_child(False)
+        self.grab_focus()
+
+    def _on_search_changed(self, entry: Gtk.SearchEntry) -> None:
+        """Update VTE search state as the user edits the query."""
+        self._set_search_text(entry.get_text())
+
+    def _on_search_key_press(self, _entry: Gtk.SearchEntry, event: Gdk.EventKey) -> bool:
+        """Close search when Escape is pressed in the search field."""
+        if event.keyval == Gdk.KEY_Escape:
+            self.hide_search()
+            return True
+
+        return False
+
+    def _set_search_text(self, text: str) -> None:
+        """Set the literal search text used by VTE."""
+        if not text:
+            self.terminal.search_set_regex(None, 0)
+            return
+
+        try:
+            pattern = re.escape(text)
+            regex = Vte.Regex.new_for_search(pattern, -1, 0)
+            self.terminal.search_set_regex(regex, 0)
+            self.terminal.search_set_wrap_around(True)
+            self.search_next()
+        except Exception as e:
+            logger.warning(f"Failed to set terminal search text: {e}")
+
+    def search_next(self) -> None:
+        """Move to the next search match."""
+        try:
+            self.terminal.search_find_next()
+        except Exception as e:
+            logger.debug(f"Failed to find next terminal search match: {e}")
+
+    def search_previous(self) -> None:
+        """Move to the previous search match."""
+        try:
+            self.terminal.search_find_previous()
+        except Exception as e:
+            logger.debug(f"Failed to find previous terminal search match: {e}")
 
     def _configure_terminal(self) -> None:
         """Configure basic terminal settings."""
