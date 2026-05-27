@@ -4,6 +4,7 @@ title: Persist session tree and sidebar state
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:08'
+updated_date: '2026-05-27 22:35'
 labels:
   - feature
   - 'effort:medium'
@@ -11,14 +12,15 @@ labels:
 dependencies: []
 references:
   - ARCHITECTURE.md
-priority: high
-ordinal: 40
+priority: medium
+ordinal: 115
 ---
 
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 Persist the session tree structure, titles, cwd values, selected session, and expanded/collapsed sidebar state under XDG state. Restore structure on startup without pretending to restore live process state.
+This feature needs to be non-invasive. Handling of multiple instances running at the same time has to be considered.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
