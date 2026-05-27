@@ -40,6 +40,8 @@ class SessionSidebar(Gtk.Box):
         self.controller = sidebar_controller
         self._selection_callback: Optional[Callable[[TerminalSession], None]] = None
         self._selecting_programmatically = False
+        self._selection_started_by_pointer = False
+        self._last_selection_was_pointer = False
         
         # Create the tree view
         self.tree_view = Gtk.TreeView()
@@ -56,6 +58,7 @@ class SessionSidebar(Gtk.Box):
         selection = self.tree_view.get_selection()
         selection.set_mode(Gtk.SelectionMode.SINGLE)
         selection.connect("changed", self._on_selection_changed)
+        self.tree_view.connect("button-press-event", self._on_button_press_event)
         
         # Create scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
@@ -112,7 +115,20 @@ class SessionSidebar(Gtk.Box):
             session = self.controller.get_session_from_iter(tree_iter)
             if session and self._selection_callback:
                 logger.debug(f"Session selected: {session.title}")
-                self._selection_callback(session)
+                self._last_selection_was_pointer = self._selection_started_by_pointer
+                try:
+                    self._selection_callback(session)
+                finally:
+                    self._selection_started_by_pointer = False
+
+    def _on_button_press_event(self, _tree_view: Gtk.TreeView, _event: Gdk.EventButton) -> bool:
+        """Track that the next selection change originated from the pointer."""
+        self._selection_started_by_pointer = True
+        return False
+
+    def last_selection_was_pointer(self) -> bool:
+        """Return whether the most recent user selection started with a pointer event."""
+        return self._last_selection_was_pointer
     
     def set_selection_callback(self, callback: Callable[[TerminalSession], None]) -> None:
         """

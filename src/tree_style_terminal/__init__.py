@@ -6,7 +6,7 @@ structure instead of traditional tabs, making it easier to manage complex workfl
 with multiple related terminal sessions.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 __author__ = "Tree Style Terminal Contributors"
 __license__ = "Apache-2.0"
 

@@ -132,3 +132,25 @@ class TestSessionSidebar:
         sidebar.select_session(session)
 
         assert selected_sessions == []
+
+    def test_pointer_selection_is_tracked_for_callback(self):
+        """Test pointer-initiated selections can be distinguished from keyboard selections."""
+        tree = SessionTree()
+        controller = SidebarController(tree)
+        sidebar = SessionSidebar(controller)
+
+        session = TerminalSession(pid=1, pty_fd=10, cwd="/one")
+        tree.add_node(session)
+        controller.sync_with_session_tree()
+
+        pointer_selection_states = []
+        sidebar.set_selection_callback(
+            lambda selected: pointer_selection_states.append(sidebar.last_selection_was_pointer())
+        )
+
+        tree_iter = controller.find_iter_for_session(session)
+        path = controller.get_tree_store().get_path(tree_iter)
+        sidebar._on_button_press_event(sidebar.tree_view, None)
+        sidebar.tree_view.get_selection().select_path(path)
+
+        assert pointer_selection_states == [True]

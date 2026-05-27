@@ -899,6 +899,8 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Update button states
         self._update_button_states()
+
+        GLib.idle_add(self.focus_terminal)
         
         logger.debug(f"Session created: {session.title}")
     
@@ -959,7 +961,13 @@ class MainWindow(Gtk.ApplicationWindow):
         Args:
             session: The selected session
         """
+        focus_terminal_after_select = (
+            self.session_sidebar is not None
+            and self.session_sidebar.last_selection_was_pointer()
+        )
         self.session_manager.select_session(session)
+        if focus_terminal_after_select:
+            GLib.idle_add(self.focus_terminal)
     
     def _on_session_selected_by_manager(self, session: TerminalSession) -> None:
         """

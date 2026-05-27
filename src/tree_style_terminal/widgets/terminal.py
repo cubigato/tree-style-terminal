@@ -74,6 +74,10 @@ class VteTerminal(Gtk.Box):
         self.terminal.connect("window-title-changed", self._on_title_changed)
         self.terminal.connect("button-press-event", self._on_button_press)
 
+    def grab_focus(self) -> None:
+        """Focus the underlying VTE widget instead of the wrapper box."""
+        self.terminal.grab_focus()
+
     def _configure_terminal(self) -> None:
         """Configure basic terminal settings."""
         # Set default font

@@ -1,6 +1,13 @@
 """Main window tests for tree-style-terminal."""
 
 import pytest
+from unittest.mock import patch
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+from src.tree_style_terminal.models.session import TerminalSession
 
 
 def test_main_window_creation():
@@ -118,3 +125,18 @@ def test_sidebar_toggle_functionality():
     except Exception:
         # If method requires specific setup, just verify it exists
         pass
+
+
+def test_new_session_creation_schedules_terminal_focus():
+    """Test creating a session schedules focus back to the terminal."""
+    from src.tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    app = TreeStyleTerminalApp()
+    window = MainWindow(application=app)
+    session = TerminalSession(pid=123, pty_fd=456, cwd="/test")
+    terminal_widget = Gtk.Box()
+
+    with patch("src.tree_style_terminal.main.GLib.idle_add") as idle_add:
+        window._on_session_created(session, terminal_widget)
+
+    idle_add.assert_called_with(window.focus_terminal)
