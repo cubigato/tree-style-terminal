@@ -4,6 +4,7 @@ title: Normalize runtime diagnostics to logging
 status: To Do
 assignee: []
 created_date: '2026-05-27 22:18'
+updated_date: '2026-05-27 22:25'
 labels: []
 dependencies: []
 references:
@@ -11,7 +12,7 @@ references:
   - src/tree_style_terminal/main.py
 parent_task_id: TASK-27
 priority: high
-ordinal: 6000
+ordinal: 60
 ---
 
 ## Description

@@ -4,6 +4,7 @@ title: Explore remote SSH session helpers
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:10'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:large'
@@ -14,7 +15,7 @@ references:
   - 'https://wezterm.org/'
   - 'https://iterm2.com/documentation-shell-integration.html'
 priority: low
-ordinal: 230
+ordinal: 240
 ---
 
 ## Description

@@ -4,6 +4,7 @@ title: Show lightweight session badges in the tree
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:09'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:medium'
@@ -12,7 +13,7 @@ dependencies: []
 references:
   - 'https://iterm2.com/documentation-shell-integration.html'
 priority: medium
-ordinal: 60
+ordinal: 90
 ---
 
 ## Description

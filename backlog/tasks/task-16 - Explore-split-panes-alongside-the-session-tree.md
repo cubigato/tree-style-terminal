@@ -4,6 +4,7 @@ title: Explore split panes alongside the session tree
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:10'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:large'
@@ -15,7 +16,7 @@ references:
   - 'https://wezterm.org/'
   - 'https://learn.microsoft.com/en-us/windows/terminal/'
 priority: low
-ordinal: 200
+ordinal: 210
 ---
 
 ## Description

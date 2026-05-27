@@ -4,6 +4,7 @@ title: Evaluate plugin API for Tree Style Terminal extensions
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:10'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:large'
@@ -13,7 +14,7 @@ dependencies: []
 references:
   - ARCHITECTURE.md
 priority: low
-ordinal: 250
+ordinal: 260
 ---
 
 ## Description

@@ -4,6 +4,7 @@ title: Standardize tests on package imports
 status: To Do
 assignee: []
 created_date: '2026-05-27 22:19'
+updated_date: '2026-05-27 22:25'
 labels: []
 dependencies: []
 references:
@@ -14,7 +15,7 @@ references:
   - tests/conftest.py
 parent_task_id: TASK-27
 priority: high
-ordinal: 10000
+ordinal: 70
 ---
 
 ## Description

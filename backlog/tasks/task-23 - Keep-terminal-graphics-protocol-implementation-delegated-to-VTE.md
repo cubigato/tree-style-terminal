@@ -4,6 +4,7 @@ title: Keep terminal graphics protocol implementation delegated to VTE
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:11'
+updated_date: '2026-05-27 22:25'
 labels:
   - research
   - not-now
@@ -13,7 +14,7 @@ dependencies: []
 references:
   - 'https://gnome.pages.gitlab.gnome.org/vte/gtk3/class.Terminal.html'
 priority: low
-ordinal: 310
+ordinal: 280
 ---
 
 ## Description

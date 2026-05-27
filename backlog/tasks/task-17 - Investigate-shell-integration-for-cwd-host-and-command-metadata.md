@@ -4,6 +4,7 @@ title: Investigate shell integration for cwd host and command metadata
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:10'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:large'
@@ -13,7 +14,7 @@ dependencies: []
 references:
   - 'https://iterm2.com/documentation-shell-integration.html'
 priority: low
-ordinal: 210
+ordinal: 220
 ---
 
 ## Description

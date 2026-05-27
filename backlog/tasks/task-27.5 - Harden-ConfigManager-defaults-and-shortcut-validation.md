@@ -4,6 +4,7 @@ title: Harden ConfigManager defaults and shortcut validation
 status: To Do
 assignee: []
 created_date: '2026-05-27 22:18'
+updated_date: '2026-05-27 22:25'
 labels: []
 dependencies: []
 references:
@@ -14,7 +15,7 @@ references:
   - tests/unit/test_config.py
 parent_task_id: TASK-27
 priority: low
-ordinal: 8000
+ordinal: 310
 ---
 
 ## Description

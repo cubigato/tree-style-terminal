@@ -4,6 +4,7 @@ title: Extract CSSLoader from main.py
 status: To Do
 assignee: []
 created_date: '2026-05-27 22:18'
+updated_date: '2026-05-27 22:25'
 labels: []
 dependencies: []
 references:
@@ -15,7 +16,7 @@ references:
   - tests/integration/test_font_scaling_integration.py
 parent_task_id: TASK-27
 priority: high
-ordinal: 5000
+ordinal: 50
 ---
 
 ## Description

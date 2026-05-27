@@ -4,6 +4,7 @@ title: Keep custom terminal rendering engine out of scope
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:11'
+updated_date: '2026-05-27 22:25'
 labels:
   - research
   - not-now
@@ -13,7 +14,7 @@ dependencies: []
 references:
   - ARCHITECTURE.md
 priority: low
-ordinal: 300
+ordinal: 270
 ---
 
 ## Description

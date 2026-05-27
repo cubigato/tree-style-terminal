@@ -4,6 +4,7 @@ title: Evaluate session resurrection from saved layouts
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:10'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:large'
@@ -13,7 +14,7 @@ dependencies: []
 references:
   - 'https://zellij.dev/features/'
 priority: low
-ordinal: 220
+ordinal: 230
 ---
 
 ## Description

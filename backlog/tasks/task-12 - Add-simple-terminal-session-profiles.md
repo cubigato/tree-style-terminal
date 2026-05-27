@@ -4,6 +4,7 @@ title: Add simple terminal session profiles
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:09'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:medium'
@@ -13,7 +14,7 @@ references:
   - 'https://learn.microsoft.com/en-us/windows/terminal/'
   - 'https://help.gnome.org/gnome-terminal/'
 priority: medium
-ordinal: 100
+ordinal: 130
 ---
 
 ## Description

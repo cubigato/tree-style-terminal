@@ -4,6 +4,7 @@ title: Add duplicate session actions
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:09'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:medium'
@@ -12,7 +13,7 @@ dependencies: []
 references:
   - 'https://learn.microsoft.com/en-us/windows/terminal/'
 priority: medium
-ordinal: 70
+ordinal: 100
 ---
 
 ## Description

@@ -4,6 +4,7 @@ title: Define YAML layout templates for session trees
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:10'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:medium'
@@ -13,7 +14,7 @@ dependencies: []
 references:
   - 'https://zellij.dev/features/'
 priority: medium
-ordinal: 120
+ordinal: 150
 ---
 
 ## Description

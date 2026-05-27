@@ -4,6 +4,7 @@ title: Add save scrollback action
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:09'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:small'
@@ -12,7 +13,7 @@ dependencies: []
 references:
   - 'https://help.gnome.org/gnome-terminal/'
 priority: medium
-ordinal: 80
+ordinal: 110
 ---
 
 ## Description

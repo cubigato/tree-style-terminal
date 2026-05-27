@@ -4,6 +4,7 @@ title: Explore command block model for terminal output
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:10'
+updated_date: '2026-05-27 22:25'
 labels:
   - feature
   - 'effort:large'
@@ -13,7 +14,7 @@ dependencies: []
 references:
   - 'https://docs.warp.dev/features/windows'
 priority: low
-ordinal: 240
+ordinal: 250
 ---
 
 ## Description
