@@ -1,10 +1,10 @@
 ---
 id: TASK-5
 title: Improve session titles with rename and title lock
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-05-27 22:29'
+updated_date: '2026-05-27 22:32'
 labels:
   - feature
   - 'effort:small'
@@ -21,7 +21,7 @@ modified_files:
   - tests/unit/test_session_actions.py
   - tests/unit/test_session_sidebar.py
 priority: high
-ordinal: 3000
+ordinal: 5000
 ---
 
 ## Description
