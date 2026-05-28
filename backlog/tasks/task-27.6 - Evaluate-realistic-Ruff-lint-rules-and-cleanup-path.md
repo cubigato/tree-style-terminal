@@ -1,10 +1,10 @@
 ---
 id: TASK-27.6
 title: Evaluate realistic Ruff lint rules and cleanup path
-status: To Do
+status: next
 assignee: []
 created_date: '2026-05-27 22:19'
-updated_date: '2026-05-27 22:25'
+updated_date: '2026-05-28 12:13'
 labels: []
 dependencies: []
 references:
@@ -14,7 +14,7 @@ references:
   - tests
 parent_task_id: TASK-27
 priority: medium
-ordinal: 180
+ordinal: 3000
 ---
 
 ## Description

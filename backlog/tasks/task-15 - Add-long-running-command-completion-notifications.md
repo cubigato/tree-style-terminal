@@ -4,7 +4,7 @@ title: Add long-running command completion notifications
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:10'
-updated_date: '2026-05-27 22:25'
+updated_date: '2026-05-28 14:26'
 labels:
   - feature
   - 'effort:medium'
@@ -13,7 +13,7 @@ labels:
 dependencies: []
 references:
   - 'https://iterm2.com/documentation-shell-integration.html'
-priority: low
+priority: medium
 ordinal: 200
 ---
 

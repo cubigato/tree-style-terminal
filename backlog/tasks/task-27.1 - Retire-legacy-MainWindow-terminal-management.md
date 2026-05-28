@@ -1,10 +1,10 @@
 ---
 id: TASK-27.1
 title: Retire legacy MainWindow terminal management
-status: To Do
+status: next
 assignee: []
 created_date: '2026-05-27 22:18'
-updated_date: '2026-05-27 22:25'
+updated_date: '2026-05-28 12:12'
 labels: []
 dependencies: []
 references:
@@ -13,7 +13,7 @@ references:
   - tests/test_main_window.py
 parent_task_id: TASK-27
 priority: medium
-ordinal: 160
+ordinal: 1000
 ---
 
 ## Description
