@@ -7,12 +7,12 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-from src.tree_style_terminal.models.session import TerminalSession
+from tree_style_terminal.models.session import TerminalSession
 
 
 def test_main_window_creation():
     """Test MainWindow can be instantiated (basic setup)."""
-    from src.tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
     
     # Create a minimal app instance for the window
     app = TreeStyleTerminalApp()
@@ -27,7 +27,7 @@ def test_main_window_creation():
 
 def test_terminal_management_dict():
     """Test terminal storage/retrieval from terminals dict."""
-    from src.tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
     
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
@@ -41,7 +41,7 @@ def test_terminal_management_dict():
 
 def test_main_window_methods_exist():
     """Test that expected methods exist on MainWindow."""
-    from src.tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
     
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
@@ -62,7 +62,7 @@ def test_main_window_methods_exist():
 
 def test_app_creation():
     """Test TreeStyleTerminalApp can be instantiated."""
-    from src.tree_style_terminal.main import TreeStyleTerminalApp
+    from tree_style_terminal.main import TreeStyleTerminalApp
     
     app = TreeStyleTerminalApp()
     assert app is not None
@@ -72,7 +72,7 @@ def test_app_creation():
 
 def test_sidebar_state_management():
     """Test sidebar state tracking properties."""
-    from src.tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
     
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
@@ -85,7 +85,7 @@ def test_sidebar_state_management():
 
 def test_layout_components_exist():
     """Test that layout components (Paned, Revealer) are available."""
-    from src.tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
     
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
@@ -104,7 +104,7 @@ def test_layout_components_exist():
 
 def test_sidebar_toggle_functionality():
     """Test sidebar toggle button and revealer functionality."""
-    from src.tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
     
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
@@ -129,14 +129,14 @@ def test_sidebar_toggle_functionality():
 
 def test_new_session_creation_schedules_terminal_focus():
     """Test creating a session schedules focus back to the terminal."""
-    from src.tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
 
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
     session = TerminalSession(pid=123, pty_fd=456, cwd="/test")
     terminal_widget = Gtk.Box()
 
-    with patch("src.tree_style_terminal.main.GLib.idle_add") as idle_add:
+    with patch("tree_style_terminal.main.GLib.idle_add") as idle_add:
         window._on_session_created(session, terminal_widget)
 
     idle_add.assert_called_with(window.focus_terminal)

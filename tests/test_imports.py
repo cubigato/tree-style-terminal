@@ -28,7 +28,7 @@ def test_gtk_import():
 def test_terminal_widget_import():
     """Ensure our terminal widget can be imported."""
     try:
-        from src.tree_style_terminal.widgets.terminal import VteTerminal
+        from tree_style_terminal.widgets.terminal import VteTerminal
         assert VteTerminal is not None
     except ImportError as e:
         pytest.fail(f"Terminal widget import failed: {e}")
@@ -38,8 +38,8 @@ def test_main_import():
     """Ensure main module can be imported."""
     try:
         # Test that we can import the module itself
-        import src.tree_style_terminal.main
-        assert src.tree_style_terminal.main is not None
+        import tree_style_terminal.main
+        assert tree_style_terminal.main is not None
     except ImportError as e:
         pytest.fail(f"Main module import failed: {e}")
 
@@ -47,7 +47,7 @@ def test_main_import():
 def test_main_window_class_import():
     """Ensure MainWindow class can be imported."""
     try:
-        from src.tree_style_terminal.main import MainWindow
+        from tree_style_terminal.main import MainWindow
         assert MainWindow is not None
     except ImportError as e:
         pytest.fail(f"MainWindow class import failed: {e}")
@@ -56,7 +56,7 @@ def test_main_window_class_import():
 def test_app_class_import():
     """Ensure TreeStyleTerminalApp class can be imported."""
     try:
-        from src.tree_style_terminal.main import TreeStyleTerminalApp
+        from tree_style_terminal.main import TreeStyleTerminalApp
         assert TreeStyleTerminalApp is not None
     except ImportError as e:
         pytest.fail(f"TreeStyleTerminalApp class import failed: {e}")
