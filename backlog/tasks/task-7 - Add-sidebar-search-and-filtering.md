@@ -4,13 +4,13 @@ title: Add sidebar search and filtering
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:09'
-updated_date: '2026-05-27 22:25'
+updated_date: '2026-05-28 08:24'
 labels:
   - feature
   - 'effort:medium'
   - 'area:sidebar'
 dependencies: []
-priority: medium
+priority: low
 ordinal: 80
 ---
 

@@ -1,10 +1,10 @@
 ---
 id: TASK-27.7
 title: Standardize tests on package imports
-status: To Do
+status: next
 assignee: []
 created_date: '2026-05-27 22:19'
-updated_date: '2026-05-28 06:38'
+updated_date: '2026-05-28 08:25'
 labels: []
 dependencies: []
 references:
@@ -15,7 +15,7 @@ references:
   - tests/conftest.py
 parent_task_id: TASK-27
 priority: high
-ordinal: 40
+ordinal: 2000
 ---
 
 ## Description
