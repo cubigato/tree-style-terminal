@@ -50,7 +50,7 @@ class CSSLoader:
             # Read DPI scale from config
             self._config_dpi_scale = config_manager.get("display.dpi_scale", "auto")
         except ConfigError as e:
-            print(f"Configuration error: {e}")
+            logger.error("Configuration error: %s", e)
             raise
         
         self._override_dpi = override_dpi
@@ -67,11 +67,11 @@ class CSSLoader:
             try:
                 self.css_provider.load_from_path(str(base_css_path))
                 self._add_provider_to_screen(self.css_provider)
-                print(f"Loaded base CSS from {base_css_path}")
+                logger.info("Loaded base CSS from %s", base_css_path)
             except GLib.Error as e:
-                print(f"Error loading base CSS: {e}")
+                logger.warning("Error loading base CSS: %s", e)
         else:
-            print(f"Warning: Base CSS file not found at {base_css_path}")
+            logger.warning("Base CSS file not found at %s", base_css_path)
     
     def _load_system_css(self):
         """Generate and load CSS with proper font scaling based on DPI settings."""
@@ -87,7 +87,7 @@ class CSSLoader:
             self._add_provider_to_screen(self.system_css_provider)
             
         except Exception as e:
-            print(f"Warning: Could not load system CSS with font scaling: {e}")
+            logger.warning("Could not load system CSS with font scaling: %s", e)
     
     def load_theme(self, theme_name: str):
         """Load a specific theme (light/dark)."""
@@ -111,11 +111,11 @@ class CSSLoader:
                 # Reload system CSS after theme to ensure transparency overrides
                 self._load_system_css()
                 
-                print(f"Loaded {theme_name} theme from {theme_css_path}")
+                logger.info("Loaded %s theme from %s", theme_name, theme_css_path)
             except GLib.Error as e:
-                print(f"Error loading {theme_name} theme: {e}")
+                logger.warning("Error loading %s theme: %s", theme_name, e)
         else:
-            print(f"Warning: Theme file not found at {theme_css_path}")
+            logger.warning("Theme file not found at %s", theme_css_path)
     
     def toggle_theme(self):
         """Toggle between light and dark theme."""
@@ -142,7 +142,7 @@ class CSSLoader:
             # Try to get the dark theme preference
             prefer_dark = settings.get_property("gtk-application-prefer-dark-theme")
             if prefer_dark:
-                print("Detected system preference: dark theme")
+                logger.info("Detected system preference: dark theme")
                 return "dark"
             
             # Fallback: check the theme name for dark indicators
@@ -150,15 +150,15 @@ class CSSLoader:
             theme_name_lower = theme_name.lower()
             
             if any(dark_indicator in theme_name_lower for dark_indicator in ["dark", "noir", "black", "adwaita-dark"]):
-                print(f"Detected dark theme from theme name: {theme_name}")
+                logger.info("Detected dark theme from theme name: %s", theme_name)
                 return "dark"
             
-            print(f"Detected light theme (theme name: {theme_name})")
+            logger.info("Detected light theme (theme name: %s)", theme_name)
             return "light"
             
         except Exception as e:
-            print(f"Could not detect system theme preference: {e}")
-            print("Falling back to light theme")
+            logger.warning("Could not detect system theme preference: %s", e)
+            logger.info("Falling back to light theme")
             return "light"
 
     def _calculate_effective_dpi_scale(self):
@@ -176,7 +176,7 @@ class CSSLoader:
                 try:
                     return float(env_dpi) / 96.0
                 except ValueError:
-                    print(f"Warning: Invalid TST_DPI value '{env_dpi}', ignoring")
+                    logger.warning("Invalid TST_DPI value %r, ignoring", env_dpi)
             
             # Priority 3: Configuration file
             if self._config_dpi_scale != "auto":
@@ -186,13 +186,13 @@ class CSSLoader:
                     try:
                         return float(self._config_dpi_scale)
                     except ValueError:
-                        print(f"Warning: Invalid dpi_scale value '{self._config_dpi_scale}', using auto")
+                        logger.warning("Invalid dpi_scale value %r, using auto", self._config_dpi_scale)
             
             # Priority 4: Auto-detection
             return self._detect_system_dpi_scale()
             
         except Exception as e:
-            print(f"Warning: Error calculating DPI scale, using 1.0: {e}")
+            logger.warning("Error calculating DPI scale, using 1.0: %s", e)
             return 1.0
 
     def _detect_system_dpi_scale(self):
@@ -258,7 +258,7 @@ class CSSLoader:
             return comfort_scale
             
         except Exception as e:
-            print(f"Warning: Could not detect system DPI, using scale 1.0: {e}")
+            logger.warning("Could not detect system DPI, using scale 1.0: %s", e)
             return 1.0
 
     def _generate_scaled_css(self, scale_factor):
@@ -326,12 +326,17 @@ entry {{
             css_content += self._generate_sidebar_transparency_css()
             
             if scale_factor > 1.0:
-                print(f"Applied font scaling: {scale_factor:.2f}x (UI: {ui_font_size}px, Terminal: {terminal_font_size}px)")
+                logger.info(
+                    "Applied font scaling: %.2fx (UI: %spx, Terminal: %spx)",
+                    scale_factor,
+                    ui_font_size,
+                    terminal_font_size,
+                )
             
             return css_content
             
         except Exception as e:
-            print(f"Warning: Error generating scaled CSS: {e}")
+            logger.warning("Error generating scaled CSS: %s", e)
             return "/* Error generating scaled CSS */"
 
     def _generate_sidebar_transparency_css(self):
@@ -419,7 +424,7 @@ class MainWindow(Gtk.ApplicationWindow):
         try:
             config_manager.load_config()
         except ConfigError as e:
-            print(f"Configuration error: {e}")
+            logger.error("Configuration error: %s", e)
             raise
         
         # Check transparency requirements and enable RGBA visual if needed
@@ -477,16 +482,20 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Check if compositing is available
         if not screen.is_composited():
-            print("Error: Terminal transparency requires a compositing window manager, but none is available.")
-            print("Please disable transparency in the configuration or enable a compositing manager.")
-            exit(1)
+            logger.error(
+                "Terminal transparency requires a compositing window manager, but none is available. "
+                "Please disable transparency in the configuration or enable a compositing manager."
+            )
+            raise SystemExit(1)
         
         # Get RGBA visual
         visual = screen.get_rgba_visual()
         if visual is None:
-            print("Error: RGBA visual not available for terminal transparency.")
-            print("Please disable transparency in the configuration.")
-            exit(1)
+            logger.error(
+                "RGBA visual not available for terminal transparency. "
+                "Please disable transparency in the configuration."
+            )
+            raise SystemExit(1)
         
         # Enable RGBA visual and app paintable
         self.set_visual(visual)
@@ -575,7 +584,7 @@ class MainWindow(Gtk.ApplicationWindow):
             builder.add_from_file(str(ui_path))
         except Exception as e:
             # Fallback to manual UI creation if file loading fails
-            print(f"Warning: Could not load UI file {ui_path}: {e}")
+            logger.warning("Could not load UI file %s: %s", ui_path, e)
             self._create_manual_ui()
             return
         
@@ -807,7 +816,7 @@ class MainWindow(Gtk.ApplicationWindow):
             
             # Spawn shell in the terminal
             if not terminal_widget.spawn_shell(cwd=cwd):
-                print(f"Failed to spawn shell in terminal {terminal_id}")
+                logger.warning("Failed to spawn shell in terminal %s", terminal_id)
                 # Clean up failed terminal
                 terminal_widget.destroy()
                 return terminal_id
@@ -830,11 +839,11 @@ class MainWindow(Gtk.ApplicationWindow):
             # Switch to the new terminal  
             self._switch_to_terminal(terminal_id)
             
-            print(f"Created new terminal: {terminal_id}")
+            logger.info("Created new terminal: %s", terminal_id)
             return terminal_id
             
         except Exception as e:
-            print(f"Error creating terminal {terminal_id}: {e}")
+            logger.exception("Error creating terminal %s: %s", terminal_id, e)
             return terminal_id
     
     def _ensure_revealer_state(self, desired_state: bool) -> bool:
@@ -842,7 +851,7 @@ class MainWindow(Gtk.ApplicationWindow):
         if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
             current_state = self.sidebar_revealer.get_reveal_child()
             if current_state != desired_state:
-                print(f"Correcting revealer state: {current_state} -> {desired_state}")
+                logger.debug("Correcting revealer state: %s -> %s", current_state, desired_state)
                 self.sidebar_revealer.set_reveal_child(desired_state)
         return False  # Don't repeat
     
@@ -857,9 +866,9 @@ class MainWindow(Gtk.ApplicationWindow):
             title = terminal.get_window_title()
             self.set_title(f"Tree Style Terminal - {title}")
             
-            print(f"Switched to terminal: {terminal_id}")
+            logger.info("Switched to terminal: %s", terminal_id)
         else:
-            print(f"Terminal {terminal_id} not found")
+            logger.warning("Terminal %s not found", terminal_id)
     
     def _close_terminal(self, terminal_id: str) -> None:
         """Close the specified terminal."""
@@ -883,7 +892,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.active_terminal_id = None
                     self.set_title("Tree Style Terminal")
             
-            print(f"Closed terminal: {terminal_id}")
+            logger.info("Closed terminal: %s", terminal_id)
     
     def _setup_session_callbacks(self) -> None:
         """Set up callbacks for session management."""
@@ -1026,7 +1035,11 @@ class MainWindow(Gtk.ApplicationWindow):
     def toggle_sidebar(self) -> None:
         """Toggle sidebar visibility."""
         if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
-            print(f"Sidebar toggle: collapsed={self._sidebar_collapsed} -> {not self._sidebar_collapsed}")
+            logger.debug(
+                "Sidebar toggle: collapsed=%s -> %s",
+                self._sidebar_collapsed,
+                not self._sidebar_collapsed,
+            )
             
             if not self._sidebar_collapsed:  # Currently expanded, so collapse
                 self._collapse_sidebar()
@@ -1043,13 +1056,13 @@ class MainWindow(Gtk.ApplicationWindow):
             self.sidebar_revealer.set_reveal_child(False)
             self.sidebar_revealer.set_visible(False)
             
-            print(f"Sidebar collapsed (paned, saved width: {self._saved_sidebar_width})")
+            logger.debug("Sidebar collapsed (paned, saved width: %s)", self._saved_sidebar_width)
         else:
             # Box layout - use revealer properties
             self.sidebar_revealer.set_reveal_child(False)
             self.sidebar_revealer.set_size_request(0, -1)
             self.sidebar_revealer.set_visible(False)
-            print("Sidebar collapsed (box layout)")
+            logger.debug("Sidebar collapsed (box layout)")
         
         self._sidebar_collapsed = True
 
@@ -1064,13 +1077,13 @@ class MainWindow(Gtk.ApplicationWindow):
             # Use idle_add to ensure position is set before revealing content
             GLib.idle_add(lambda: self.sidebar_revealer.set_reveal_child(True))
             
-            print(f"Sidebar expanded (paned, restored width: {self._saved_sidebar_width})")
+            logger.debug("Sidebar expanded (paned, restored width: %s)", self._saved_sidebar_width)
         else:
             # Box layout - restore revealer properties
             self.sidebar_revealer.set_visible(True)
             self.sidebar_revealer.set_size_request(-1, -1)
             self.sidebar_revealer.set_reveal_child(True)
-            print("Sidebar expanded (box layout)")
+            logger.debug("Sidebar expanded (box layout)")
         
         self._sidebar_collapsed = False
 
@@ -1101,7 +1114,7 @@ class MainWindow(Gtk.ApplicationWindow):
             terminal_widget = self.session_manager.get_terminal_widget(self.session_manager.current_session)
             if terminal_widget and hasattr(terminal_widget, 'grab_focus'):
                 terminal_widget.grab_focus()
-                print("Focused terminal")
+                logger.debug("Focused terminal")
 
     def focus_sidebar(self) -> None:
         """Focus the sidebar tree view."""
@@ -1120,7 +1133,7 @@ class MainWindow(Gtk.ApplicationWindow):
         if hasattr(self.session_manager, 'set_theme'):
             self.session_manager.set_theme(theme_name)
         
-        print(f"Updated all terminals to {theme_name} theme")
+        logger.info("Updated all terminals to %s theme", theme_name)
     
     def _update_window_theme_class(self, theme_name: str) -> None:
         """Update window CSS class for theme targeting."""
@@ -1132,7 +1145,7 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Add new theme class
         style_context.add_class(theme_name)
-        print(f"Updated window theme class to {theme_name}")
+        logger.debug("Updated window theme class to %s", theme_name)
     
     def _update_theme_button_icon(self) -> None:
         """Update theme toggle button icon based on current theme."""
@@ -1171,7 +1184,7 @@ class TreeStyleTerminalApp(Gtk.Application):
     def _on_startup(self, app: "TreeStyleTerminalApp") -> None:
         """Called when the application starts up."""
         if not self.args.get('quiet'):
-            print("Tree Style Terminal starting up...")
+            logger.info("Tree Style Terminal starting up...")
         
         # Print system information for debugging (independent of quiet mode)
         if self.args.get('show_info'):
@@ -1248,6 +1261,7 @@ DPI Configuration Examples:
   %(prog)s --dpi 240           # 2.5x scaling for high-DPI 4K
   %(prog)s --show-info         # Show system font information
   %(prog)s --show-info --dpi 180  # Test DPI settings without starting GUI
+  %(prog)s --log-level info    # Show runtime diagnostics for this launch
 
 Environment Variables:
   TST_DPI=192                  # Alternative way to set DPI
@@ -1275,7 +1289,13 @@ Environment Variables:
     parser.add_argument(
         '--quiet', '-q',
         action='store_true',
-        help='Suppress startup messages'
+        help='Suppress the startup message'
+    )
+
+    parser.add_argument(
+        '--log-level',
+        choices=['debug', 'info', 'warning', 'error', 'critical'],
+        help='Set runtime diagnostic verbosity (overrides app.log_level in config)'
     )
     
     return parser.parse_args()
@@ -1413,6 +1433,22 @@ def print_font_test_info(dpi_override=None):
     except Exception as e:
         print(f"Error retrieving system information: {e}")
 
+
+def configure_logging(log_level: Optional[str] = None) -> None:
+    """Configure runtime diagnostics for the GUI application."""
+    configured_level = log_level
+    if configured_level is None:
+        try:
+            config_manager.load_config()
+            configured_level = config_manager.get("app.log_level", "warning")
+        except ConfigError as e:
+            logger.error("Configuration error: %s", e)
+            raise
+
+    level = getattr(logging, configured_level.upper(), logging.WARNING)
+    logging.basicConfig(level=level, format="%(levelname)s:%(name)s:%(message)s", force=True)
+
+
 def main() -> int:
     """Main entry point for the application."""
     args = parse_arguments()
@@ -1421,12 +1457,15 @@ def main() -> int:
     if args.test_fonts:
         print_font_test_info(args.dpi)
         return 0
+
+    configure_logging(args.log_level)
     
     # Create application with parsed arguments
     app_args = {
         'dpi': args.dpi,
         'show_info': args.show_info,
-        'quiet': args.quiet
+        'quiet': args.quiet,
+        'log_level': args.log_level
     }
     
     # Create filtered argv for GTK (remove our custom arguments)

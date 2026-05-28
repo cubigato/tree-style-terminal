@@ -27,24 +27,21 @@ class TestCSSLoader(unittest.TestCase):
         self.assertIn(self.css_loader.current_theme, ["light", "dark"])
     
     @patch('tree_style_terminal.main.Path.exists')
-    @patch('tree_style_terminal.main.print')
-    def test_load_base_css_file_not_found(self, mock_print, mock_exists):
+    @patch('tree_style_terminal.main.logger')
+    def test_load_base_css_file_not_found(self, mock_logger, mock_exists):
         """Test handling of missing CSS file."""
         mock_exists.return_value = False
         
         # Should not raise exception
         self.css_loader.load_base_css()
         
-        # Should print warning (system CSS enabled, so expect multiple calls)
-        self.assertGreaterEqual(mock_print.call_count, 1)
-        # Check that one of the calls contains the warning
-        call_args = [call[0][0] for call in mock_print.call_args_list]
-        self.assertTrue(any("Warning" in arg for arg in call_args))
+        warning_messages = [call[0][0] for call in mock_logger.warning.call_args_list]
+        self.assertTrue(any("Base CSS file not found" in arg for arg in warning_messages))
     
     @patch('tree_style_terminal.main.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
-    @patch('tree_style_terminal.main.print')
-    def test_load_base_css_success(self, mock_print, mock_add_provider, mock_exists):
+    @patch('tree_style_terminal.main.logger')
+    def test_load_base_css_success(self, mock_logger, mock_add_provider, mock_exists):
         """Test successful CSS loading."""
         mock_exists.return_value = True
         mock_provider = MagicMock()
@@ -55,15 +52,13 @@ class TestCSSLoader(unittest.TestCase):
         mock_provider.load_from_path.assert_called_once()
         # Should be called for base CSS and system CSS
         self.assertGreaterEqual(mock_add_provider.call_count, 1)
-        # Should print success message (system CSS enabled, so expect multiple calls)
-        self.assertGreaterEqual(mock_print.call_count, 1)
-        call_args = [call[0][0] for call in mock_print.call_args_list]
-        self.assertTrue(any("Loaded base CSS" in arg for arg in call_args))
+        info_messages = [call[0][0] for call in mock_logger.info.call_args_list]
+        self.assertTrue(any("Loaded base CSS" in arg for arg in info_messages))
     
     @patch('tree_style_terminal.main.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
-    @patch('tree_style_terminal.main.print')
-    def test_load_base_css_error(self, mock_print, mock_add_provider, mock_exists):
+    @patch('tree_style_terminal.main.logger')
+    def test_load_base_css_error(self, mock_logger, mock_add_provider, mock_exists):
         """Test CSS loading error handling."""
         mock_exists.return_value = True
         mock_provider = MagicMock()
@@ -72,30 +67,28 @@ class TestCSSLoader(unittest.TestCase):
         
         self.css_loader.load_base_css()
         
-        # Should print error message (system CSS enabled, so expect multiple calls)
-        self.assertGreaterEqual(mock_print.call_count, 1)
-        call_args = [call[0][0] for call in mock_print.call_args_list]
-        self.assertTrue(any("Error loading base CSS" in arg for arg in call_args))
+        warning_messages = [call[0][0] for call in mock_logger.warning.call_args_list]
+        self.assertTrue(any("Error loading base CSS" in arg for arg in warning_messages))
     
     @patch('tree_style_terminal.main.Path.exists')
-    @patch('tree_style_terminal.main.print')
-    def test_load_theme_file_not_found(self, mock_print, mock_exists):
+    @patch('tree_style_terminal.main.logger')
+    def test_load_theme_file_not_found(self, mock_logger, mock_exists):
         """Test handling of missing theme file."""
         mock_exists.return_value = False
         
         self.css_loader.load_theme("dark")
         
-        mock_print.assert_called_once()
-        self.assertIn("Warning", mock_print.call_args[0][0])
-        self.assertIn("dark", mock_print.call_args[0][0])
+        mock_logger.warning.assert_called_once()
+        self.assertIn("Theme file not found", mock_logger.warning.call_args[0][0])
+        self.assertIn("dark", str(mock_logger.warning.call_args))
     
     @patch('tree_style_terminal.main.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
     @patch('tree_style_terminal.main.Gdk.Screen.get_default')
     @patch('tree_style_terminal.main.Gtk.StyleContext')
     @patch('tree_style_terminal.main.Gtk.CssProvider')
-    @patch('tree_style_terminal.main.print')
-    def test_load_theme_success(self, mock_print, mock_css_provider_class, mock_style_context, mock_screen, mock_add_provider, mock_exists):
+    @patch('tree_style_terminal.main.logger')
+    def test_load_theme_success(self, mock_logger, mock_css_provider_class, mock_style_context, mock_screen, mock_add_provider, mock_exists):
         """Test successful theme loading."""
         mock_exists.return_value = True
         mock_screen_instance = MagicMock()
@@ -120,11 +113,8 @@ class TestCSSLoader(unittest.TestCase):
         self.assertGreaterEqual(mock_add_provider.call_count, 1)
         mock_add_provider.assert_any_call(mock_new_provider)
         self.assertEqual(self.css_loader.current_theme, "dark")
-        # Should print messages (system CSS reload + theme loading)
-        self.assertGreaterEqual(mock_print.call_count, 1)
-        # Check that one of the calls contains the theme loading message
-        call_args = [call[0][0] for call in mock_print.call_args_list]
-        self.assertTrue(any("Loaded dark theme" in arg for arg in call_args))
+        info_messages = [call[0][0] for call in mock_logger.info.call_args_list]
+        self.assertTrue(any("Loaded %s theme" in arg for arg in info_messages))
     
     def test_theme_toggle_light_to_dark(self):
         """Test theme toggling from light to dark."""

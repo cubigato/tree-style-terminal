@@ -72,6 +72,7 @@ class TestConfigManager:
             assert config_manager._config["terminal"]["scrollback_lines"] == 5000
             assert config_manager._config["ui"]["sidebar_width"] == 300
             # Check default values still present
+            assert config_manager._config["app"]["log_level"] == "warning"
             assert config_manager._config["terminal"]["transparency"] == 1.0
             assert config_manager._config["display"]["dpi_scale"] == "auto"
             assert config_manager._config["shortcuts"]["terminal_search"] == "<Control><Shift>f"
@@ -161,6 +162,7 @@ class TestConfigManager:
         """Test validation with valid configuration values."""
         config_manager = ConfigManager()
         config_manager._config = {
+            "app": {"log_level": "debug"},
             "theme": "light",
             "terminal": {"scrollback_lines": 5000, "transparency": 0.8},
             "ui": {"sidebar_width": 300},
@@ -185,6 +187,14 @@ class TestConfigManager:
         config_manager._config = {"theme": "invalid_theme"}
         
         with pytest.raises(ConfigError, match="theme.*must be one of.*light.*dark.*automatic"):
+            config_manager._validate_config()
+
+    def test_validation_invalid_log_level(self):
+        """Test validation rejects invalid log level values."""
+        config_manager = ConfigManager()
+        config_manager._config = {"app": {"log_level": "verbose"}}
+
+        with pytest.raises(ConfigError, match="log_level.*must be one of.*debug.*info.*warning.*error.*critical"):
             config_manager._validate_config()
     
     def test_validation_invalid_scrollback_lines(self):
@@ -290,6 +300,7 @@ class TestConfigManager:
         assert merged["terminal"]["scrollback_lines"] == 5000
         
         # Default values should be preserved
+        assert merged["app"]["log_level"] == DEFAULT_CONFIG["app"]["log_level"]
         assert merged["terminal"]["transparency"] == DEFAULT_CONFIG["terminal"]["transparency"]
         assert merged["ui"]["sidebar_width"] == DEFAULT_CONFIG["ui"]["sidebar_width"]
         assert merged["shortcuts"]["terminal_search"] == DEFAULT_CONFIG["shortcuts"]["terminal_search"]

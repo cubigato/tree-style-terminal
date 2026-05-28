@@ -5,6 +5,11 @@ Default configuration values for Tree Style Terminal.
 
 # Default configuration values
 DEFAULT_CONFIG = {
+    "app": {
+        # Runtime diagnostic verbosity: "debug", "info", "warning", "error", or "critical"
+        "log_level": "warning",
+    },
+
     # Theme for the entire GUI: "light", "dark", or "automatic"
     "theme": "dark",
     
@@ -41,6 +46,10 @@ DEFAULT_CONFIG_TEMPLATE = """# Tree Style Terminal Configuration
 # "automatic" follows system theme
 #theme: "dark"
 
+#app:
+#  # Runtime diagnostic verbosity: "debug", "info", "warning", "error", or "critical"
+#  log_level: "warning"
+
 #terminal:
 #  # Scrollback buffer size (number of lines to keep in history)
 #  scrollback_lines: 10000
@@ -68,6 +77,11 @@ VALIDATION_RULES = {
         "type": str,
         "allowed_values": ["light", "dark", "automatic"],
         "description": "Theme must be 'light', 'dark', or 'automatic'"
+    },
+    "app.log_level": {
+        "type": str,
+        "allowed_values": ["debug", "info", "warning", "error", "critical"],
+        "description": "Log level must be 'debug', 'info', 'warning', 'error', or 'critical'"
     },
     "terminal.scrollback_lines": {
         "type": int,

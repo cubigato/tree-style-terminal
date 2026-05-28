@@ -5,6 +5,11 @@
 # "automatic" follows system theme
 theme: "dark"
 
+app:
+  # Runtime diagnostic verbosity: "debug", "info", "warning", "error", or "critical"
+  # Default "warning" keeps normal launches quiet while still showing problems.
+  log_level: "warning"
+
 terminal:
   # Scrollback buffer size (number of lines to keep in history)
   # Range: 100 - 100000
@@ -50,6 +55,10 @@ shortcuts:
 
 # For light theme:
 # theme: "light"
+
+# For more verbose runtime diagnostics:
+# app:
+#   log_level: "info"
 
 # For a different terminal search shortcut:
 # shortcuts:

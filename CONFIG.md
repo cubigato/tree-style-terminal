@@ -27,6 +27,29 @@ theme: "dark"
 - `"light"` - Light theme  
 - `"automatic"` - Follows system theme
 
+### Application Diagnostics
+
+```yaml
+app:
+  # Runtime diagnostic verbosity
+  log_level: "warning"
+```
+
+**Options:**
+- `log_level`: Controls runtime logging verbosity
+  - `"debug"` - Very detailed diagnostics
+  - `"info"` - Normal runtime diagnostics
+  - `"warning"` - Warnings and errors only (default)
+  - `"error"` - Errors only
+  - `"critical"` - Critical failures only
+
+**Priority:**
+1. Command-line `--log-level` argument
+2. `app.log_level` config file setting
+3. Default `"warning"`
+
+Use `--quiet` to suppress the startup message for a launch. It does not replace `log_level`.
+
 ### Terminal Settings
 
 ```yaml
@@ -107,6 +130,8 @@ terminal:
   scrollback_lines: 20000
 shortcuts:
   terminal_search: "<Control><Shift>f"
+app:
+  log_level: "warning"
 ```
 
 ### Light Theme with Large Sidebar
@@ -121,6 +146,8 @@ terminal:
 ### Minimal Configuration (only non-defaults)
 ```yaml
 theme: "light"
+app:
+  log_level: "error"
 terminal:
   scrollback_lines: 5000
 ```
@@ -131,6 +158,7 @@ The configuration file is validated when loaded. Invalid values will cause the a
 
 **Common validation errors:**
 - Invalid theme names (must be "light", "dark", or "automatic")
+- Invalid log levels (must be "debug", "info", "warning", "error", or "critical")
 - Scrollback lines outside valid range (100-100,000)
 - Sidebar width outside valid range (50-1,000)
 - UI scale factor outside valid range (0.5-3.0) or not "auto"

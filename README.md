@@ -120,6 +120,7 @@ Also see [CONFIG.md](CONFIG.md)
 ### Key Configuration Options
 
 - **Theme**: Choose between light, dark, or automatic (follows system theme)
+- **App Diagnostics**: Configure runtime log verbosity
 - **Display Scaling**: Configure DPI scaling for high-resolution displays
 - **Terminal Settings**: Customize scrollback buffer size
 - **UI Settings**: Adjust sidebar width and other interface elements
@@ -127,6 +128,8 @@ Also see [CONFIG.md](CONFIG.md)
 **Example configuration:**
 ```yaml
 theme: "dark"
+app:
+  log_level: "warning"
 display:
   dpi_scale: 2.0  # 200% scaling for 4K displays
 ui:
@@ -196,10 +199,12 @@ tree-style-terminal --dpi 192           # Set DPI for font scaling
 tree-style-terminal --show-info         # Display system font information
 tree-style-terminal --test-fonts        # Show font scaling test and exit
 tree-style-terminal --quiet             # Suppress startup messages
+tree-style-terminal --log-level info    # Show runtime diagnostics for this launch
 
 # Combined options
-tree-style-terminal --dpi 180 --quiet   # Launch with custom DPI, no messages
+tree-style-terminal --dpi 180 --quiet   # Launch with custom DPI, no startup message
 tree-style-terminal --show-info --dpi 240  # Test DPI without starting GUI
+tree-style-terminal --log-level debug --dpi 192  # Debug launch with custom DPI
 
 # Environment variable alternative
 TST_DPI=192 tree-style-terminal                    # Set DPI via environment
