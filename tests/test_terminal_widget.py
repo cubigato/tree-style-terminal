@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 from unittest.mock import Mock, patch
 
 import pytest
@@ -193,8 +194,48 @@ def test_spawn_complete_stores_child_pid():
     assert terminal.pty_fd == 99
 
 
-def test_terminal_search_sets_literal_regex():
-    """Test terminal search configures VTE search with literal text."""
+def test_terminal_search_builds_fuzzy_case_insensitive_pattern():
+    """Test fuzzy search is case-insensitive and separator tolerant."""
+    from tree_style_terminal.widgets.terminal import build_terminal_search_pattern
+
+    assert build_terminal_search_pattern("my-command", True) == (
+        r"(?i)my[-_\s]*command"
+    )
+    assert build_terminal_search_pattern("command --flag", True) == (
+        r"(?i)command[-_\s]*flag"
+    )
+
+
+def test_terminal_search_fuzzy_pattern_matches_common_separator_differences():
+    """Test fuzzy search handles common command separator differences."""
+    from tree_style_terminal.widgets.terminal import build_terminal_search_pattern
+
+    assert re.search(build_terminal_search_pattern("x alg", True), "x-algorithm")
+    assert re.search(build_terminal_search_pattern("x -alg", True), "x-algorithm")
+    assert re.search(build_terminal_search_pattern("cat -help", True), "cat --help")
+
+
+def test_terminal_search_fuzzy_pattern_remains_conservative():
+    """Test fuzzy search does not add broad approximate matching."""
+    from tree_style_terminal.widgets.terminal import build_terminal_search_pattern
+
+    pattern = build_terminal_search_pattern("deploy app", True)
+
+    assert pattern == r"(?i)deploy[-_\s]*app"
+    assert ".*" not in pattern
+    assert build_terminal_search_pattern("--", True) == r"\-\-"
+
+
+def test_terminal_search_exact_pattern_preserves_literal_behavior():
+    """Test exact search keeps the previous literal, case-sensitive behavior."""
+    from tree_style_terminal.widgets.terminal import build_terminal_search_pattern
+
+    assert build_terminal_search_pattern("a.b[", False) == r"a\.b\["
+    assert build_terminal_search_pattern("my-command", False) == r"my\-command"
+
+
+def test_terminal_search_sets_fuzzy_regex_by_default():
+    """Test terminal search configures VTE search with fuzzy text by default."""
     from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
@@ -205,6 +246,51 @@ def test_terminal_search_sets_literal_regex():
     terminal.terminal.search_set_regex.assert_called_once()
     terminal.terminal.search_set_wrap_around.assert_called_once_with(True)
     terminal.terminal.search_find_next.assert_called_once()
+    terminal.terminal.search_find_previous.assert_not_called()
+
+
+def test_terminal_search_falls_back_to_previous_when_next_misses():
+    """Test incremental search can recover when VTE's next position skips a match."""
+    from tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    terminal.terminal.search_find_next.return_value = False
+
+    terminal._set_search_text("cat -help")
+
+    terminal.terminal.search_find_next.assert_called_once()
+    terminal.terminal.search_find_previous.assert_called_once()
+
+
+def test_terminal_search_can_use_exact_mode():
+    """Test disabling fuzzy search uses exact literal matching."""
+    from tree_style_terminal.widgets import terminal as terminal_module
+    from tree_style_terminal.widgets.terminal import VteTerminal, VTE_REGEX_COMPILE_FLAGS
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    regex = Mock()
+
+    terminal.search_fuzzy_toggle.set_active(False)
+    terminal.terminal.reset_mock()
+    with patch.object(terminal_module.Vte.Regex, "new_for_search", return_value=regex) as new_regex:
+        terminal._set_search_text("my-command")
+
+    new_regex.assert_called_once_with(r"my\-command", -1, VTE_REGEX_COMPILE_FLAGS)
+    terminal.terminal.search_set_regex.assert_called_once_with(regex, 0)
+
+
+def test_terminal_search_opens_in_fuzzy_mode():
+    """Test opening terminal search defaults to fuzzy mode."""
+    from tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+
+    terminal.search_fuzzy_toggle.set_active(False)
+    terminal.show_search()
+
+    assert terminal.search_fuzzy_toggle.get_active() is True
 
 
 def test_terminal_search_clear_removes_vte_regex():
@@ -226,8 +312,8 @@ def test_terminal_search_navigation_uses_vte_api():
     terminal = VteTerminal()
     terminal.terminal = Mock()
 
-    terminal.search_next()
-    terminal.search_previous()
+    assert terminal.search_next() is True
+    assert terminal.search_previous() is True
 
     terminal.terminal.search_find_next.assert_called_once()
     terminal.terminal.search_find_previous.assert_called_once()
@@ -254,6 +340,23 @@ def test_terminal_hyperlink_setup_failures_are_warnings(caplog):
         terminal._configure_hyperlinks()
 
     assert "Failed to enable terminal hyperlinks" in caplog.text
+
+
+def test_terminal_hyperlink_match_regex_uses_vte_compile_flags():
+    """Test hyperlink regexes are compiled with flags VTE expects."""
+    from tree_style_terminal.widgets import terminal as terminal_module
+    from tree_style_terminal.widgets.terminal import VTE_REGEX_COMPILE_FLAGS, VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    regex = Mock()
+
+    with patch.object(terminal_module.Vte.Regex, "new_for_match", return_value=regex) as new_regex:
+        terminal._configure_hyperlinks()
+
+    assert new_regex.call_count == 2
+    assert all(call.args[2] == VTE_REGEX_COMPILE_FLAGS for call in new_regex.call_args_list)
+    assert terminal.terminal.match_add_regex.call_count == 2
 
 
 def test_context_target_prefers_osc8_hyperlink():
@@ -377,6 +480,48 @@ def test_terminal_search_escape_closes_search():
         handled = terminal._on_search_key_press(terminal.search_entry, event)
 
     mock_hide_search.assert_called_once()
+    assert handled is True
+
+
+def test_terminal_search_enter_moves_to_next_match():
+    """Test Enter moves to the next terminal search match."""
+    from gi.repository import Gdk
+    from tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    event = Mock()
+    event.keyval = Gdk.KEY_Return
+    event.state = 0
+
+    with (
+        patch.object(terminal, "search_next") as mock_search_next,
+        patch.object(terminal, "search_previous") as mock_search_previous,
+    ):
+        handled = terminal._on_search_key_press(terminal.search_entry, event)
+
+    mock_search_next.assert_called_once()
+    mock_search_previous.assert_not_called()
+    assert handled is True
+
+
+def test_terminal_search_shift_enter_moves_to_previous_match():
+    """Test Shift+Enter moves to the previous terminal search match."""
+    from gi.repository import Gdk
+    from tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    event = Mock()
+    event.keyval = Gdk.KEY_Return
+    event.state = Gdk.ModifierType.SHIFT_MASK
+
+    with (
+        patch.object(terminal, "search_next") as mock_search_next,
+        patch.object(terminal, "search_previous") as mock_search_previous,
+    ):
+        handled = terminal._on_search_key_press(terminal.search_entry, event)
+
+    mock_search_next.assert_not_called()
+    mock_search_previous.assert_called_once()
     assert handled is True
 
 

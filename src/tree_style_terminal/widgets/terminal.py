@@ -26,6 +26,35 @@ logger = logging.getLogger(__name__)
 
 URL_MATCH_PATTERN = r"https?://[^\s<>'\"]+[^\s<>'\".,;:!?)]"
 FILE_PATH_MATCH_PATTERN = r"(?:~|/|\./|\../)[^\s<>'\"]*[^\s<>'\".,;:!?)]"
+FUZZY_SEARCH_SEPARATOR_PATTERN = r"[-_\s]*"
+PCRE2_MULTILINE = 1024
+VTE_REGEX_COMPILE_FLAGS = Vte.REGEX_FLAGS_DEFAULT | PCRE2_MULTILINE
+
+
+def build_terminal_search_pattern(text: str, fuzzy: bool) -> str:
+    """Build the PCRE2 pattern used for VTE terminal search."""
+    if not fuzzy:
+        return re.escape(text)
+
+    pattern_parts: List[str] = ["(?i)"]
+    in_separator_run = False
+    has_search_term = False
+
+    for character in text:
+        if character in " \t\r\n-_":
+            if not in_separator_run:
+                pattern_parts.append(FUZZY_SEARCH_SEPARATOR_PATTERN)
+                in_separator_run = True
+            continue
+
+        pattern_parts.append(re.escape(character))
+        in_separator_run = False
+        has_search_term = True
+
+    if not has_search_term:
+        return re.escape(text)
+
+    return "".join(pattern_parts)
 
 
 class VteTerminal(Gtk.Box):
@@ -108,11 +137,19 @@ class VteTerminal(Gtk.Box):
         self.search_entry.connect("key-press-event", self._on_search_key_press)
         self.search_bar.pack_start(self.search_entry, True, True, 0)
 
+        self.search_fuzzy_toggle = Gtk.ToggleButton(label="Fuzzy")
+        self.search_fuzzy_toggle.set_active(True)
+        self.search_fuzzy_toggle.set_tooltip_text(
+            "Fuzzy search: case-insensitive, ignores spaces, hyphens, and underscores"
+        )
+        self.search_fuzzy_toggle.connect("toggled", self._on_search_mode_toggled)
+        self.search_bar.pack_start(self.search_fuzzy_toggle, False, False, 0)
+
         self.search_previous_button = Gtk.Button()
         self.search_previous_button.set_image(
             Gtk.Image.new_from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON)
         )
-        self.search_previous_button.set_tooltip_text("Previous match")
+        self.search_previous_button.set_tooltip_text("Previous match (Shift+Enter)")
         self.search_previous_button.connect("clicked", lambda _button: self.search_previous())
         self.search_bar.pack_start(self.search_previous_button, False, False, 0)
 
@@ -120,7 +157,7 @@ class VteTerminal(Gtk.Box):
         self.search_next_button.set_image(
             Gtk.Image.new_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
         )
-        self.search_next_button.set_tooltip_text("Next match")
+        self.search_next_button.set_tooltip_text("Next match (Enter)")
         self.search_next_button.connect("clicked", lambda _button: self.search_next())
         self.search_bar.pack_start(self.search_next_button, False, False, 0)
 
@@ -136,6 +173,7 @@ class VteTerminal(Gtk.Box):
 
     def show_search(self) -> None:
         """Open the scrollback search UI for this terminal."""
+        self.search_fuzzy_toggle.set_active(True)
         self.search_revealer.set_reveal_child(True)
         self.search_entry.grab_focus()
         self.search_entry.select_region(0, -1)
@@ -151,42 +189,59 @@ class VteTerminal(Gtk.Box):
         """Update VTE search state as the user edits the query."""
         self._set_search_text(entry.get_text())
 
+    def _on_search_mode_toggled(self, _button: Gtk.ToggleButton) -> None:
+        """Refresh VTE search state when fuzzy/exact mode changes."""
+        self._set_search_text(self.search_entry.get_text())
+
     def _on_search_key_press(self, _entry: Gtk.SearchEntry, event: Gdk.EventKey) -> bool:
-        """Close search when Escape is pressed in the search field."""
+        """Handle search-field keyboard navigation."""
         if event.keyval == Gdk.KEY_Escape:
             self.hide_search()
+            return True
+
+        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+            if event.state & Gdk.ModifierType.SHIFT_MASK:
+                self.search_previous()
+            else:
+                self.search_next()
             return True
 
         return False
 
     def _set_search_text(self, text: str) -> None:
-        """Set the literal search text used by VTE."""
+        """Set the search text used by VTE."""
         if not text:
             self.terminal.search_set_regex(None, 0)
             return
 
         try:
-            pattern = re.escape(text)
-            regex = Vte.Regex.new_for_search(pattern, -1, 0)
+            pattern = build_terminal_search_pattern(
+                text,
+                self.search_fuzzy_toggle.get_active(),
+            )
+            regex = Vte.Regex.new_for_search(pattern, -1, VTE_REGEX_COMPILE_FLAGS)
             self.terminal.search_set_regex(regex, 0)
             self.terminal.search_set_wrap_around(True)
-            self.search_next()
+            if not self.search_next():
+                self.search_previous()
         except Exception as e:
             logger.warning(f"Failed to set terminal search text: {e}")
 
-    def search_next(self) -> None:
+    def search_next(self) -> bool:
         """Move to the next search match."""
         try:
-            self.terminal.search_find_next()
+            return bool(self.terminal.search_find_next())
         except Exception as e:
             logger.debug(f"Failed to find next terminal search match: {e}")
+            return False
 
-    def search_previous(self) -> None:
+    def search_previous(self) -> bool:
         """Move to the previous search match."""
         try:
-            self.terminal.search_find_previous()
+            return bool(self.terminal.search_find_previous())
         except Exception as e:
             logger.debug(f"Failed to find previous terminal search match: {e}")
+            return False
 
     def _configure_terminal(self) -> None:
         """Configure basic terminal settings."""
@@ -259,7 +314,7 @@ class VteTerminal(Gtk.Box):
 
         for pattern in (URL_MATCH_PATTERN, FILE_PATH_MATCH_PATTERN):
             try:
-                regex = Vte.Regex.new_for_match(pattern, -1, 0)
+                regex = Vte.Regex.new_for_match(pattern, -1, VTE_REGEX_COMPILE_FLAGS)
                 tag = self.terminal.match_add_regex(regex, 0)
                 self.terminal.match_set_cursor_name(tag, "pointer")
             except Exception as e:

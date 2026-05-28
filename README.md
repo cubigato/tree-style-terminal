@@ -237,9 +237,9 @@ CSS themes are located in `src/tree_style_terminal/resources/css/`:
 - **Close Session**: `Ctrl+Q` - Close the current session (children are adopted by parent)
 - **Toggle Sidebar**: `F9` or `Ctrl+Shift+O` - Show/hide the session tree sidebar
 - **Focus Sidebar**: `Ctrl+Shift+S` - Move keyboard focus to the session tree
-- **Focus Terminal**: `Ctrl+Shift+F` - Move keyboard focus back to the terminal
 - **Navigate Sessions**: Click on sessions in the sidebar or use `Alt+Left`/`Alt+Right` or `Ctrl+Shift+Left`/`Ctrl+Shift+Right`
 - **Terminal Clipboard**: `Ctrl+Shift+C` / `Ctrl+Shift+V` - Copy/paste in the terminal
+- **Terminal Search**: `Ctrl+Shift+F` opens active-terminal search. In the search field, `Enter` jumps to the next match, `Shift+Enter` jumps to the previous match, and `Escape` closes search.
 
 ### Session Tree Navigation
 The sidebar displays terminal sessions in a tree structure:

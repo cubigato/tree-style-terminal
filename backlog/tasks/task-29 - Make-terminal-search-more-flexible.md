@@ -1,15 +1,19 @@
 ---
 id: TASK-29
 title: Make terminal search more flexible
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-28 11:41'
-updated_date: '2026-05-28 11:48'
+updated_date: '2026-05-28 12:09'
 labels:
   - feature
   - 'area:terminal'
   - 'effort:small'
 dependencies: []
+modified_files:
+  - src/tree_style_terminal/widgets/terminal.py
+  - tests/test_terminal_widget.py
+  - README.md
 priority: medium
 ordinal: 9500
 ---
@@ -48,6 +52,18 @@ API notes checked before implementation:
 - [ ] #5 The user can switch fuzzy mode off and get the existing exact matching behavior.
 - [ ] #6 Next/previous search navigation continues to work in both fuzzy and exact modes.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Implemented fuzzy terminal search via VTE regex patterns, added a Fuzzy toggle for exact fallback, and covered pattern/default/exact behavior with tests. Awaiting human review before Done.
+
+Refined fuzzy separator handling to use an explicit whitespace/hyphen/underscore class and added coverage for x -alg -> x-algorithm plus cat -help -> cat --help. Added search-field keyboard navigation: Enter for next match and Shift+Enter for previous match.
+
+Fixed VTE runtime warnings by compiling both search and hyperlink match regexes with VTE default flags plus PCRE2_MULTILINE. Documented terminal search shortcuts in README and removed stale Ctrl+Shift+F focus-terminal wording.
+
+Stabilized incremental search after query refinement: after installing a new VTE search regex, the UI now searches forward and falls back to previous when VTE reports no next match, so extending an existing partial match does not skip the current buffer occurrence.
+<!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
