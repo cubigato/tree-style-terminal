@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.2 - 2026-05-28
+
+### Added
+
+- Added terminal search with shortcut support.
+- Added fuzzy matching for terminal search.
+- Added session rename and title lock actions.
+- Added text drag-and-drop support for terminals.
+- Added OSC8 hyperlink detection and link actions through VTE.
+
+### Changed
+
+- Migrated runtime diagnostics to Python logging with configurable `log_level`.
+- Extracted CSS loading into a dedicated `CSSLoader` module.
+- Standardized tests on package imports.
+
+## 0.4.1 - 2026-05-27
+
+### Fixed
+
+- Fixed terminal focus after switching sessions with the mouse.
+
 ## 0.4.0 - 2026-05-26
 
 ### Added
