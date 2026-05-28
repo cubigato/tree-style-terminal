@@ -49,6 +49,7 @@ class VteTerminal(Gtk.Box):
         # Set up basic terminal properties
         self._configure_terminal()
         self._context_menu = self._create_context_menu()
+        self._setup_text_drag_and_drop()
 
         # Add a lightweight search bar for the active terminal scrollback.
         self._setup_search_bar()
@@ -228,6 +229,65 @@ class VteTerminal(Gtk.Box):
 
         menu.show_all()
         return menu
+
+    def _setup_text_drag_and_drop(self) -> None:
+        """Accept plain text drops as terminal paste input."""
+        self.terminal.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
+        self.terminal.drag_dest_add_text_targets()
+        self.terminal.connect("drag-data-received", self._on_drag_data_received)
+
+    def _on_drag_data_received(
+        self,
+        _widget: Vte.Terminal,
+        context: Gdk.DragContext,
+        _x: int,
+        _y: int,
+        selection_data: Gtk.SelectionData,
+        _info: int,
+        time: int,
+    ) -> None:
+        """Paste dropped text into the terminal and reject non-text drops."""
+        handled = self._paste_dropped_text(selection_data)
+
+        try:
+            context.finish(handled, False, time)
+        except Exception as e:
+            logger.debug(f"Failed to finish terminal drop context: {e}")
+
+        if handled:
+            GLib.idle_add(self._focus_after_drop, time)
+
+    def _paste_dropped_text(self, selection_data: Gtk.SelectionData) -> bool:
+        """Return whether text was extracted and pasted from a drop."""
+        try:
+            text = selection_data.get_text()
+        except Exception as e:
+            logger.debug(f"Failed to read dropped terminal text: {e}")
+            return False
+
+        if text is None:
+            return False
+
+        try:
+            self.terminal.paste_text(text)
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to paste dropped terminal text: {e}")
+            return False
+
+    def _focus_after_drop(self, time: int) -> bool:
+        """Present this window and focus VTE after GTK has finished the drop."""
+        toplevel = self.get_toplevel()
+        present_with_time = getattr(toplevel, "present_with_time", None)
+
+        if callable(present_with_time):
+            try:
+                present_with_time(time)
+            except Exception as e:
+                logger.debug(f"Failed to present terminal window after drop: {e}")
+
+        self.grab_focus()
+        return False
 
     def _on_button_press(self, terminal: Vte.Terminal, event: Gdk.EventButton) -> bool:
         """Show the terminal context menu on right click."""

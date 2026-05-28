@@ -122,6 +122,7 @@ def test_terminal_methods_exist():
         'paste_clipboard',
         'select_all',
         'has_selection',
+        '_paste_dropped_text',
         'get_window_title',
         'get_current_directory',
         'close'
@@ -255,3 +256,105 @@ def test_terminal_search_non_escape_key_is_not_handled():
 
     mock_hide_search.assert_not_called()
     assert handled is False
+
+
+def test_paste_dropped_text_uses_vte_paste_text():
+    """Test dropped text is inserted through VTE's paste API."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    selection_data = Mock()
+    selection_data.get_text.return_value = "https://example.test/ä path"
+
+    handled = terminal._paste_dropped_text(selection_data)
+
+    assert handled is True
+    terminal.terminal.paste_text.assert_called_once_with("https://example.test/ä path")
+
+
+def test_paste_dropped_text_ignores_non_text_payload():
+    """Test non-text drops are ignored without writing terminal input."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    selection_data = Mock()
+    selection_data.get_text.return_value = None
+
+    handled = terminal._paste_dropped_text(selection_data)
+
+    assert handled is False
+    terminal.terminal.paste_text.assert_not_called()
+
+
+def test_drag_data_received_finishes_context_with_result():
+    """Test GTK drop context is completed after handling a text drop."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+    from src.tree_style_terminal.widgets import terminal as terminal_module
+
+    terminal = VteTerminal()
+    context = Mock()
+    selection_data = Mock()
+
+    with (
+        patch.object(terminal, "_paste_dropped_text", return_value=True),
+        patch.object(terminal_module.GLib, "idle_add") as mock_idle_add,
+    ):
+        terminal._on_drag_data_received(
+            terminal.terminal,
+            context,
+            0,
+            0,
+            selection_data,
+            0,
+            1234,
+        )
+
+    context.finish.assert_called_once_with(True, False, 1234)
+    mock_idle_add.assert_called_once_with(terminal._focus_after_drop, 1234)
+
+
+def test_drag_data_received_does_not_focus_after_rejected_drop():
+    """Test rejected drops do not attempt to take focus."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+    from src.tree_style_terminal.widgets import terminal as terminal_module
+
+    terminal = VteTerminal()
+    context = Mock()
+    selection_data = Mock()
+
+    with (
+        patch.object(terminal, "_paste_dropped_text", return_value=False),
+        patch.object(terminal_module.GLib, "idle_add") as mock_idle_add,
+    ):
+        terminal._on_drag_data_received(
+            terminal.terminal,
+            context,
+            0,
+            0,
+            selection_data,
+            0,
+            1234,
+        )
+
+    context.finish.assert_called_once_with(False, False, 1234)
+    mock_idle_add.assert_not_called()
+
+
+def test_focus_after_drop_presents_window_and_grabs_terminal_focus():
+    """Test post-drop focus requests use the drop timestamp."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    toplevel = Mock()
+
+    with (
+        patch.object(terminal, "get_toplevel", return_value=toplevel),
+        patch.object(terminal, "grab_focus") as mock_grab_focus,
+    ):
+        keep_callback = terminal._focus_after_drop(1234)
+
+    toplevel.present_with_time.assert_called_once_with(1234)
+    mock_grab_focus.assert_called_once()
+    assert keep_callback is False
