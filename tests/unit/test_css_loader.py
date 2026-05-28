@@ -11,7 +11,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib
 
-from tree_style_terminal.main import CSSLoader
+from tree_style_terminal.css_loader import CSSLoader
 
 
 class TestCSSLoader(unittest.TestCase):
@@ -26,8 +26,8 @@ class TestCSSLoader(unittest.TestCase):
         # Theme is automatically detected from system, so just check it's set
         self.assertIn(self.css_loader.current_theme, ["light", "dark"])
     
-    @patch('tree_style_terminal.main.Path.exists')
-    @patch('tree_style_terminal.main.logger')
+    @patch('tree_style_terminal.css_loader.Path.exists')
+    @patch('tree_style_terminal.css_loader.logger')
     def test_load_base_css_file_not_found(self, mock_logger, mock_exists):
         """Test handling of missing CSS file."""
         mock_exists.return_value = False
@@ -38,9 +38,9 @@ class TestCSSLoader(unittest.TestCase):
         warning_messages = [call[0][0] for call in mock_logger.warning.call_args_list]
         self.assertTrue(any("Base CSS file not found" in arg for arg in warning_messages))
     
-    @patch('tree_style_terminal.main.Path.exists')
+    @patch('tree_style_terminal.css_loader.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
-    @patch('tree_style_terminal.main.logger')
+    @patch('tree_style_terminal.css_loader.logger')
     def test_load_base_css_success(self, mock_logger, mock_add_provider, mock_exists):
         """Test successful CSS loading."""
         mock_exists.return_value = True
@@ -55,9 +55,9 @@ class TestCSSLoader(unittest.TestCase):
         info_messages = [call[0][0] for call in mock_logger.info.call_args_list]
         self.assertTrue(any("Loaded base CSS" in arg for arg in info_messages))
     
-    @patch('tree_style_terminal.main.Path.exists')
+    @patch('tree_style_terminal.css_loader.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
-    @patch('tree_style_terminal.main.logger')
+    @patch('tree_style_terminal.css_loader.logger')
     def test_load_base_css_error(self, mock_logger, mock_add_provider, mock_exists):
         """Test CSS loading error handling."""
         mock_exists.return_value = True
@@ -70,8 +70,8 @@ class TestCSSLoader(unittest.TestCase):
         warning_messages = [call[0][0] for call in mock_logger.warning.call_args_list]
         self.assertTrue(any("Error loading base CSS" in arg for arg in warning_messages))
     
-    @patch('tree_style_terminal.main.Path.exists')
-    @patch('tree_style_terminal.main.logger')
+    @patch('tree_style_terminal.css_loader.Path.exists')
+    @patch('tree_style_terminal.css_loader.logger')
     def test_load_theme_file_not_found(self, mock_logger, mock_exists):
         """Test handling of missing theme file."""
         mock_exists.return_value = False
@@ -82,12 +82,12 @@ class TestCSSLoader(unittest.TestCase):
         self.assertIn("Theme file not found", mock_logger.warning.call_args[0][0])
         self.assertIn("dark", str(mock_logger.warning.call_args))
     
-    @patch('tree_style_terminal.main.Path.exists')
+    @patch('tree_style_terminal.css_loader.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
-    @patch('tree_style_terminal.main.Gdk.Screen.get_default')
-    @patch('tree_style_terminal.main.Gtk.StyleContext')
-    @patch('tree_style_terminal.main.Gtk.CssProvider')
-    @patch('tree_style_terminal.main.logger')
+    @patch('tree_style_terminal.css_loader.Gdk.Screen.get_default')
+    @patch('tree_style_terminal.css_loader.Gtk.StyleContext')
+    @patch('tree_style_terminal.css_loader.Gtk.CssProvider')
+    @patch('tree_style_terminal.css_loader.logger')
     def test_load_theme_success(self, mock_logger, mock_css_provider_class, mock_style_context, mock_screen, mock_add_provider, mock_exists):
         """Test successful theme loading."""
         mock_exists.return_value = True
@@ -132,11 +132,11 @@ class TestCSSLoader(unittest.TestCase):
             self.css_loader.toggle_theme()
             mock_load.assert_called_once_with("light")
 
-    @patch('tree_style_terminal.main.Path.exists')
+    @patch('tree_style_terminal.css_loader.Path.exists')
     @patch.object(CSSLoader, '_add_provider_to_screen')
-    @patch('tree_style_terminal.main.Gdk.Screen.get_default')
-    @patch('tree_style_terminal.main.Gtk.StyleContext')
-    @patch('tree_style_terminal.main.Gtk.CssProvider')
+    @patch('tree_style_terminal.css_loader.Gdk.Screen.get_default')
+    @patch('tree_style_terminal.css_loader.Gtk.StyleContext')
+    @patch('tree_style_terminal.css_loader.Gtk.CssProvider')
     def test_load_theme_updates_current_theme_before_runtime_css(self, mock_css_provider_class, mock_style_context, mock_screen, mock_add_provider, mock_exists):
         """Test runtime CSS is regenerated with the newly loaded theme."""
         mock_exists.return_value = True
@@ -156,8 +156,8 @@ class TestCSSLoader(unittest.TestCase):
         self.assertEqual(seen_themes, ["light"])
         self.assertEqual(self.css_loader.current_theme, "light")
     
-    @patch('tree_style_terminal.main.Gdk.Screen.get_default')
-    @patch('tree_style_terminal.main.Gtk.StyleContext')
+    @patch('tree_style_terminal.css_loader.Gdk.Screen.get_default')
+    @patch('tree_style_terminal.css_loader.Gtk.StyleContext')
     def test_add_provider_to_screen(self, mock_style_context, mock_screen):
         """Test adding CSS provider to screen."""
         mock_screen_instance = MagicMock()
@@ -174,7 +174,7 @@ class TestCSSLoader(unittest.TestCase):
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
 
-    @patch('tree_style_terminal.main.config_manager.get')
+    @patch('tree_style_terminal.css_loader.config_manager.get')
     def test_sidebar_transparency_css_uses_terminal_alpha(self, mock_config_get):
         """Test sidebar runtime CSS follows terminal transparency."""
         mock_config_get.return_value = 0.42
@@ -186,7 +186,7 @@ class TestCSSLoader(unittest.TestCase):
         self.assertIn(".sidebar treeview.view", css)
         self.assertIn("background-image: none", css)
 
-    @patch('tree_style_terminal.main.config_manager.get')
+    @patch('tree_style_terminal.css_loader.config_manager.get')
     def test_sidebar_transparency_css_clamps_invalid_alpha(self, mock_config_get):
         """Test sidebar transparency CSS clamps out-of-range alpha values."""
         mock_config_get.return_value = 2.0

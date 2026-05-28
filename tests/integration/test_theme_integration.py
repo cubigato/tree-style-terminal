@@ -29,8 +29,8 @@ class TestThemeIntegration(unittest.TestCase):
         """Test that application has CSS loader instance."""
         self.assertIsNotNone(self.app.css_loader)
     
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
     def test_css_loaded_on_startup(self, mock_load_theme, mock_load_base):
         """Test that CSS is loaded during application startup."""
         self.app._on_startup(self.app)
@@ -39,8 +39,8 @@ class TestThemeIntegration(unittest.TestCase):
         # Theme is automatically detected, so we just check it was called once
         mock_load_theme.assert_called_once()
     
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
     def test_main_window_has_theme_toggle_button(self, mock_load_theme, mock_load_base):
         """Test that main window has theme toggle button."""
         self.app._on_startup(self.app)
@@ -51,9 +51,9 @@ class TestThemeIntegration(unittest.TestCase):
         self.assertTrue(hasattr(self.window, 'theme_toggle_button'))
         self.assertIsInstance(self.window.theme_toggle_button, Gtk.Button)
     
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
-    @patch('tree_style_terminal.main.CSSLoader.toggle_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.toggle_theme')
     def test_theme_toggle_button_callback(self, mock_toggle_theme, mock_load_theme, mock_load_base):
         """Test that theme toggle button callback works."""
         self.app._on_startup(self.app)
@@ -64,8 +64,8 @@ class TestThemeIntegration(unittest.TestCase):
         
         mock_toggle_theme.assert_called_once()
     
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
     def test_theme_toggle_updates_button_icon(self, mock_load_theme, mock_load_base):
         """Test that theme toggle updates button icon."""
         self.app._on_startup(self.app)
@@ -81,8 +81,8 @@ class TestThemeIntegration(unittest.TestCase):
         button_image = self.window.theme_toggle_button.get_image()
         self.assertIsNotNone(button_image)
     
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
     def test_window_has_css_classes(self, mock_load_theme, mock_load_base):
         """Test that main window has proper CSS classes."""
         self.app._on_startup(self.app)
@@ -92,8 +92,8 @@ class TestThemeIntegration(unittest.TestCase):
         style_context = self.window.get_style_context()
         self.assertTrue(style_context.has_class("main-window"))
     
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
     def test_sidebar_has_css_classes(self, mock_load_theme, mock_load_base):
         """Test that sidebar elements have proper CSS classes."""
         self.app._on_startup(self.app)
@@ -107,8 +107,8 @@ class TestThemeIntegration(unittest.TestCase):
         self.assertIsNotNone(self.window.sidebar_revealer)
         self.assertIsNotNone(self.window.session_sidebar)
     
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
     def test_sidebar_transparency_css_rules(self, mock_load_theme, mock_load_base):
         """Test that sidebar transparency CSS rules are properly loaded."""
         self.app._on_startup(self.app)
@@ -134,8 +134,8 @@ class TestThemeIntegration(unittest.TestCase):
         self.assertIn('.sidebar-tree', css_content)
         self.assertIn('background-color: transparent', css_content)
     
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
     def test_sidebar_view_class_removal(self, mock_load_theme, mock_load_base):
         """Test that .view class is removed from sidebar for transparency to work."""
         self.app._on_startup(self.app)
@@ -152,8 +152,8 @@ class TestThemeIntegration(unittest.TestCase):
         self.assertTrue(session_sidebar_context.has_class("sidebar-tree"),
                        "The .sidebar-tree class should be present")
 
-    @patch('tree_style_terminal.main.CSSLoader.load_base_css')
-    @patch('tree_style_terminal.main.CSSLoader.load_theme')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_base_css')
+    @patch('tree_style_terminal.css_loader.CSSLoader.load_theme')
     def test_sidebar_container_has_transparency_hooks(self, mock_load_theme, mock_load_base):
         """Test that outer sidebar containers have transparency CSS hooks."""
         self.app._on_startup(self.app)

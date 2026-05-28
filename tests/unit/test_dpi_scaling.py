@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import os
 
-from tree_style_terminal.main import CSSLoader
+from tree_style_terminal.css_loader import CSSLoader
 from tree_style_terminal.config.manager import ConfigManager
 
 
@@ -25,8 +25,8 @@ class TestDPIScaling(unittest.TestCase):
         if 'TST_DPI' in os.environ:
             del os.environ['TST_DPI']
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_config_dpi_scale_numeric(self, mock_gtk, mock_config):
         """Test that numeric dpi_scale from config is used."""
         mock_config.load_config.return_value = None
@@ -40,8 +40,8 @@ class TestDPIScaling(unittest.TestCase):
         
         self.assertEqual(scale, 1.5)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_config_dpi_scale_string_numeric(self, mock_gtk, mock_config):
         """Test that string numeric dpi_scale from config is converted."""
         mock_config.load_config.return_value = None
@@ -55,8 +55,8 @@ class TestDPIScaling(unittest.TestCase):
         
         self.assertEqual(scale, 2.0)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_cli_override_priority(self, mock_gtk, mock_config):
         """Test that CLI DPI override has highest priority."""
         mock_config.load_config.return_value = None
@@ -74,8 +74,8 @@ class TestDPIScaling(unittest.TestCase):
         # 192 DPI / 96 = 2.0 scale
         self.assertEqual(scale, 2.0)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_env_override_priority(self, mock_gtk, mock_config):
         """Test that environment variable overrides config."""
         mock_config.load_config.return_value = None
@@ -92,8 +92,8 @@ class TestDPIScaling(unittest.TestCase):
         # 144 DPI / 96 = 1.5 scale
         self.assertEqual(scale, 1.5)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_auto_detection_fallback(self, mock_gtk, mock_config):
         """Test auto-detection when config is 'auto'."""
         mock_config.load_config.return_value = None
@@ -115,8 +115,8 @@ class TestDPIScaling(unittest.TestCase):
         # For this test system (~250 DPI), calibrated to give 2.0x scaling
         self.assertEqual(scale, 2.0)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_css_generation_with_scaling(self, mock_gtk, mock_config):
         """Test CSS generation includes scaled font sizes."""
         mock_config.load_config.return_value = None
@@ -138,8 +138,8 @@ class TestDPIScaling(unittest.TestCase):
         self.assertIn("font-size: 15px", css_content)
         self.assertIn("font-size: 16px", css_content)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_minimum_font_sizes_enforced(self, mock_gtk, mock_config):
         """Test that minimum font sizes are enforced for readability."""
         mock_config.load_config.return_value = None
@@ -160,8 +160,8 @@ class TestDPIScaling(unittest.TestCase):
         self.assertIn("font-size: 10px", css_content)
         self.assertIn("font-size: 11px", css_content)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_high_dpi_minimum_sizes(self, mock_gtk, mock_config):
         """Test higher minimum font sizes for high-DPI displays."""
         mock_config.load_config.return_value = None
@@ -182,8 +182,8 @@ class TestDPIScaling(unittest.TestCase):
         self.assertIn("font-size: 14px", css_content)
         self.assertIn("font-size: 15px", css_content)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_improved_auto_detection_comfort_scaling(self, mock_gtk, mock_config):
         """Test improved auto-detection with comfort scaling for high-DPI displays."""
         mock_config.load_config.return_value = None
@@ -228,8 +228,8 @@ class TestDPIScaling(unittest.TestCase):
         # apply comfort scaling to the system DPI (142), which at minimum should be 1.25x
         self.assertGreaterEqual(scale, 1.25)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_medium_dpi_comfort_scaling(self, mock_gtk, mock_config):
         """Test comfort scaling ensures minimum 1.25x for medium-DPI displays."""
         mock_config.load_config.return_value = None

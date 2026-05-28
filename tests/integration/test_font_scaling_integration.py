@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from tree_style_terminal.main import CSSLoader
+from tree_style_terminal.css_loader import CSSLoader
 from tree_style_terminal.config.manager import ConfigManager
 
 
@@ -34,8 +34,8 @@ class TestFontScalingIntegration(unittest.TestCase):
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_config_file_dpi_scaling(self, mock_gtk, mock_config):
         """Test that DPI scaling from config file is applied."""
         # Mock config manager responses
@@ -60,8 +60,8 @@ class TestFontScalingIntegration(unittest.TestCase):
         scale = css_loader._calculate_effective_dpi_scale()
         self.assertEqual(scale, 1.5)
 
-    @patch('tree_style_terminal.main.config_manager')
-    @patch('tree_style_terminal.main.Gtk')
+    @patch('tree_style_terminal.css_loader.config_manager')
+    @patch('tree_style_terminal.css_loader.Gtk')
     def test_priority_system_works(self, mock_gtk, mock_config):
         """Test that CLI override takes priority over config."""
         # Mock config manager responses
