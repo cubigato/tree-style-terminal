@@ -1,8 +1,10 @@
 """VTE terminal widget tests for tree-style-terminal."""
 
-import pytest
+import logging
 import os
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 def test_vte_terminal_creation():
@@ -98,6 +100,8 @@ def test_context_menu_labels_are_english():
 
     terminal = VteTerminal()
 
+    assert terminal._open_target_menu_item.get_label() == "Open Link"
+    assert terminal._copy_target_menu_item.get_label() == "Copy Link"
     assert terminal._copy_menu_item.get_label() == "Copy"
     assert terminal._paste_menu_item.get_label() == "Paste"
     assert terminal._select_all_menu_item.get_label() == "Select All"
@@ -123,6 +127,9 @@ def test_terminal_methods_exist():
         'select_all',
         'has_selection',
         '_paste_dropped_text',
+        '_target_from_event',
+        '_target_to_uri',
+        '_update_target_menu_labels',
         'get_window_title',
         'get_current_directory',
         'close'
@@ -224,6 +231,137 @@ def test_terminal_search_navigation_uses_vte_api():
 
     terminal.terminal.search_find_next.assert_called_once()
     terminal.terminal.search_find_previous.assert_called_once()
+
+
+def test_terminal_enables_vte_hyperlinks():
+    """Test OSC 8 hyperlinks are enabled on the VTE widget."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+
+    assert terminal.terminal.get_allow_hyperlink() is True
+
+
+def test_terminal_hyperlink_setup_failures_are_warnings(caplog):
+    """Test terminal hyperlink setup failures are visible above debug logging."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    terminal.terminal.set_allow_hyperlink.side_effect = RuntimeError("no hyperlinks")
+
+    with caplog.at_level(logging.WARNING):
+        terminal._configure_hyperlinks()
+
+    assert "Failed to enable terminal hyperlinks" in caplog.text
+
+
+def test_context_target_prefers_osc8_hyperlink():
+    """Test native VTE hyperlinks are used before plain text matches."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    terminal.terminal.hyperlink_check_event.return_value = "https://example.test/docs"
+    event = Mock()
+
+    target = terminal._target_from_event(event)
+
+    assert target == "https://example.test/docs"
+    terminal.terminal.match_check_event.assert_not_called()
+
+
+def test_context_target_falls_back_to_text_match_and_trims_punctuation():
+    """Test plain URL/path matches are cleaned for context actions."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal = Mock()
+    terminal.terminal.hyperlink_check_event.return_value = None
+    terminal.terminal.match_check_event.return_value = ("https://example.test/path),", 1)
+    event = Mock()
+
+    assert terminal._target_from_event(event) == "https://example.test/path"
+
+
+def test_context_target_to_uri_preserves_url():
+    """Test URLs are passed to GTK as-is."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+
+    assert terminal._target_to_uri("https://example.test/path") == "https://example.test/path"
+
+
+def test_context_target_to_uri_resolves_relative_file_path(tmp_path):
+    """Test detected file paths are opened relative to terminal cwd."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    with patch.object(terminal, "get_current_directory", return_value=str(tmp_path)):
+        uri = terminal._target_to_uri("./README.md")
+
+    assert uri == (tmp_path / "README.md").as_uri()
+
+
+def test_context_target_menu_labels_distinguish_paths():
+    """Test path context actions use path-specific labels."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+
+    terminal._update_target_menu_labels("./README.md")
+
+    assert terminal._open_target_menu_item.get_label() == "Open File"
+    assert terminal._copy_target_menu_item.get_label() == "Copy Path"
+
+
+def test_copy_context_target_uses_clipboard():
+    """Test the link context copy action writes the target to the clipboard."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+    from src.tree_style_terminal.widgets import terminal as terminal_module
+
+    terminal = VteTerminal()
+    terminal._context_menu_target = "https://example.test"
+    clipboard = Mock()
+
+    with patch.object(terminal_module.Gtk.Clipboard, "get", return_value=clipboard):
+        terminal._copy_context_target()
+
+    clipboard.set_text.assert_called_once_with("https://example.test", -1)
+    clipboard.store.assert_called_once()
+
+
+def test_open_context_target_uses_gtk_show_uri():
+    """Test the link context open action delegates to GTK URI opening."""
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+    from src.tree_style_terminal.widgets import terminal as terminal_module
+
+    terminal = VteTerminal()
+    terminal._context_menu_target = "https://example.test"
+
+    with patch.object(terminal_module.Gtk, "show_uri_on_window") as mock_show_uri:
+        terminal._open_context_target()
+
+    mock_show_uri.assert_called_once()
+    assert mock_show_uri.call_args.args[1] == "https://example.test"
+
+
+def test_primary_click_does_not_show_context_menu_or_affect_selection():
+    """Test normal terminal clicks are left for VTE selection handling."""
+    from gi.repository import Gdk
+    from src.tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    event = Mock()
+    event.type = Gdk.EventType.BUTTON_PRESS
+    event.button = Gdk.BUTTON_PRIMARY
+
+    with patch.object(terminal, "_popup_context_menu") as mock_popup:
+        handled = terminal._on_button_press(terminal.terminal, event)
+
+    mock_popup.assert_not_called()
+    assert handled is False
 
 
 def test_terminal_search_escape_closes_search():

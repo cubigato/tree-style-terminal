@@ -1,10 +1,10 @@
 ---
 id: TASK-4
 title: 'Handle hyperlinks, URLs, and file paths in terminal output'
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-05-27 21:46'
+updated_date: '2026-05-28 08:15'
 labels:
   - feature
   - 'effort:small'
@@ -12,8 +12,11 @@ labels:
 dependencies: []
 references:
   - 'https://gnome.pages.gitlab.gnome.org/vte/gtk3/class.Terminal.html'
+modified_files:
+  - src/tree_style_terminal/widgets/terminal.py
+  - tests/test_terminal_widget.py
 priority: high
-ordinal: 2000
+ordinal: 125
 ---
 
 ## Description
@@ -24,7 +27,13 @@ Enable VTE-supported hyperlinks and add minimal context actions for opening/copy
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 OSC 8 hyperlinks are enabled where supported by VTE
-- [ ] #2 Right-clicking a link exposes open and copy actions
-- [ ] #3 Plain URL or file-path detection does not interfere with normal terminal selection
+- [x] #1 OSC 8 hyperlinks are enabled where supported by VTE
+- [x] #2 Right-clicking a link exposes open and copy actions
+- [x] #3 Plain URL or file-path detection does not interfere with normal terminal selection
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Enabled VTE OSC 8 hyperlinks, added conservative URL/file path matches, and extended the terminal context menu with Open/Copy actions that appear only when right-clicking a detected target. Path targets use file/path labels. Hyperlink setup failures are logged as warnings so initialization problems are visible above debug logging.
+<!-- SECTION:FINAL_SUMMARY:END -->

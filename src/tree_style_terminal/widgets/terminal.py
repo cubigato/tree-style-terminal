@@ -8,6 +8,7 @@ This module provides a VTE terminal widget wrapper with spawn functionality.
 import os
 import logging
 import re
+from pathlib import Path
 from urllib.parse import unquote, urlparse
 from typing import Optional, List
 
@@ -22,6 +23,9 @@ from gi.repository import Gtk, Vte, GLib, Gdk
 from ..config import config_manager, ConfigError
 
 logger = logging.getLogger(__name__)
+
+URL_MATCH_PATTERN = r"https?://[^\s<>'\"]+[^\s<>'\".,;:!?)]"
+FILE_PATH_MATCH_PATTERN = r"(?:~|/|\./|\../)[^\s<>'\"]*[^\s<>'\".,;:!?)]"
 
 
 class VteTerminal(Gtk.Box):
@@ -49,6 +53,7 @@ class VteTerminal(Gtk.Box):
         # Set up basic terminal properties
         self._configure_terminal()
         self._context_menu = self._create_context_menu()
+        self._context_menu_target: Optional[str] = None
         self._setup_text_drag_and_drop()
 
         # Add a lightweight search bar for the active terminal scrollback.
@@ -202,6 +207,9 @@ class VteTerminal(Gtk.Box):
         # Set word char exceptions
         self.terminal.set_word_char_exceptions("-A-Za-z0-9,./?%&#:_=+@~")
 
+        # Enable VTE-native OSC 8 hyperlinks and conservative plain-text matches.
+        self._configure_hyperlinks()
+
         # Set transparency from config
         transparency = config_manager.get("terminal.transparency", 1.0)
         self.set_transparency(transparency)
@@ -212,6 +220,17 @@ class VteTerminal(Gtk.Box):
     def _create_context_menu(self) -> Gtk.Menu:
         """Create the terminal context menu."""
         menu = Gtk.Menu()
+
+        self._open_target_menu_item = Gtk.MenuItem(label="Open Link")
+        self._open_target_menu_item.connect("activate", lambda _item: self._open_context_target())
+        menu.append(self._open_target_menu_item)
+
+        self._copy_target_menu_item = Gtk.MenuItem(label="Copy Link")
+        self._copy_target_menu_item.connect("activate", lambda _item: self._copy_context_target())
+        menu.append(self._copy_target_menu_item)
+
+        self._target_separator_menu_item = Gtk.SeparatorMenuItem()
+        menu.append(self._target_separator_menu_item)
 
         self._copy_menu_item = Gtk.MenuItem(label="Copy")
         self._copy_menu_item.connect("activate", lambda _item: self.copy_clipboard())
@@ -228,7 +247,23 @@ class VteTerminal(Gtk.Box):
         menu.append(self._select_all_menu_item)
 
         menu.show_all()
+        self._set_target_menu_visible(False)
         return menu
+
+    def _configure_hyperlinks(self) -> None:
+        """Enable OSC 8 hyperlinks and add conservative URL/path matching."""
+        try:
+            self.terminal.set_allow_hyperlink(True)
+        except Exception as e:
+            logger.warning(f"Failed to enable terminal hyperlinks: {e}")
+
+        for pattern in (URL_MATCH_PATTERN, FILE_PATH_MATCH_PATTERN):
+            try:
+                regex = Vte.Regex.new_for_match(pattern, -1, 0)
+                tag = self.terminal.match_add_regex(regex, 0)
+                self.terminal.match_set_cursor_name(tag, "pointer")
+            except Exception as e:
+                logger.warning(f"Failed to configure terminal match pattern {pattern}: {e}")
 
     def _setup_text_drag_and_drop(self) -> None:
         """Accept plain text drops as terminal paste input."""
@@ -302,6 +337,12 @@ class VteTerminal(Gtk.Box):
 
     def _popup_context_menu(self, event: Gdk.EventButton) -> None:
         """Display the context menu at the pointer position."""
+        self._context_menu_target = self._target_from_event(event)
+        has_target = self._context_menu_target is not None
+
+        if has_target:
+            self._update_target_menu_labels(self._context_menu_target)
+        self._set_target_menu_visible(has_target)
         self._copy_menu_item.set_sensitive(self.has_selection())
 
         if hasattr(self._context_menu, "popup_at_pointer"):
@@ -315,6 +356,93 @@ class VteTerminal(Gtk.Box):
                 event.button,
                 event.time,
             )
+
+    def _set_target_menu_visible(self, visible: bool) -> None:
+        """Show link/path context actions only when the pointer is over a target."""
+        self._open_target_menu_item.set_visible(visible)
+        self._copy_target_menu_item.set_visible(visible)
+        self._target_separator_menu_item.set_visible(visible)
+
+    def _update_target_menu_labels(self, target: str) -> None:
+        """Label target actions according to whether the target is a URL or path."""
+        if urlparse(target).scheme:
+            self._open_target_menu_item.set_label("Open Link")
+            self._copy_target_menu_item.set_label("Copy Link")
+        else:
+            self._open_target_menu_item.set_label("Open File")
+            self._copy_target_menu_item.set_label("Copy Path")
+
+    def _target_from_event(self, event: Gdk.EventButton) -> Optional[str]:
+        """Return an OSC 8 hyperlink or plain-text match for the pointer event."""
+        try:
+            target = self.terminal.hyperlink_check_event(event)
+        except Exception as e:
+            logger.debug(f"Failed to check terminal hyperlink under pointer: {e}")
+            target = None
+
+        if target:
+            return self._clean_context_target(target)
+
+        try:
+            target, _tag = self.terminal.match_check_event(event)
+        except Exception as e:
+            logger.debug(f"Failed to check terminal text match under pointer: {e}")
+            target = None
+
+        if target:
+            return self._clean_context_target(target)
+
+        return None
+
+    def _clean_context_target(self, target: str) -> Optional[str]:
+        """Trim terminal-adjacent punctuation from detected links and paths."""
+        cleaned = target.strip().rstrip(".,;:!?)")
+        return cleaned or None
+
+    def _open_context_target(self) -> None:
+        """Open the link or file path currently associated with the context menu."""
+        if not self._context_menu_target:
+            return
+
+        uri = self._target_to_uri(self._context_menu_target)
+        if not uri:
+            return
+
+        toplevel = self.get_toplevel()
+        parent = toplevel if isinstance(toplevel, Gtk.Window) else None
+
+        try:
+            Gtk.show_uri_on_window(parent, uri, Gdk.CURRENT_TIME)
+        except Exception as e:
+            logger.warning(f"Failed to open terminal target {uri}: {e}")
+
+    def _copy_context_target(self) -> None:
+        """Copy the link or path currently associated with the context menu."""
+        if not self._context_menu_target:
+            return
+
+        try:
+            clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+            clipboard.set_text(self._context_menu_target, -1)
+            clipboard.store()
+        except Exception as e:
+            logger.warning(f"Failed to copy terminal target: {e}")
+
+    def _target_to_uri(self, target: str) -> Optional[str]:
+        """Convert a detected context target to a URI suitable for GTK opening."""
+        parsed = urlparse(target)
+        if parsed.scheme:
+            return target
+
+        try:
+            path = Path(os.path.expanduser(target))
+            if not path.is_absolute():
+                cwd = self.get_current_directory() or os.getcwd()
+                path = Path(cwd) / path
+            return path.resolve(strict=False).as_uri()
+        except Exception as e:
+            logger.debug(f"Failed to convert terminal target to URI: {e}")
+            return None
 
     def has_selection(self) -> bool:
         """Return whether the terminal currently has selected text."""
