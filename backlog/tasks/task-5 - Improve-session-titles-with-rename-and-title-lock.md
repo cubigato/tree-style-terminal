@@ -4,7 +4,7 @@ title: Improve session titles with rename and title lock
 status: Done
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-05-27 22:32'
+updated_date: '2026-05-28 07:49'
 labels:
   - feature
   - 'effort:small'
@@ -21,7 +21,7 @@ modified_files:
   - tests/unit/test_session_actions.py
   - tests/unit/test_session_sidebar.py
 priority: high
-ordinal: 5000
+ordinal: 6500
 ---
 
 ## Description

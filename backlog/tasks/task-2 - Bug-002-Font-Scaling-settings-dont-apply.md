@@ -4,13 +4,13 @@ title: 'Bug #002: Font Scaling settings don''t apply'
 status: Done
 assignee: []
 created_date: '2026-05-26 22:04'
-updated_date: '2026-05-27 22:32'
+updated_date: '2026-05-28 07:49'
 labels:
   - bug
   - legacy
 dependencies: []
 priority: medium
-ordinal: 3000
+ordinal: 4500
 ---
 
 ## Description

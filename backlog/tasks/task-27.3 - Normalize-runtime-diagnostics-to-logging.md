@@ -1,10 +1,10 @@
 ---
 id: TASK-27.3
 title: Normalize runtime diagnostics to logging
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-05-27 22:18'
-updated_date: '2026-05-28 07:41'
+updated_date: '2026-05-28 07:49'
 labels: []
 dependencies: []
 references:
@@ -21,7 +21,7 @@ modified_files:
   - config-example.yaml
 parent_task_id: TASK-27
 priority: high
-ordinal: 1500
+ordinal: 250
 ---
 
 ## Description

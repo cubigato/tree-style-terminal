@@ -4,7 +4,7 @@ title: code review and cleanup
 status: Done
 assignee: []
 created_date: '2026-05-27 21:54'
-updated_date: '2026-05-27 22:19'
+updated_date: '2026-05-28 07:49'
 labels: []
 dependencies: []
 references:
@@ -16,7 +16,7 @@ references:
   - src/tree_style_terminal/config/manager.py
   - ARCHITECTURE.md
 priority: high
-ordinal: 1000
+ordinal: 2500
 ---
 
 ## Description
