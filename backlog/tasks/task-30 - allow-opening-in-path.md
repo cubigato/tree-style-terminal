@@ -1,18 +1,20 @@
 ---
 id: TASK-30
 title: Allow opening in a requested path
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-29 12:39'
-updated_date: '2026-05-29 13:32'
+updated_date: '2026-05-29 13:09'
 labels:
   - feature
   - 'area:startup'
   - 'effort:small'
 dependencies: []
 references:
-  - 'https://www.debian.org/doc/debian-policy/ch-customized-programs.html#packages-providing-a-terminal-emulator'
-  - 'https://manpages.debian.org/trixie/gnome-terminal/x-terminal-emulator.1.en.html'
+  - >-
+    https://www.debian.org/doc/debian-policy/ch-customized-programs.html#packages-providing-a-terminal-emulator
+  - >-
+    https://manpages.debian.org/trixie/gnome-terminal/x-terminal-emulator.1.en.html
   - 'https://www.mankier.com/1/gnome-terminal'
   - 'https://man.archlinux.org/man/xfce4-terminal.1.en'
   - 'https://docs.kde.org/trunk_kf6/de/konsole/konsole/command-line-options.html'
@@ -62,21 +64,37 @@ Implementation guidance:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Running `tree-style-terminal` without a path still opens TST without an automatic terminal session.
-- [ ] #2 Creating the first session manually after a no-path startup still starts that session in `$HOME`.
-- [ ] #3 Running `tree-style-terminal /tmp` opens TST and creates exactly one root terminal session with `/tmp` as its working directory.
-- [ ] #4 Running `tree-style-terminal --working-directory /tmp` and `tree-style-terminal --working-directory=/tmp` opens exactly one root terminal session with `/tmp` as its working directory.
-- [ ] #5 Running `tree-style-terminal --workdir /tmp` opens exactly one root terminal session with `/tmp` as its working directory.
-- [ ] #6 Relative directory arguments are resolved relative to the caller's current working directory.
-- [ ] #7 Invalid paths and regular files are reported clearly and do not silently fall back to `$HOME` or another unrelated working directory.
-- [ ] #8 The path-opening behavior works when invoked through a desktop/file-manager command equivalent to `x-terminal-emulator %s`.
+- [x] #1 Running `tree-style-terminal` without a path still opens TST without an automatic terminal session.
+- [x] #2 Creating the first session manually after a no-path startup still starts that session in `$HOME`.
+- [x] #3 Running `tree-style-terminal /tmp` opens TST and creates exactly one root terminal session with `/tmp` as its working directory.
+- [x] #4 Running `tree-style-terminal --working-directory /tmp` and `tree-style-terminal --working-directory=/tmp` opens exactly one root terminal session with `/tmp` as its working directory.
+- [x] #5 Running `tree-style-terminal --workdir /tmp` opens exactly one root terminal session with `/tmp` as its working directory.
+- [x] #6 Relative directory arguments are resolved relative to the caller's current working directory.
+- [x] #7 Invalid paths and regular files are reported clearly and do not silently fall back to `$HOME` or another unrelated working directory.
+- [x] #8 The path-opening behavior works when invoked through a desktop/file-manager command equivalent to `x-terminal-emulator %s`.
 <!-- AC:END -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Argument parsing and path validation have focused automated tests where practical.
-- [ ] #2 Manual verification covers direct CLI invocation and at least one file-manager or `x-terminal-emulator` style invocation.
-- [ ] #3 Automated or documented manual coverage verifies that no-argument startup still creates no initial session.
-- [ ] #4 The implementation does not change cwd globally for the whole application.
-- [ ] #5 No unrelated terminal profile, workspace, session persistence, tabs/windows CLI grammar, or command-execution feature is added.
+- [x] #1 Argument parsing and path validation have focused automated tests where practical.
+- [x] #2 Manual verification covers direct CLI invocation and at least one file-manager or `x-terminal-emulator` style invocation.
+- [x] #3 Automated or documented manual coverage verifies that no-argument startup still creates no initial session.
+- [x] #4 The implementation does not change cwd globally for the whole application.
+- [x] #5 No unrelated terminal profile, workspace, session persistence, tabs/windows CLI grammar, or command-execution feature is added.
 <!-- DOD:END -->

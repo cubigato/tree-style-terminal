@@ -792,6 +792,7 @@ class TreeStyleTerminalApp(Gtk.Application):
         
         self.window: Optional[MainWindow] = None
         self.args = args or {}
+        self._initial_session_created = False
         self.css_loader = CSSLoader(override_dpi=self.args.get('dpi'))
         
         # Connect the activate signal
@@ -861,12 +862,60 @@ class TreeStyleTerminalApp(Gtk.Application):
         """Called when the application is activated."""
         if not self.window:
             self.window = MainWindow(application=self)
+
+        self._create_initial_session_if_requested()
         
         self.window.show_all()
         self.window.present()
 
+    def _create_initial_session_if_requested(self) -> None:
+        """Create the requested startup session once, if a cwd was provided."""
+        initial_cwd = self.args.get("initial_cwd")
+        if not initial_cwd or self._initial_session_created or not self.window:
+            return
 
-def parse_arguments():
+        self._initial_session_created = True
+        self.window.session_manager.new_session(cwd=initial_cwd)
+
+
+def _resolve_startup_directory(path_value: str, base_dir: Path | None = None) -> str:
+    """Resolve and validate a startup directory argument."""
+    if not path_value:
+        raise argparse.ArgumentTypeError("working directory must not be empty")
+
+    candidate = Path(path_value).expanduser()
+    if not candidate.is_absolute():
+        candidate = (base_dir or Path.cwd()) / candidate
+
+    resolved = candidate.resolve(strict=False)
+    if not resolved.is_dir():
+        raise argparse.ArgumentTypeError(
+            f"{path_value!r} is not an existing directory"
+        )
+
+    return str(resolved)
+
+
+def _select_initial_cwd(args: argparse.Namespace, parser: argparse.ArgumentParser) -> str | None:
+    """Return the requested initial cwd or fail with a clear parser error."""
+    requested = [
+        value
+        for value in (args.working_directory, args.directory)
+        if value is not None
+    ]
+    if not requested:
+        return None
+
+    if len(requested) > 1:
+        parser.error("provide either a positional directory or --working-directory/--workdir, not both")
+
+    try:
+        return _resolve_startup_directory(requested[0])
+    except argparse.ArgumentTypeError as exc:
+        parser.error(str(exc))
+
+
+def parse_arguments(argv: list[str] | None = None):
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Tree Style Terminal - Terminal with tree-based session management",
@@ -914,8 +963,23 @@ Environment Variables:
         choices=['debug', 'info', 'warning', 'error', 'critical'],
         help='Set runtime diagnostic verbosity (overrides app.log_level in config)'
     )
+
+    parser.add_argument(
+        '--working-directory',
+        '--workdir',
+        dest='working_directory',
+        help='Create the first terminal session in this directory'
+    )
+
+    parser.add_argument(
+        'directory',
+        nargs='?',
+        help='Create the first terminal session in this directory'
+    )
     
-    return parser.parse_args()
+    args = parser.parse_args(argv)
+    args.initial_cwd = _select_initial_cwd(args, parser)
+    return args
 
 def print_font_test_info(dpi_override=None):
     """Print font scaling test information (integrated from font_test.py)."""
@@ -1082,7 +1146,8 @@ def main() -> int:
         'dpi': args.dpi,
         'show_info': args.show_info,
         'quiet': args.quiet,
-        'log_level': args.log_level
+        'log_level': args.log_level,
+        'initial_cwd': args.initial_cwd
     }
     
     # Create filtered argv for GTK (remove our custom arguments)

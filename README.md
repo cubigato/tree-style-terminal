@@ -151,6 +151,45 @@ tree-style-terminal
 tst
 ```
 
+### Opening In A Directory
+
+Tree Style Terminal can create the first root session in a requested directory:
+
+```bash
+tree-style-terminal /tmp
+tree-style-terminal --working-directory /tmp
+tree-style-terminal --workdir /tmp
+```
+
+Relative paths are resolved from the caller's current working directory. Invalid
+paths fail clearly instead of silently falling back to `$HOME`.
+
+This is useful for file manager actions such as "Open Terminal Here". Some file
+managers pass the selected directory as an argument, while others start the
+terminal process with the target directory as its current working directory. For
+the second style, use `.`:
+
+```bash
+tree-style-terminal --workdir .
+```
+
+#### PCManFM
+
+PCManFM/libfm's advanced "Terminal emulator" setting is one of the file managers
+that launches the terminal with the target directory as the process working
+directory. Its historical `%s` placeholder is not the folder path for "Open
+Current Folder in Terminal"; libfm treats it as an old command-execution
+placeholder and may ignore or strip it.
+
+In PCManFM, open `Edit > Preferences > Advanced` and set "Terminal emulator" to:
+
+```bash
+/home/you/.local/bin/tree-style-terminal --workdir .
+```
+
+Adjust the executable path for your installation. Do not append `%s` for this
+PCManFM use case.
+
 ### Font and Display Configuration
 
 Tree Style Terminal automatically detects your system's DPI and font settings to provide optimal scaling on high-resolution displays.
@@ -200,6 +239,8 @@ tree-style-terminal --show-info         # Display system font information
 tree-style-terminal --test-fonts        # Show font scaling test and exit
 tree-style-terminal --quiet             # Suppress startup messages
 tree-style-terminal --log-level info    # Show runtime diagnostics for this launch
+tree-style-terminal /tmp                # Open one root session in /tmp
+tree-style-terminal --workdir .         # Open in the caller's current directory
 
 # Combined options
 tree-style-terminal --dpi 180 --quiet   # Launch with custom DPI, no startup message
