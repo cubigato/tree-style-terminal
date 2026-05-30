@@ -262,32 +262,14 @@ class ShortcutController:
     def _on_next_session(self, action: Gio.SimpleAction, parameter: GLib.Variant) -> None:
         """Handle next_session action activation."""
         try:
-            if hasattr(self.session_manager, 'select_next_session'):
-                self.session_manager.select_next_session()
-            else:
-                # Simple fallback implementation
-                all_sessions = self.session_manager.get_all_sessions()
-                if len(all_sessions) > 1 and self.session_manager.current_session:
-                    current_index = all_sessions.index(self.session_manager.current_session)
-                    next_index = (current_index + 1) % len(all_sessions)
-                    self.session_manager.select_session(all_sessions[next_index])
-                    logger.debug("Selected next session")
+            self.session_manager.select_next_session()
         except Exception as e:
             logger.error(f"Error selecting next session: {e}")
 
     def _on_prev_session(self, action: Gio.SimpleAction, parameter: GLib.Variant) -> None:
         """Handle prev_session action activation."""
         try:
-            if hasattr(self.session_manager, 'select_previous_session'):
-                self.session_manager.select_previous_session()
-            else:
-                # Simple fallback implementation
-                all_sessions = self.session_manager.get_all_sessions()
-                if len(all_sessions) > 1 and self.session_manager.current_session:
-                    current_index = all_sessions.index(self.session_manager.current_session)
-                    prev_index = (current_index - 1) % len(all_sessions)
-                    self.session_manager.select_session(all_sessions[prev_index])
-                    logger.debug("Selected previous session")
+            self.session_manager.select_previous_session()
         except Exception as e:
             logger.error(f"Error selecting previous session: {e}")
 

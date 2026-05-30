@@ -350,6 +350,36 @@ class TestShortcutController:
 
             mock_get_terminal.assert_not_called()
 
+    def test_next_session_action_uses_session_manager(
+        self,
+        shortcut_controller,
+        session_manager,
+    ):
+        """Test next_session action delegates navigation to SessionManager."""
+        with patch.object(
+            session_manager,
+            'select_next_session',
+        ) as mock_select_next:
+            action = shortcut_controller.get_action("next_session")
+            action.activate(None)
+
+            mock_select_next.assert_called_once_with()
+
+    def test_prev_session_action_uses_session_manager(
+        self,
+        shortcut_controller,
+        session_manager,
+    ):
+        """Test prev_session action delegates navigation to SessionManager."""
+        with patch.object(
+            session_manager,
+            'select_previous_session',
+        ) as mock_select_previous:
+            action = shortcut_controller.get_action("prev_session")
+            action.activate(None)
+
+            mock_select_previous.assert_called_once_with()
+
     def test_accelerator_action_consumes_key_event(self, shortcut_controller):
         """Test accelerator callbacks stop the key press from reaching VTE."""
         action = Mock()
