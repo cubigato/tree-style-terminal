@@ -406,10 +406,6 @@ class SessionManager:
         
         logger.debug(f"Applied {theme_name} theme to all sessions")
     
-    def get_current_theme(self) -> str:
-        """Get the current theme name."""
-        return self._current_theme
-    
     def _refresh_current_directory(self) -> None:
         """
         Refresh the current working directory of the current session.

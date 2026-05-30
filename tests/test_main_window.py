@@ -181,4 +181,3 @@ def test_theme_update_applies_to_session_manager_terminals():
     window._update_terminal_themes("dark")
 
     terminal_widget.apply_theme.assert_called_once_with("dark")
-    assert window.session_manager.get_current_theme() == "dark"

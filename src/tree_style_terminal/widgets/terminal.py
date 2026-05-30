@@ -638,19 +638,6 @@ class VteTerminal(Gtk.Box):
 
         return getattr(self, "_last_spawn_cwd", None)
 
-    def force_update_directory_tracking(self) -> None:
-        """
-        Force an update of directory tracking by triggering a title change.
-        This can be used to refresh the current working directory.
-        """
-        try:
-            # Send escape sequence to request current directory in title
-            # This should trigger a title-changed event that updates the session CWD
-            command = b'\033]0;\007'  # Simple title update request
-            self.terminal.feed_child(command)
-        except Exception as e:
-            logger.debug(f"Failed to send directory update command: {e}")
-
     def close(self) -> None:
         """Close the terminal and clean up resources."""
         if self.pid:
@@ -809,11 +796,3 @@ class VteTerminal(Gtk.Box):
 
         # Re-apply current theme with new transparency
         self.apply_theme(self._current_theme)
-
-    def get_transparency(self) -> float:
-        """Get the current transparency value."""
-        return getattr(self, '_transparency', 1.0)
-
-    def get_current_theme(self) -> str:
-        """Get the current theme name."""
-        return self._current_theme
