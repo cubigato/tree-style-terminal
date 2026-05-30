@@ -4,7 +4,7 @@ title: Add scrollback search for the active terminal
 status: Done
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-05-28 07:49'
+updated_date: '2026-05-30 00:16'
 labels:
   - feature
   - 'effort:small'
@@ -13,7 +13,7 @@ dependencies: []
 references:
   - 'https://gnome.pages.gitlab.gnome.org/vte/gtk3/class.Terminal.html'
 priority: high
-ordinal: 1500
+ordinal: 2500
 ---
 
 ## Description

@@ -4,7 +4,7 @@ title: Standardize tests on package imports
 status: Done
 assignee: []
 created_date: '2026-05-27 22:19'
-updated_date: '2026-05-28 11:38'
+updated_date: '2026-05-30 00:16'
 labels: []
 dependencies: []
 references:
@@ -20,7 +20,7 @@ modified_files:
   - tests/test_terminal_widget.py
 parent_task_id: TASK-27
 priority: high
-ordinal: 8500
+ordinal: 9500
 ---
 
 ## Description

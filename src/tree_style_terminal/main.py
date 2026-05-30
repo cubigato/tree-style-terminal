@@ -5,11 +5,14 @@ Tree Style Terminal - Main application entry point.
 This module contains the main GTK application class and window implementation.
 """
 
+from __future__ import annotations
+
 import sys
 import os
 import argparse
 import logging
 from pathlib import Path
+from dataclasses import dataclass
 from typing import Optional, Dict
 
 import gi
@@ -26,9 +29,47 @@ from .controllers.shortcuts import ShortcutController
 from .models.session import TerminalSession
 from .models.tree import SessionTree
 from .config import config_manager, ConfigError
+from .config.defaults import DEFAULT_CONFIG
 from .css_loader import CSSLoader
 
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_WINDOW_WIDTH = 1024
+
+
+@dataclass(frozen=True)
+class SidebarWidthBounds:
+    """Computed sidebar size limits for the current window width."""
+
+    minimum: int
+    default: int
+    maximum: int
+
+
+def clamp_sidebar_width(value: int, bounds: SidebarWidthBounds) -> int:
+    """Clamp a sidebar width to the computed bounds."""
+    return max(bounds.minimum, min(value, bounds.maximum))
+
+
+def calculate_sidebar_width_bounds(window_width: int) -> SidebarWidthBounds:
+    """Calculate sidebar min/default/max widths from the available window width."""
+    available_width = max(window_width, 1)
+    minimum = max(150, min(round(available_width * 0.12), 260))
+    default = max(250, min(round(available_width * 0.22), 560))
+
+    terminal_reserve = 360
+    desired_maximum = max(320, round(available_width * 0.40))
+    upper_maximum = min(1000, max(minimum, available_width - terminal_reserve))
+    maximum = min(desired_maximum, upper_maximum)
+    maximum = max(minimum, maximum)
+    default = max(minimum, min(default, maximum))
+
+    return SidebarWidthBounds(
+        minimum=minimum,
+        default=default,
+        maximum=maximum,
+    )
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -228,11 +269,16 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Initialize sidebar state tracking for UI file compatibility
         self._sidebar_collapsed = False
-        self._saved_sidebar_width = config_manager.get("ui.sidebar_width", 250)
+        self._sidebar_uses_dynamic_default = self._uses_default_sidebar_width()
+        self._updating_sidebar_position = False
+        self._programmatic_sidebar_position = None
+        self._saved_sidebar_width = self._get_initial_sidebar_width()
+        self._set_sidebar_position(self._saved_sidebar_width)
         
         # Connect paned position changes if main_container is a Paned
         if hasattr(self.main_paned, 'get_position') and callable(getattr(self.main_paned, 'get_position', None)):
             self.main_paned.connect("notify::position", self._on_paned_position_changed)
+            self.main_paned.connect("size-allocate", self._on_paned_size_allocate)
         
         # Create and integrate the session sidebar
         sidebar_container = builder.get_object("sidebar_scrolled")
@@ -269,6 +315,30 @@ class MainWindow(Gtk.ApplicationWindow):
             context = widget.get_style_context()
             context.add_class("sidebar-transparency-root")
             context.remove_class("view")
+
+    def _uses_default_sidebar_width(self) -> bool:
+        return config_manager.get("ui.sidebar_width", 250) == DEFAULT_CONFIG["ui"]["sidebar_width"]
+
+    def _get_sidebar_bounds(self, paned: Gtk.Paned | None = None) -> SidebarWidthBounds:
+        paned = paned or self.main_paned
+        allocated_width = paned.get_allocated_width() if paned else 0
+        window_width = max(allocated_width, self.get_allocated_width(), DEFAULT_WINDOW_WIDTH)
+        return calculate_sidebar_width_bounds(window_width)
+
+    def _get_initial_sidebar_width(self) -> int:
+        bounds = self._get_sidebar_bounds()
+        configured_width = config_manager.get("ui.sidebar_width", bounds.default)
+        if self._uses_default_sidebar_width():
+            return bounds.default
+        return clamp_sidebar_width(configured_width, bounds)
+
+    def _set_sidebar_position(self, width: int) -> None:
+        self._programmatic_sidebar_position = width
+        self._updating_sidebar_position = True
+        try:
+            self.main_paned.set_position(width)
+        finally:
+            self._updating_sidebar_position = False
     
     def _create_manual_ui(self) -> None:
         """Create a basic UI manually if Glade file is not available."""
@@ -290,7 +360,10 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Initialize sidebar state tracking with config
         self._sidebar_collapsed = False
-        self._saved_sidebar_width = config_manager.get("ui.sidebar_width", 250)
+        self._sidebar_uses_dynamic_default = self._uses_default_sidebar_width()
+        self._updating_sidebar_position = False
+        self._programmatic_sidebar_position = None
+        self._saved_sidebar_width = self._get_initial_sidebar_width()
         
         # Create session sidebar widget
         self.session_sidebar = SessionSidebar(self.sidebar_controller)
@@ -332,10 +405,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self.main_paned.pack2(terminal_area, resize=True, shrink=True)
         
         # Set initial sidebar width
-        self.main_paned.set_position(self._saved_sidebar_width)
+        self._set_sidebar_position(self._saved_sidebar_width)
         
         # Connect to position changes for width constraints
         self.main_paned.connect("notify::position", self._on_paned_position_changed)
+        self.main_paned.connect("size-allocate", self._on_paned_size_allocate)
         
         self.add(self.main_paned)
     
@@ -667,7 +741,8 @@ class MainWindow(Gtk.ApplicationWindow):
         """Collapse the sidebar."""
         if self._is_paned_layout():
             # Save current width before collapsing (Paned layout)
-            self._saved_sidebar_width = max(150, self.main_paned.get_position())
+            bounds = self._get_sidebar_bounds()
+            self._saved_sidebar_width = clamp_sidebar_width(self.main_paned.get_position(), bounds)
             
             # Hide the revealer completely to make it disappear from paned
             self.sidebar_revealer.set_reveal_child(False)
@@ -688,7 +763,7 @@ class MainWindow(Gtk.ApplicationWindow):
         if self._is_paned_layout():
             # First make revealer visible and restore position
             self.sidebar_revealer.set_visible(True)
-            self.main_paned.set_position(self._saved_sidebar_width)
+            self._set_sidebar_position(clamp_sidebar_width(self._saved_sidebar_width, self._get_sidebar_bounds()))
             
             # Then show the revealer content
             # Use idle_add to ensure position is set before revealing content
@@ -712,18 +787,38 @@ class MainWindow(Gtk.ApplicationWindow):
         """Handle paned position changes to enforce width constraints."""
         if not hasattr(self, '_sidebar_collapsed') or self._sidebar_collapsed:
             return
-            
+
         current_position = paned.get_position()
-        
-        # Define min/max constraints
-        min_width = 150
-        max_width = 500
-        
-        # Enforce constraints
-        if current_position < min_width and current_position > 0:
-            paned.set_position(min_width)
-        elif current_position > max_width:
-            paned.set_position(max_width)
+        expected_position = getattr(self, "_programmatic_sidebar_position", None)
+        if expected_position is not None:
+            self._programmatic_sidebar_position = None
+        elif not getattr(self, "_updating_sidebar_position", False):
+            self._sidebar_uses_dynamic_default = False
+
+        bounds = self._get_sidebar_bounds(paned)
+        constrained_position = clamp_sidebar_width(current_position, bounds)
+
+        if constrained_position != current_position:
+            self._set_sidebar_position(constrained_position)
+            current_position = constrained_position
+
+        self._saved_sidebar_width = current_position
+
+    def _on_paned_size_allocate(self, paned: Gtk.HPaned, allocation: Gdk.Rectangle) -> None:
+        """Keep sidebar size within bounds after the window is resized."""
+        if not hasattr(self, '_sidebar_collapsed') or self._sidebar_collapsed:
+            return
+
+        bounds = calculate_sidebar_width_bounds(allocation.width)
+        current_position = paned.get_position()
+        if getattr(self, "_sidebar_uses_dynamic_default", False):
+            target_position = bounds.default
+        else:
+            target_position = clamp_sidebar_width(current_position, bounds)
+
+        if current_position != target_position:
+            self._set_sidebar_position(target_position)
+        self._saved_sidebar_width = target_position
 
     def focus_terminal(self) -> None:
         """Focus the currently active terminal."""

@@ -4,7 +4,7 @@ title: 'Bug: Terminal verliert Fokus nach Session-Wechsel per Maus'
 status: Done
 assignee: []
 created_date: '2026-05-27 21:39'
-updated_date: '2026-05-28 07:49'
+updated_date: '2026-05-30 00:16'
 labels:
   - bug
 dependencies: []
@@ -15,7 +15,7 @@ modified_files:
   - tests/test_main_window.py
   - tests/unit/test_session_sidebar.py
 priority: medium
-ordinal: 5500
+ordinal: 6500
 ---
 
 ## Description

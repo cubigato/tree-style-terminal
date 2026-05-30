@@ -4,7 +4,7 @@ title: Make terminal search more flexible
 status: Done
 assignee: []
 created_date: '2026-05-28 11:41'
-updated_date: '2026-05-28 12:09'
+updated_date: '2026-05-30 00:16'
 labels:
   - feature
   - 'area:terminal'
@@ -15,7 +15,7 @@ modified_files:
   - tests/test_terminal_widget.py
   - README.md
 priority: medium
-ordinal: 9500
+ordinal: 10500
 ---
 
 ## Description

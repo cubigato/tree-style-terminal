@@ -4,7 +4,7 @@ title: Handle text drag and drop
 status: Done
 assignee: []
 created_date: '2026-05-28 06:37'
-updated_date: '2026-05-28 07:07'
+updated_date: '2026-05-30 00:16'
 labels:
   - feature
   - 'area:terminal'
@@ -14,7 +14,7 @@ modified_files:
   - src/tree_style_terminal/widgets/terminal.py
   - tests/test_terminal_widget.py
 priority: high
-ordinal: 500
+ordinal: 1500
 ---
 
 ## Description

@@ -83,6 +83,50 @@ def test_sidebar_state_management():
     assert window._sidebar_collapsed is False  # Should start expanded
 
 
+def test_sidebar_width_bounds_for_small_window():
+    """Sidebar bounds preserve terminal room on small windows."""
+    from tree_style_terminal.main import calculate_sidebar_width_bounds
+
+    bounds = calculate_sidebar_width_bounds(800)
+
+    assert bounds.minimum == 150
+    assert bounds.default == 250
+    assert bounds.maximum == 320
+
+
+def test_sidebar_width_bounds_for_medium_window():
+    """Sidebar bounds match the previous defaults on normal windows."""
+    from tree_style_terminal.main import calculate_sidebar_width_bounds
+
+    bounds = calculate_sidebar_width_bounds(1024)
+
+    assert bounds.minimum == 150
+    assert bounds.default == 250
+    assert bounds.maximum == 410
+
+
+def test_sidebar_width_bounds_for_large_window():
+    """Sidebar bounds scale up for large displays."""
+    from tree_style_terminal.main import calculate_sidebar_width_bounds
+
+    bounds = calculate_sidebar_width_bounds(3840)
+
+    assert bounds.minimum == 260
+    assert bounds.default == 560
+    assert bounds.maximum == 1000
+
+
+def test_clamp_sidebar_width_uses_computed_bounds():
+    """Sidebar clamping follows the dynamic min/max bounds."""
+    from tree_style_terminal.main import calculate_sidebar_width_bounds, clamp_sidebar_width
+
+    bounds = calculate_sidebar_width_bounds(3840)
+
+    assert clamp_sidebar_width(100, bounds) == 260
+    assert clamp_sidebar_width(700, bounds) == 700
+    assert clamp_sidebar_width(1200, bounds) == 1000
+
+
 def test_layout_components_exist():
     """Test that layout components (Paned, Revealer) are available."""
     from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
