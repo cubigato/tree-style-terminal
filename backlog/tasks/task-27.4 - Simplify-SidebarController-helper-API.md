@@ -1,10 +1,10 @@
 ---
 id: TASK-27.4
 title: Simplify SidebarController helper API
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-27 22:18'
-updated_date: '2026-05-30 09:34'
+updated_date: '2026-05-30 10:01'
 labels: []
 dependencies: []
 references:
@@ -13,9 +13,13 @@ references:
   - src/tree_style_terminal/widgets/sidebar.py
   - tests/unit/test_sidebar_controller.py
   - tests/unit/test_session_tree_events.py
+modified_files:
+  - src/tree_style_terminal/controllers/sidebar.py
+  - tests/unit/test_sidebar_controller.py
+  - tests/unit/test_session_tree_events.py
 parent_task_id: TASK-27
 priority: medium
-ordinal: 2000
+ordinal: 13500
 ---
 
 ## Description
@@ -26,10 +30,10 @@ Follow-up from TASK-27. SidebarController has runtime-used direct TreeStore upda
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Each SidebarController helper is classified as runtime-used, test-only, dead, or intentionally reserved.
-- [ ] #2 Dead/test-only helpers are removed or explicitly justified.
-- [ ] #3 Tests no longer assert placeholder APIs merely exist unless the API is intentionally kept.
-- [ ] #4 Session close/adoption behavior in the sidebar remains covered by tests.
+- [x] #1 Each SidebarController helper is classified as runtime-used, test-only, dead, or intentionally reserved.
+- [x] #2 Dead/test-only helpers are removed or explicitly justified.
+- [x] #3 Tests no longer assert placeholder APIs merely exist unless the API is intentionally kept.
+- [x] #4 Session close/adoption behavior in the sidebar remains covered by tests.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -83,8 +87,14 @@ Risks / what could go wrong
 Helper classification (AC #1): KEEP (runtime): add_session, remove_session_with_adoption, _restore_children_data, update_session, get_tree_store, get_session_from_iter, find_iter_for_session (widget select_session), sync_with_session_tree (widget refresh), _populate_from_session_tree, _add_session_recursive. DEAD (no callers): move_session, _cleanup_session_mapping, _extract_children_data. TEST-ONLY/PLACEHOLDER: bind_session_tree_events (no-op), remove_session (superseded by remove_session_with_adoption), update_session_title (superseded by update_session). Correction to task description: find_iter_for_session and sync_with_session_tree are runtime-used via widgets/sidebar.py, NOT dead -- keep them.
 <!-- SECTION:NOTES:END -->
 
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Removed dead/test-only SidebarController helpers (remove_session, move_session, _cleanup_session_mapping, _extract_children_data, update_session_title, bind_session_tree_events) and updated tests to cover the runtime manual-sync/adoption API. Validation: .venv/bin/python -m pytest -q -> 251 passed.
+<!-- SECTION:FINAL_SUMMARY:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Sidebar controller and session tree related tests pass.
-- [ ] #2 No behavior change is made to active session add/select/close flows except removal of unused API.
+- [x] #1 Sidebar controller and session tree related tests pass.
+- [x] #2 No behavior change is made to active session add/select/close flows except removal of unused API.
 <!-- DOD:END -->

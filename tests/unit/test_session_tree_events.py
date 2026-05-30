@@ -1,15 +1,11 @@
 """
-Unit tests for SessionTree event binding functionality.
+Unit tests for manual SessionTree synchronization.
 
-Tests the event system that connects SessionTree changes to TreeStore updates.
+Tests the sync path that connects SessionTree changes to TreeStore updates.
 """
-
-import pytest
-from unittest.mock import Mock, patch
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
 
 from tree_style_terminal.controllers.sidebar import SidebarController
 from tree_style_terminal.models.session import TerminalSession
@@ -17,10 +13,10 @@ from tree_style_terminal.models.tree import SessionTree
 
 
 class TestSessionTreeEvents:
-    """Test cases for SessionTree event binding."""
+    """Test cases for SessionTree synchronization."""
     
     def test_controller_responds_to_tree_changes(self):
-        """Test that SidebarController automatically updates when SessionTree changes."""
+        """Test that SidebarController updates after explicit sync."""
         tree = SessionTree()
         controller = SidebarController(tree)
         
@@ -31,8 +27,7 @@ class TestSessionTreeEvents:
         session = TerminalSession(pid=123, pty_fd=456, cwd="/test")
         tree.add_node(session)
         
-        # Controller should automatically sync (if events are bound)
-        # For now, we test manual sync - event binding is a future enhancement
+        # Controller sync is explicit; SessionSidebar.refresh() calls this path.
         controller.sync_with_session_tree()
         assert len(controller.tree_store) == 1
         
@@ -41,26 +36,11 @@ class TestSessionTreeEvents:
         controller.sync_with_session_tree()
         assert len(controller.tree_store) == 0
     
-    def test_bind_session_tree_events_method_exists(self):
-        """Test that bind_session_tree_events method exists on controller."""
-        tree = SessionTree()
-        controller = SidebarController(tree)
-        
-        assert hasattr(controller, 'bind_session_tree_events')
-        assert callable(controller.bind_session_tree_events)
-        
-        # Should not raise exception when called
-        controller.bind_session_tree_events()
-    
-    def test_multiple_controllers_can_bind_to_same_tree(self):
-        """Test that multiple controllers can bind to the same SessionTree."""
+    def test_multiple_controllers_can_sync_to_same_tree(self):
+        """Test that multiple controllers can manually sync to the same SessionTree."""
         tree = SessionTree()
         controller1 = SidebarController(tree)
         controller2 = SidebarController(tree)
-        
-        # Both should be able to bind without conflicts
-        controller1.bind_session_tree_events()
-        controller2.bind_session_tree_events()
         
         # Add session
         session = TerminalSession(pid=123, pty_fd=456, cwd="/test")

@@ -5,9 +5,6 @@ Tests the TreeStore setup, session management, and synchronization
 with the SessionTree model.
 """
 
-import pytest
-from unittest.mock import Mock
-
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
@@ -160,8 +157,8 @@ class TestSidebarController:
         stored_child = controller.tree_store.get_value(child_iter, controller.COL_OBJECT)
         assert stored_child == child
     
-    def test_remove_session(self):
-        """Test removing a session from the TreeStore."""
+    def test_remove_leaf_session_with_adoption_api(self):
+        """Test removing a leaf session through the runtime removal API."""
         session_tree = SessionTree()
         controller = SidebarController(session_tree)
         
@@ -174,14 +171,14 @@ class TestSidebarController:
         assert session in controller._session_to_iter
         
         # Remove it
-        controller.remove_session(session)
+        controller.remove_session_with_adoption(session, [], None)
         
         # Verify it's gone
         assert len(controller.tree_store) == 0
         assert session not in controller._session_to_iter
     
-    def test_update_session_title(self):
-        """Test updating a session's title."""
+    def test_update_session_refreshes_title(self):
+        """Test refreshing a session's TreeStore title from the session object."""
         session_tree = SessionTree()
         controller = SidebarController(session_tree)
         
@@ -191,7 +188,8 @@ class TestSidebarController:
         
         # Update title
         new_title = "New Title"
-        controller.update_session_title(session, new_title)
+        session.title = new_title
+        controller.update_session(session)
         
         # Verify title was updated in both session and TreeStore
         assert session.title == new_title
@@ -255,10 +253,30 @@ class TestSidebarController:
         controller.sync_with_session_tree()
         assert len(controller.tree_store) == 2  # Now has both roots
     
-    def test_bind_session_tree_events_placeholder(self):
-        """Test that bind_session_tree_events exists but doesn't crash."""
+    def test_remove_session_with_adoption_reparents_children(self):
+        """Test removing a middle session restores adopted children under the new parent."""
         session_tree = SessionTree()
+        grandparent = TerminalSession(pid=1, pty_fd=10, cwd="/grandparent", title="grandparent")
+        parent = TerminalSession(pid=2, pty_fd=20, cwd="/parent", title="parent")
+        child1 = TerminalSession(pid=3, pty_fd=30, cwd="/child1", title="child1")
+        child2 = TerminalSession(pid=4, pty_fd=40, cwd="/child2", title="child2")
+
+        session_tree.add_node(grandparent)
+        session_tree.add_node(parent, grandparent)
+        session_tree.add_node(child1, parent)
+        session_tree.add_node(child2, parent)
         controller = SidebarController(session_tree)
-        
-        # Should not raise an exception
-        controller.bind_session_tree_events()
+
+        controller.remove_session_with_adoption(parent, [child1, child2], grandparent)
+
+        grandparent_iter = controller.find_iter_for_session(grandparent)
+        assert grandparent_iter is not None
+        assert controller.tree_store.iter_n_children(grandparent_iter) == 2
+        assert parent not in controller._session_to_iter
+
+        child1_iter = controller.find_iter_for_session(child1)
+        child2_iter = controller.find_iter_for_session(child2)
+        assert child1_iter is not None
+        assert child2_iter is not None
+        assert controller.tree_store.get_value(child1_iter, controller.COL_OBJECT) == child1
+        assert controller.tree_store.get_value(child2_iter, controller.COL_OBJECT) == child2
