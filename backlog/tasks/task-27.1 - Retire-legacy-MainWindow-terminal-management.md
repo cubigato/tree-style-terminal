@@ -1,19 +1,22 @@
 ---
 id: TASK-27.1
 title: Retire legacy MainWindow terminal management
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-27 22:18'
-updated_date: '2026-05-30 09:32'
+updated_date: '2026-05-30 09:52'
 labels: []
 dependencies: []
 references:
   - TASK-27
   - src/tree_style_terminal/main.py
   - tests/test_main_window.py
+modified_files:
+  - src/tree_style_terminal/main.py
+  - tests/test_main_window.py
 parent_task_id: TASK-27
 priority: medium
-ordinal: 1000
+ordinal: 12500
 ---
 
 ## Description
@@ -24,10 +27,10 @@ Follow-up from TASK-27. MainWindow still contains an older terminal-management p
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Call-site review documents whether the legacy terminal path is reachable outside tests.
-- [ ] #2 Tests assert the current SessionManager-driven behavior instead of requiring legacy terminal attributes/methods.
-- [ ] #3 Unused legacy state and methods are removed, or the remaining compatibility surface is explicitly justified in code/tests.
-- [ ] #4 Theme update behavior still applies to all active SessionManager terminals.
+- [x] #1 Call-site review documents whether the legacy terminal path is reachable outside tests.
+- [x] #2 Tests assert the current SessionManager-driven behavior instead of requiring legacy terminal attributes/methods.
+- [x] #3 Unused legacy state and methods are removed, or the remaining compatibility surface is explicitly justified in code/tests.
+- [x] #4 Theme update behavior still applies to all active SessionManager terminals.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -75,10 +78,12 @@ Risks / what could go wrong
 
 <!-- SECTION:NOTES:BEGIN -->
 Call-site review (AC #1): legacy path (_create_new_terminal/_switch_to_terminal/_close_terminal, self.terminals, terminal_counter, active_terminal_id) is unreachable in production. Only callers are tests and the legacy methods themselves; all buttons route via ShortcutController->SessionManager. self.terminals is only filled by _create_new_terminal so it is always empty at runtime, making the theme loop over it a no-op (SessionManager.set_theme already themes every live terminal via _session_terminals). _ensure_revealer_state also has no remaining callers.
+
+Implemented: removed MainWindow legacy terminal state/methods, updated main-window tests to assert SessionManager-driven behavior, and kept theme updates delegated through SessionManager.set_theme. Verified no remaining legacy references in src/tests.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Focused main-window/session tests pass.
-- [ ] #2 No unrelated MainWindow refactor is included.
+- [x] #1 Focused main-window/session tests pass.
+- [x] #2 No unrelated MainWindow refactor is included.
 <!-- DOD:END -->

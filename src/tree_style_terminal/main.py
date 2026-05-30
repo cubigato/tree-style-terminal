@@ -13,7 +13,7 @@ import argparse
 import logging
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional
 
 import gi
 
@@ -109,11 +109,6 @@ class MainWindow(Gtk.ApplicationWindow):
         
         # Initialize shortcut controller
         self.shortcut_controller = ShortcutController(self.session_manager, self)
-        
-        # Legacy terminal management (will be phased out)
-        self.terminals: Dict[str, VteTerminal] = {}
-        self.terminal_counter = 0
-        self.active_terminal_id: Optional[str] = None
         
         # Sidebar state management
         self._sidebar_collapsed = False
@@ -482,109 +477,6 @@ class MainWindow(Gtk.ApplicationWindow):
         # Update shortcut controller action states
         self.shortcut_controller.update_action_states()
     
-    def _create_new_terminal(self, cwd: Optional[str] = None) -> str:
-        """
-        Create a new terminal session.
-        
-        Args:
-            cwd: Working directory for the new terminal.
-            
-        Returns:
-            Terminal ID of the newly created terminal.
-        """
-        # Generate unique terminal ID
-        self.terminal_counter += 1
-        terminal_id = f"terminal_{self.terminal_counter}"
-        
-        try:
-            # Create new VTE terminal widget
-            terminal_widget = VteTerminal()
-            
-            # Apply current theme to the new terminal
-            app = self.get_application()
-            if app and hasattr(app, 'css_loader'):
-                terminal_widget.apply_theme(app.css_loader.current_theme)
-            
-            # Spawn shell in the terminal
-            if not terminal_widget.spawn_shell(cwd=cwd):
-                logger.warning("Failed to spawn shell in terminal %s", terminal_id)
-                # Clean up failed terminal
-                terminal_widget.destroy()
-                return terminal_id
-            
-            # Store terminal reference
-            self.terminals[terminal_id] = terminal_widget
-            
-            # Show only the terminal widget, not all children to avoid affecting sidebar
-            terminal_widget.show()
-            
-            # Ensure sidebar state is not affected by new terminal
-            if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
-                current_reveal_state = self.sidebar_revealer.get_reveal_child()
-                # Re-apply the current state to ensure it's preserved
-                GLib.idle_add(lambda: self.sidebar_revealer.set_reveal_child(current_reveal_state))
-            
-            # Add to stack
-            self.terminal_stack.add_named(terminal_widget, terminal_id)
-            
-            # Switch to the new terminal  
-            self._switch_to_terminal(terminal_id)
-            
-            logger.info("Created new terminal: %s", terminal_id)
-            return terminal_id
-            
-        except Exception as e:
-            logger.exception("Error creating terminal %s: %s", terminal_id, e)
-            return terminal_id
-    
-    def _ensure_revealer_state(self, desired_state: bool) -> bool:
-        """Ensure the revealer maintains its desired state."""
-        if hasattr(self, 'sidebar_revealer') and self.sidebar_revealer:
-            current_state = self.sidebar_revealer.get_reveal_child()
-            if current_state != desired_state:
-                logger.debug("Correcting revealer state: %s -> %s", current_state, desired_state)
-                self.sidebar_revealer.set_reveal_child(desired_state)
-        return False  # Don't repeat
-    
-    def _switch_to_terminal(self, terminal_id: str) -> None:
-        """Switch to the specified terminal."""
-        if terminal_id in self.terminals:
-            self.terminal_stack.set_visible_child_name(terminal_id)
-            self.active_terminal_id = terminal_id
-            
-            # Update window title with terminal info
-            terminal = self.terminals[terminal_id]
-            title = terminal.get_window_title()
-            self.set_title(f"Tree Style Terminal - {title}")
-            
-            logger.info("Switched to terminal: %s", terminal_id)
-        else:
-            logger.warning("Terminal %s not found", terminal_id)
-    
-    def _close_terminal(self, terminal_id: str) -> None:
-        """Close the specified terminal."""
-        if terminal_id in self.terminals:
-            terminal = self.terminals[terminal_id]
-            terminal.close()
-            
-            # Remove from stack and dict
-            self.terminal_stack.remove(terminal)
-            del self.terminals[terminal_id]
-            
-            # If this was the active terminal, switch to another or welcome
-            if self.active_terminal_id == terminal_id:
-                if self.terminals:
-                    # Switch to the first available terminal
-                    next_terminal_id = next(iter(self.terminals.keys()))
-                    self._switch_to_terminal(next_terminal_id)
-                else:
-                    # No terminals left, show welcome page
-                    self.terminal_stack.set_visible_child_name("welcome")
-                    self.active_terminal_id = None
-                    self.set_title("Tree Style Terminal")
-            
-            logger.info("Closed terminal: %s", terminal_id)
-    
     def _setup_session_callbacks(self) -> None:
         """Set up callbacks for session management."""
         self.session_manager.set_session_created_callback(self._on_session_created)
@@ -836,15 +728,7 @@ class MainWindow(Gtk.ApplicationWindow):
     
     def _update_terminal_themes(self, theme_name: str) -> None:
         """Update all terminals to use the specified theme."""
-        # Update legacy terminals dictionary
-        for terminal_widget in self.terminals.values():
-            if hasattr(terminal_widget, 'apply_theme'):
-                terminal_widget.apply_theme(theme_name)
-        
-        # Update terminals managed by session manager
-        if hasattr(self.session_manager, 'set_theme'):
-            self.session_manager.set_theme(theme_name)
-        
+        self.session_manager.set_theme(theme_name)
         logger.info("Updated all terminals to %s theme", theme_name)
     
     def _update_window_theme_class(self, theme_name: str) -> None:

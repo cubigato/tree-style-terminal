@@ -1,7 +1,6 @@
 """Main window tests for tree-style-terminal."""
 
-import pytest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -20,23 +19,7 @@ def test_main_window_creation():
     # Create main window
     window = MainWindow(application=app)
     assert window is not None
-    assert hasattr(window, 'terminals')
-    assert hasattr(window, 'terminal_counter')
-    assert hasattr(window, 'active_terminal_id')
-
-
-def test_terminal_management_dict():
-    """Test terminal storage/retrieval from terminals dict."""
-    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
-    
-    app = TreeStyleTerminalApp()
-    window = MainWindow(application=app)
-    
-    # Check initial state
-    assert isinstance(window.terminals, dict)
-    assert len(window.terminals) == 0
-    assert window.terminal_counter == 0
-    assert window.active_terminal_id is None
+    assert window.session_manager is not None
 
 
 def test_main_window_methods_exist():
@@ -48,10 +31,9 @@ def test_main_window_methods_exist():
     
     # Check that expected methods exist
     expected_methods = [
-        '_create_new_terminal',
-        '_switch_to_terminal',
-        '_close_terminal',
         '_on_new_terminal_clicked',
+        '_on_close_session_clicked',
+        '_on_new_child_clicked',
         '_on_sidebar_toggle_clicked'
     ]
     
@@ -184,3 +166,19 @@ def test_new_session_creation_schedules_terminal_focus():
         window._on_session_created(session, terminal_widget)
 
     idle_add.assert_called_with(window.focus_terminal)
+
+
+def test_theme_update_applies_to_session_manager_terminals():
+    """Test theme updates are delegated to SessionManager-managed terminals."""
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    app = TreeStyleTerminalApp()
+    window = MainWindow(application=app)
+    session = TerminalSession(pid=123, pty_fd=456, cwd="/test")
+    terminal_widget = Mock()
+    window.session_manager._session_terminals[session] = terminal_widget
+
+    window._update_terminal_themes("dark")
+
+    terminal_widget.apply_theme.assert_called_once_with("dark")
+    assert window.session_manager.get_current_theme() == "dark"
