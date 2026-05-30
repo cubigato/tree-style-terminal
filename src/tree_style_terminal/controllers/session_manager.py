@@ -48,6 +48,7 @@ class SessionManager:
         self._session_created_callback: Optional[Callable[[TerminalSession, VteTerminal], None]] = None
         self._session_closed_callback: Optional[Callable[[TerminalSession, list[TerminalSession], Optional[TerminalSession]], None]] = None
         self._session_selected_callback: Optional[Callable[[TerminalSession], None]] = None
+        self._session_changed_callback: Optional[Callable[[TerminalSession], None]] = None
         
         # Counter for generating unique session IDs
         self._session_counter = 0
@@ -265,14 +266,14 @@ class SessionManager:
     def rename_session(self, session: TerminalSession, title: str) -> None:
         """Set a custom visible title for a session."""
         session.rename(title)
-        if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
-            self.session_changed_callback(session)
+        if self._session_changed_callback:
+            self._session_changed_callback(session)
 
     def clear_session_title(self, session: TerminalSession) -> None:
         """Clear a custom title and return the session to automatic naming."""
         session.clear_custom_title()
-        if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
-            self.session_changed_callback(session)
+        if self._session_changed_callback:
+            self._session_changed_callback(session)
     
     def _on_terminal_exited(self, terminal: VteTerminal, exit_status: int, session: TerminalSession) -> None:
         """
@@ -329,8 +330,8 @@ class SessionManager:
         
         # Notify sidebar of changes if any updates occurred
         if title_changed or cwd_changed:
-            if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
-                self.session_changed_callback(session)
+            if self._session_changed_callback:
+                self._session_changed_callback(session)
     
     def set_session_created_callback(self, callback: Callable[[TerminalSession, VteTerminal], None]) -> None:
         """Set callback for when a session is created."""
@@ -338,7 +339,7 @@ class SessionManager:
     
     def set_session_changed_callback(self, callback: Callable[[TerminalSession], None]) -> None:
         """Set callback for when a session's properties change."""
-        self.session_changed_callback = callback
+        self._session_changed_callback = callback
     
     def set_session_closed_callback(self, callback: Callable[[TerminalSession, list[TerminalSession], Optional[TerminalSession]], None]) -> None:
         """Set callback for when a session is closed."""
@@ -427,8 +428,8 @@ class SessionManager:
                     if self.current_session.set_automatic_title(new_title):
                         
                         # Notify callbacks of the change
-                        if hasattr(self, 'session_changed_callback') and self.session_changed_callback:
-                            self.session_changed_callback(self.current_session)
+                        if self._session_changed_callback:
+                            self._session_changed_callback(self.current_session)
                             
             except Exception as e:
                 logger.debug(f"Failed to refresh current directory: {e}")
