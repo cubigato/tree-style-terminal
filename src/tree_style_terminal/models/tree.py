@@ -8,6 +8,7 @@ and implements the adoption algorithm when sessions are removed.
 from __future__ import annotations
 
 from typing import List, Optional, Set
+
 from .session import TerminalSession
 
 

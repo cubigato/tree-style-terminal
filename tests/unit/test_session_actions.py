@@ -6,19 +6,18 @@ verifying that they create proper parent-child relationships and
 tree structures as specified in Milestone 5 point 4.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import gi
+import pytest
+
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gio', '2.0')
-from gi.repository import Gio, GLib
 
-from tree_style_terminal.controllers.shortcuts import ShortcutController
 from tree_style_terminal.controllers.session_manager import SessionManager
-from tree_style_terminal.models.tree import SessionTree
+from tree_style_terminal.controllers.shortcuts import ShortcutController
 from tree_style_terminal.models.session import TerminalSession
-from tree_style_terminal.widgets.terminal import VteTerminal
+from tree_style_terminal.models.tree import SessionTree
 
 
 class TestSessionActions:

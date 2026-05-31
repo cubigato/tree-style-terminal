@@ -5,7 +5,7 @@ Configuration module for Tree Style Terminal.
 This module provides configuration management functionality.
 """
 
-from .manager import ConfigManager, ConfigError, get_config_manager
+from .manager import ConfigError, ConfigManager, get_config_manager
 
 # Export the global config manager instance
 config_manager = get_config_manager()

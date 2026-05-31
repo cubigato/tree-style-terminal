@@ -4,9 +4,14 @@ import logging
 import os
 from pathlib import Path
 
-from gi.repository import Gtk, GLib, Gdk
+import gi
 
-from .config import config_manager, ConfigError
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+
+from gi.repository import Gdk, GLib, Gtk
+
+from .config import ConfigError, config_manager
 
 # Keep the logger name stable for this behavior-preserving extraction.
 logger = logging.getLogger("tree_style_terminal.main")

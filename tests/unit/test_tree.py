@@ -5,7 +5,6 @@ Tests node addition, the adoption algorithm, basic queries, and edge cases.
 Focus on the complex adoption behavior when nodes are removed.
 """
 
-import pytest
 from tree_style_terminal.models.session import TerminalSession
 from tree_style_terminal.models.tree import SessionTree
 

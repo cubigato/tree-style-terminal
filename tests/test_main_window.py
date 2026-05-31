@@ -3,6 +3,7 @@
 from unittest.mock import Mock, patch
 
 import gi
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
@@ -100,7 +101,10 @@ def test_sidebar_width_bounds_for_large_window():
 
 def test_clamp_sidebar_width_uses_computed_bounds():
     """Sidebar clamping follows the dynamic min/max bounds."""
-    from tree_style_terminal.main import calculate_sidebar_width_bounds, clamp_sidebar_width
+    from tree_style_terminal.main import (
+        calculate_sidebar_width_bounds,
+        clamp_sidebar_width,
+    )
 
     bounds = calculate_sidebar_width_bounds(3840)
 

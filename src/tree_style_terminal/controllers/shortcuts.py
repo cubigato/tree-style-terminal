@@ -14,10 +14,10 @@ import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gio', '2.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gio, GLib, Gtk, Gdk  # noqa: E402
+from gi.repository import Gio, GLib, Gtk  # noqa: E402
 
-from .session_manager import SessionManager  # noqa: E402
 from ..config import config_manager  # noqa: E402
+from .session_manager import SessionManager  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

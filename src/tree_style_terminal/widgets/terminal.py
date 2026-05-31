@@ -5,12 +5,12 @@ Terminal widget module for Tree Style Terminal.
 This module provides a VTE terminal widget wrapper with spawn functionality.
 """
 
-import os
 import logging
+import os
 import re
 from pathlib import Path
+from typing import List, Optional
 from urllib.parse import unquote, urlparse
-from typing import Optional, List
 
 import gi
 
@@ -18,9 +18,9 @@ gi.require_version("Gtk", "3.0")
 gi.require_version("Vte", "2.91")
 gi.require_version("Gdk", "3.0")
 
-from gi.repository import Gtk, Vte, GLib, Gdk
+from gi.repository import Gdk, GLib, Gtk, Vte
 
-from ..config import config_manager, ConfigError
+from ..config import ConfigError, config_manager
 
 logger = logging.getLogger(__name__)
 

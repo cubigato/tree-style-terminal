@@ -1,8 +1,9 @@
 """Pytest configuration and fixtures for tree-style-terminal tests."""
 
-import pytest
 import os
 import sys
+
+import pytest
 
 # Add the src layout root so package imports work from a repository checkout.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

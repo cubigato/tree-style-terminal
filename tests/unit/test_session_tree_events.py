@@ -5,6 +5,7 @@ Tests the sync path that connects SessionTree changes to TreeStore updates.
 """
 
 import gi
+
 gi.require_version('Gtk', '3.0')
 
 from tree_style_terminal.controllers.sidebar import SidebarController

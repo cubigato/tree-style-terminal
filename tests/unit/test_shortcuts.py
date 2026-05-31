@@ -4,18 +4,19 @@ Unit tests for ShortcutController.
 Tests action creation, callback execution, and state management.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import gi
+import pytest
+
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gio', '2.0')
-from gi.repository import Gio, GLib
+from gi.repository import Gio
 
-from tree_style_terminal.controllers.shortcuts import ShortcutController
 from tree_style_terminal.controllers.session_manager import SessionManager
-from tree_style_terminal.models.tree import SessionTree
+from tree_style_terminal.controllers.shortcuts import ShortcutController
 from tree_style_terminal.models.session import TerminalSession
+from tree_style_terminal.models.tree import SessionTree
 
 
 class TestShortcutController:

@@ -5,14 +5,13 @@ Configuration manager for Tree Style Terminal.
 This module handles loading, validating, and saving configuration files.
 """
 
-import os
 import logging
-import yaml
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict
+
+import yaml
 
 from .defaults import DEFAULT_CONFIG, DEFAULT_CONFIG_TEMPLATE, VALIDATION_RULES
-
 
 logger = logging.getLogger(__name__)
 

@@ -5,8 +5,6 @@ import os
 import re
 from unittest.mock import Mock, patch
 
-import pytest
-
 
 def test_vte_terminal_creation():
     """Test that VteTerminal widget can be instantiated."""
@@ -266,7 +264,10 @@ def test_terminal_search_falls_back_to_previous_when_next_misses():
 def test_terminal_search_can_use_exact_mode():
     """Test disabling fuzzy search uses exact literal matching."""
     from tree_style_terminal.widgets import terminal as terminal_module
-    from tree_style_terminal.widgets.terminal import VteTerminal, VTE_REGEX_COMPILE_FLAGS
+    from tree_style_terminal.widgets.terminal import (
+        VTE_REGEX_COMPILE_FLAGS,
+        VteTerminal,
+    )
 
     terminal = VteTerminal()
     terminal.terminal = Mock()
@@ -345,7 +346,10 @@ def test_terminal_hyperlink_setup_failures_are_warnings(caplog):
 def test_terminal_hyperlink_match_regex_uses_vte_compile_flags():
     """Test hyperlink regexes are compiled with flags VTE expects."""
     from tree_style_terminal.widgets import terminal as terminal_module
-    from tree_style_terminal.widgets.terminal import VTE_REGEX_COMPILE_FLAGS, VteTerminal
+    from tree_style_terminal.widgets.terminal import (
+        VTE_REGEX_COMPILE_FLAGS,
+        VteTerminal,
+    )
 
     terminal = VteTerminal()
     terminal.terminal = Mock()
@@ -421,8 +425,8 @@ def test_context_target_menu_labels_distinguish_paths():
 
 def test_copy_context_target_uses_clipboard():
     """Test the link context copy action writes the target to the clipboard."""
-    from tree_style_terminal.widgets.terminal import VteTerminal
     from tree_style_terminal.widgets import terminal as terminal_module
+    from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
     terminal._context_menu_target = "https://example.test"
@@ -437,8 +441,8 @@ def test_copy_context_target_uses_clipboard():
 
 def test_open_context_target_uses_gtk_show_uri():
     """Test the link context open action delegates to GTK URI opening."""
-    from tree_style_terminal.widgets.terminal import VteTerminal
     from tree_style_terminal.widgets import terminal as terminal_module
+    from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
     terminal._context_menu_target = "https://example.test"
@@ -453,6 +457,7 @@ def test_open_context_target_uses_gtk_show_uri():
 def test_primary_click_does_not_show_context_menu_or_affect_selection():
     """Test normal terminal clicks are left for VTE selection handling."""
     from gi.repository import Gdk
+
     from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
@@ -470,6 +475,7 @@ def test_primary_click_does_not_show_context_menu_or_affect_selection():
 def test_terminal_search_escape_closes_search():
     """Test Escape closes the terminal search UI."""
     from gi.repository import Gdk
+
     from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
@@ -486,6 +492,7 @@ def test_terminal_search_escape_closes_search():
 def test_terminal_search_enter_moves_to_next_match():
     """Test Enter moves to the next terminal search match."""
     from gi.repository import Gdk
+
     from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
@@ -507,6 +514,7 @@ def test_terminal_search_enter_moves_to_next_match():
 def test_terminal_search_shift_enter_moves_to_previous_match():
     """Test Shift+Enter moves to the previous terminal search match."""
     from gi.repository import Gdk
+
     from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
@@ -528,6 +536,7 @@ def test_terminal_search_shift_enter_moves_to_previous_match():
 def test_terminal_search_non_escape_key_is_not_handled():
     """Test non-Escape keys keep normal entry handling."""
     from gi.repository import Gdk
+
     from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
@@ -573,8 +582,8 @@ def test_paste_dropped_text_ignores_non_text_payload():
 
 def test_drag_data_received_finishes_context_with_result():
     """Test GTK drop context is completed after handling a text drop."""
-    from tree_style_terminal.widgets.terminal import VteTerminal
     from tree_style_terminal.widgets import terminal as terminal_module
+    from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
     context = Mock()
@@ -600,8 +609,8 @@ def test_drag_data_received_finishes_context_with_result():
 
 def test_drag_data_received_does_not_focus_after_rejected_drop():
     """Test rejected drops do not attempt to take focus."""
-    from tree_style_terminal.widgets.terminal import VteTerminal
     from tree_style_terminal.widgets import terminal as terminal_module
+    from tree_style_terminal.widgets.terminal import VteTerminal
 
     terminal = VteTerminal()
     context = Mock()

@@ -7,30 +7,31 @@ This module contains the main GTK application class and window implementation.
 
 from __future__ import annotations
 
-import sys
-import os
 import argparse
 import logging
-from pathlib import Path
+import os
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 import gi
 
 gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
 
-from gi.repository import Gtk, Gio, GLib, Gdk
+from gi.repository import Gdk, Gio, GLib, Gtk
 
-from .widgets.terminal import VteTerminal
-from .widgets.sidebar import SessionSidebar
-from .controllers.sidebar import SidebarController
+from .config import ConfigError, config_manager
+from .config.defaults import DEFAULT_CONFIG
 from .controllers.session_manager import SessionManager
 from .controllers.shortcuts import ShortcutController
+from .controllers.sidebar import SidebarController
+from .css_loader import CSSLoader
 from .models.session import TerminalSession
 from .models.tree import SessionTree
-from .config import config_manager, ConfigError
-from .config.defaults import DEFAULT_CONFIG
-from .css_loader import CSSLoader
+from .widgets.sidebar import SessionSidebar
+from .widgets.terminal import VteTerminal
 
 logger = logging.getLogger(__name__)
 

@@ -10,6 +10,6 @@ __version__ = "0.4.2"
 __author__ = "Tree Style Terminal Contributors"
 __license__ = "Apache-2.0"
 
-from .main import TreeStyleTerminalApp, MainWindow, main
+from .main import MainWindow, TreeStyleTerminalApp, main
 
 __all__ = ["TreeStyleTerminalApp", "MainWindow", "main"]

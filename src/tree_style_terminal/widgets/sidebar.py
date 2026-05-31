@@ -8,14 +8,16 @@ for displaying the hierarchical session structure.
 from __future__ import annotations
 
 import logging
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk
 
-from ..models.session import TerminalSession
+gi.require_version('Gtk', '3.0')
+gi.require_version('Gdk', '3.0')
+from gi.repository import Gdk, Gtk
+
 from ..controllers.sidebar import SidebarController
+from ..models.session import TerminalSession
 
 logger = logging.getLogger(__name__)
 

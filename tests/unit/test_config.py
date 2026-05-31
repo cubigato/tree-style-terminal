@@ -5,13 +5,14 @@ Unit tests for the ConfigManager class.
 Tests configuration loading, validation, default creation, and error handling.
 """
 
-import pytest
 import tempfile
-import yaml
 from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
-from tree_style_terminal.config import ConfigManager, ConfigError, get_config_manager
+import pytest
+import yaml
+
+from tree_style_terminal.config import ConfigError, ConfigManager, get_config_manager
 from tree_style_terminal.config.defaults import DEFAULT_CONFIG
 
 

@@ -3,12 +3,11 @@
 Unit tests for DPI scaling functionality in CSSLoader.
 """
 
-import unittest
-from unittest.mock import patch, MagicMock
 import os
+import unittest
+from unittest.mock import MagicMock, patch
 
 from tree_style_terminal.css_loader import CSSLoader
-from tree_style_terminal.config.manager import ConfigManager
 
 
 class TestDPIScaling(unittest.TestCase):

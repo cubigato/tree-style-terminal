@@ -11,8 +11,9 @@ import logging
 from typing import Optional
 
 import gi
+
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GObject
+from gi.repository import GObject, Gtk
 
 from ..models.session import TerminalSession
 from ..models.tree import SessionTree

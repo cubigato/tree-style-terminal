@@ -5,14 +5,13 @@ Tests the interaction between SessionSidebar, SidebarController, and SessionMana
 for focus switching and session selection.
 """
 
-import pytest
 
 import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
 
-from tree_style_terminal.controllers.sidebar import SidebarController
+gi.require_version('Gtk', '3.0')
+
 from tree_style_terminal.controllers.session_manager import SessionManager
+from tree_style_terminal.controllers.sidebar import SidebarController
 from tree_style_terminal.models.session import TerminalSession
 from tree_style_terminal.models.tree import SessionTree
 from tree_style_terminal.widgets.sidebar import SessionSidebar

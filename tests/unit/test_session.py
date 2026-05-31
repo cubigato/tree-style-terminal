@@ -5,7 +5,6 @@ Tests basic instantiation, title auto-generation, hash/equality behavior,
 and edge cases for cwd handling.
 """
 
-import pytest
 from tree_style_terminal.models.session import TerminalSession
 
 

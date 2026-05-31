@@ -4,9 +4,9 @@ Unit tests for the SessionSidebar widget.
 Tests the widget structure, TreeView configuration, and selection handling.
 """
 
-import pytest
 
 import gi
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 

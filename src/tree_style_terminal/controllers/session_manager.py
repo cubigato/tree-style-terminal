@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional, Callable, Dict
+from typing import Callable, Dict, Optional
 
 import gi
+
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 from gi.repository import GLib

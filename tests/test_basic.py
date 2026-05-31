@@ -2,13 +2,12 @@
 Basic smoke tests for tree-style-terminal application.
 """
 
-import pytest
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio
+from gi.repository import Gio, Gtk
 
-from tree_style_terminal import TreeStyleTerminalApp, MainWindow, main
+from tree_style_terminal import MainWindow, TreeStyleTerminalApp, main
 
 
 class TestTreeStyleTerminalApp:
@@ -57,7 +56,7 @@ class TestApplicationIntegration:
 
     def test_package_imports(self):
         """Test that package imports work correctly."""
-        from tree_style_terminal import __version__, __author__, __license__
+        from tree_style_terminal import __author__, __license__, __version__
         assert __version__ == "0.4.2"
         assert __author__ == "Tree Style Terminal Contributors"
         assert __license__ == "Apache-2.0"

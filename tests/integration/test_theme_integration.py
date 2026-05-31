@@ -1,16 +1,17 @@
-import unittest
-from unittest.mock import patch, MagicMock
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import patch
 
 # Add src to path for testing
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio
 
-from tree_style_terminal.main import TreeStyleTerminalApp, MainWindow
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
 
 
 class TestThemeIntegration(unittest.TestCase):

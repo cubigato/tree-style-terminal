@@ -3,14 +3,13 @@
 Integration tests for font scaling functionality.
 """
 
-import unittest
-import tempfile
 import os
+import tempfile
+import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from tree_style_terminal.css_loader import CSSLoader
-from tree_style_terminal.config.manager import ConfigManager
 
 
 class TestFontScalingIntegration(unittest.TestCase):
