@@ -1,14 +1,15 @@
 ---
 id: TASK-33
 title: Review and remove obsolete spike/debug helper files
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-05-31 13:29'
+updated_date: '2026-05-31 13:44'
 labels:
   - cleanup
 dependencies: []
 priority: low
-ordinal: 21500
+ordinal: 22500
 ---
 
 ## Description
@@ -19,8 +20,8 @@ Review the top-level spike and debug helper files that are outside the normal sr
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 spikes/gtk.py, spikes/qt.py, and util/debug_transparency.py are reviewed for current usefulness
-- [ ] #2 Obsolete files are removed from the repository
-- [ ] #3 Any retained file is either lint-clean under the project Ruff configuration or has a documented reason to remain out of scope
-- [ ] #4 Ruff repo-wide output no longer includes avoidable safe-fix noise from obsolete spike/debug helpers
+- [x] #1 spikes/gtk.py, spikes/qt.py, and util/debug_transparency.py are reviewed for current usefulness
+- [x] #2 Obsolete files are removed from the repository
+- [x] #3 Any retained file is either lint-clean under the project Ruff configuration or has a documented reason to remain out of scope
+- [x] #4 Ruff repo-wide output no longer includes avoidable safe-fix noise from obsolete spike/debug helpers
 <!-- AC:END -->
