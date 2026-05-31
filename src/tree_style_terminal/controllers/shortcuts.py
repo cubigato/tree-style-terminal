@@ -42,12 +42,12 @@ class ShortcutController:
         self.main_window = main_window
         self._actions: dict[str, Gio.SimpleAction] = {}
         self._accel_group: Optional[Gtk.AccelGroup] = None
-        
+
         self._setup_actions()
-        
+
         if main_window:
             self._setup_shortcuts()
-        
+
         logger.debug("ShortcutController initialized")
 
     def _setup_actions(self) -> None:
@@ -335,7 +335,7 @@ class ShortcutController:
             ('<Control><Shift>t', 'new_sibling'),
             ('<Control><Alt>t', 'new_child'),
             ('<Control>q', 'close_session'),
-            
+
             # Navigation & UI
             ('F9', 'toggle_sidebar'),
             ('<Control><Shift>o', 'toggle_sidebar'),  # Alternative
@@ -345,7 +345,7 @@ class ShortcutController:
             ('<Control><Shift>c', 'terminal_copy'),
             ('<Control><Shift>v', 'terminal_paste'),
             (terminal_search_shortcut, 'terminal_search'),
-            
+
             # Session navigation
             ('<Control><Shift>Right', 'next_session'),
             ('<Control><Shift>Left', 'prev_session'),
@@ -389,7 +389,7 @@ class ShortcutController:
     def set_main_window(self, main_window: Gtk.ApplicationWindow) -> None:
         """
         Set the main window and setup shortcuts.
-        
+
         Args:
             main_window: The main window to add actions and shortcuts to
         """

@@ -12,19 +12,19 @@ DEFAULT_CONFIG = {
 
     # Theme for the entire GUI: "light", "dark", or "automatic"
     "theme": "dark",
-    
+
     "terminal": {
         # Scrollback buffer size (number of lines to keep in history)
         "scrollback_lines": 10000,
         # Terminal transparency (0.0 = fully transparent, 1.0 = fully opaque)
         "transparency": 1.0,
     },
-    
+
     "ui": {
         # Initial width of the sidebar in pixels
         "sidebar_width": 250,
     },
-    
+
     "display": {
         # UI scaling factor (1.0 = 100%, 1.5 = 150%, etc.)
         # Set to "auto" to use system DPI detection

@@ -664,7 +664,7 @@ class VteTerminal(Gtk.Box):
                 # Store the PTY file descriptor for reference
                 self.pty_fd = pty.get_fd()
                 self.pid = child_pid
-                
+
                 logger.info(f"Successfully spawned shell in directory {self._spawn_cwd}")
             else:
                 logger.error("Failed to spawn shell")

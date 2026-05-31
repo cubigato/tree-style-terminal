@@ -74,65 +74,65 @@ def calculate_sidebar_width_bounds(window_width: int) -> SidebarWidthBounds:
 
 class MainWindow(Gtk.ApplicationWindow):
     """Main application window with tree-style terminal layout."""
-    
+
     def __init__(self, application: "TreeStyleTerminalApp"):
         super().__init__(application=application)
-        
+
         # Load configuration
         try:
             config_manager.load_config()
         except ConfigError as e:
             logger.error("Configuration error: %s", e)
             raise
-        
+
         # Check transparency requirements and enable RGBA visual if needed
         transparency = config_manager.get("terminal.transparency", 1.0)
         if transparency < 1.0:
             self._setup_transparency()
-        
+
         # Add CSS class to window
         self.get_style_context().add_class("main-window")
-        
+
         # Add theme class to window for CSS targeting
         app = application
         if hasattr(app, 'css_loader') and hasattr(app.css_loader, 'current_theme'):
             self.get_style_context().add_class(app.css_loader.current_theme)
-        
+
         # Set up window properties
         self.set_title("Tree Style Terminal")
         self.set_default_size(1024, 768)
-        
+
         # Initialize domain models
         self.session_tree = SessionTree()
         self.session_manager = SessionManager(self.session_tree)
         self.sidebar_controller = SidebarController(self.session_tree)
-        
+
         # Initialize shortcut controller
         self.shortcut_controller = ShortcutController(self.session_manager, self)
-        
+
         # Sidebar state management
         self._sidebar_collapsed = False
-        
+
         # Create header bar
         self._setup_headerbar()
-        
+
         # Update theme button icon based on current theme
         self._update_theme_button_icon()
-        
+
         # Load the UI from the Glade file
         self._load_ui()
-        
+
         # Set up session management callbacks
         self._setup_session_callbacks()
-        
+
         # Don't create initial session in constructor to allow clean testing
         # Initial session will be created when needed
-    
+
 
     def _setup_transparency(self) -> None:
         """Set up RGBA visual for terminal transparency support."""
         screen = self.get_screen()
-        
+
         # Check if compositing is available
         if not screen.is_composited():
             logger.error(
@@ -140,7 +140,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Please disable transparency in the configuration or enable a compositing manager."
             )
             raise SystemExit(1)
-        
+
         # Get RGBA visual
         visual = screen.get_rgba_visual()
         if visual is None:
@@ -149,18 +149,18 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Please disable transparency in the configuration."
             )
             raise SystemExit(1)
-        
+
         # Enable RGBA visual and app paintable
         self.set_visual(visual)
         self.set_app_paintable(True)
-        
+
     def _setup_headerbar(self) -> None:
         """Set up the header bar."""
         self.headerbar = Gtk.HeaderBar()
         self.headerbar.set_show_close_button(True)
         self.headerbar.set_title("Tree Style Terminal")
         self.set_titlebar(self.headerbar)
-        
+
         # Add sidebar toggle button
         self.sidebar_toggle_button = Gtk.Button()
         self.sidebar_toggle_button.set_image(
@@ -169,11 +169,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sidebar_toggle_button.set_tooltip_text("Toggle sidebar (F9)")
         self.sidebar_toggle_button.connect("clicked", self._on_sidebar_toggle_clicked)
         self.headerbar.pack_start(self.sidebar_toggle_button)
-        
+
         # Create button container for session actions
         session_buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         session_buttons_box.get_style_context().add_class("linked")
-        
+
         # Add new sibling button (was new_terminal_button)
         self.new_sibling_button = Gtk.Button()
         self.new_sibling_button.set_image(
@@ -182,8 +182,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.new_sibling_button.set_tooltip_text("New sibling session (Ctrl+Shift+T)")
         self.new_sibling_button.connect("clicked", self._on_new_terminal_clicked)  # Use existing callback
         session_buttons_box.pack_start(self.new_sibling_button, False, False, 0)
-        
-        # Add new child button  
+
+        # Add new child button
         self.new_child_button = Gtk.Button()
         self.new_child_button.set_image(
             Gtk.Image.new_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
@@ -191,7 +191,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.new_child_button.set_tooltip_text("New child session (Ctrl+Alt+T)")
         self.new_child_button.connect("clicked", self._on_new_child_clicked)
         session_buttons_box.pack_start(self.new_child_button, False, False, 0)
-        
+
         # Add close session button
         self.close_session_button = Gtk.Button()
         self.close_session_button.set_image(
@@ -200,7 +200,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.close_session_button.set_tooltip_text("Close session (Ctrl+Q)")
         self.close_session_button.connect("clicked", self._on_close_session_clicked)
         session_buttons_box.pack_start(self.close_session_button, False, False, 0)
-        
+
         # Add the button box to header bar
         self.headerbar.pack_start(session_buttons_box)
 
@@ -214,7 +214,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.search_button.connect("clicked", self._on_search_clicked)
         self.search_button.set_sensitive(False)
         self.headerbar.pack_end(self.search_button)
-        
+
         # Add theme toggle button
         self.theme_toggle_button = Gtk.Button()
         self.theme_toggle_button.set_image(
@@ -223,14 +223,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.theme_toggle_button.set_tooltip_text("Toggle Dark/Light Theme")
         self.theme_toggle_button.connect("clicked", self._on_theme_toggle_clicked)
         self.headerbar.pack_end(self.theme_toggle_button)
-        
+
         # Keep reference to old new_terminal_button for compatibility
         self.new_terminal_button = self.new_sibling_button
-        
+
     def _load_ui(self) -> None:
         """Load the UI from Glade file or create manually."""
         ui_path = self._get_ui_file_path()
-        
+
         # Create a builder and load the UI
         builder = Gtk.Builder()
         try:
@@ -240,7 +240,7 @@ class MainWindow(Gtk.ApplicationWindow):
             logger.warning("Could not load UI file %s: %s", ui_path, e)
             self._create_manual_ui()
             return
-        
+
         # Get the main container from the UI
         main_container = builder.get_object("main_container")
         if main_container:
@@ -251,7 +251,7 @@ class MainWindow(Gtk.ApplicationWindow):
         else:
             self._create_manual_ui()
             return
-        
+
         # Store references to important widgets
         self.sidebar_revealer = builder.get_object("sidebar_revealer")
         self.terminal_stack = builder.get_object("terminal_stack")
@@ -261,7 +261,7 @@ class MainWindow(Gtk.ApplicationWindow):
             builder.get_object("sidebar_header"),
             builder.get_object("sidebar_scrolled"),
         )
-        
+
         # Initialize sidebar state tracking for UI file compatibility
         self._sidebar_collapsed = False
         self._sidebar_uses_dynamic_default = self._uses_default_sidebar_width()
@@ -269,12 +269,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self._programmatic_sidebar_position = None
         self._saved_sidebar_width = self._get_initial_sidebar_width()
         self._set_sidebar_position(self._saved_sidebar_width)
-        
+
         # Connect paned position changes if main_container is a Paned
         if hasattr(self.main_paned, 'get_position') and callable(getattr(self.main_paned, 'get_position', None)):
             self.main_paned.connect("notify::position", self._on_paned_position_changed)
             self.main_paned.connect("size-allocate", self._on_paned_size_allocate)
-        
+
         # Create and integrate the session sidebar
         sidebar_container = builder.get_object("sidebar_scrolled")
         if sidebar_container:
@@ -282,7 +282,7 @@ class MainWindow(Gtk.ApplicationWindow):
             old_tree_view = builder.get_object("session_tree_view")
             if old_tree_view:
                 sidebar_container.remove(old_tree_view)
-            
+
             # Create our SessionSidebar widget
             self.session_sidebar = SessionSidebar(self.sidebar_controller)
             self.session_sidebar.set_selection_callback(self._on_session_selected)
@@ -292,16 +292,16 @@ class MainWindow(Gtk.ApplicationWindow):
             sidebar_container.add(self.session_sidebar)
         else:
             self.session_sidebar = None
-        
+
         # Connect signals from UI file
         new_terminal_ui = builder.get_object("new_terminal_button")
         if new_terminal_ui:
             new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
-        
+
         welcome_new_terminal_ui = builder.get_object("welcome_new_terminal_button")
         if welcome_new_terminal_ui:
             welcome_new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
-        
+
     def _mark_sidebar_transparency_widgets(self, *widgets: Gtk.Widget) -> None:
         """Add CSS hooks used by runtime sidebar transparency rules."""
         for widget in widgets:
@@ -334,17 +334,17 @@ class MainWindow(Gtk.ApplicationWindow):
             self.main_paned.set_position(width)
         finally:
             self._updating_sidebar_position = False
-    
+
     def _create_manual_ui(self) -> None:
         """Create a basic UI manually if Glade file is not available."""
         # Create main horizontal paned for resizable sidebar
         self.main_paned = Gtk.HPaned()
         self.main_paned.get_style_context().add_class("main-paned")
-        
+
         # Create sidebar area
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         # Remove fixed width - let paned handle sizing
-        
+
         # Create sidebar revealer
         self.sidebar_revealer = Gtk.Revealer()
         self.sidebar_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_RIGHT)
@@ -352,14 +352,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sidebar_revealer.set_reveal_child(True)
         self.sidebar_revealer.get_style_context().add_class("sidebar")
         self.sidebar_revealer.add(sidebar_box)
-        
+
         # Initialize sidebar state tracking with config
         self._sidebar_collapsed = False
         self._sidebar_uses_dynamic_default = self._uses_default_sidebar_width()
         self._updating_sidebar_position = False
         self._programmatic_sidebar_position = None
         self._saved_sidebar_width = self._get_initial_sidebar_width()
-        
+
         # Create session sidebar widget
         self.session_sidebar = SessionSidebar(self.sidebar_controller)
         self.session_sidebar.set_selection_callback(self._on_session_selected)
@@ -367,86 +367,86 @@ class MainWindow(Gtk.ApplicationWindow):
         self.session_sidebar.set_clear_title_callback(self._on_session_clear_title_requested)
         self.session_sidebar.get_style_context().add_class("sidebar")
         sidebar_box.pack_start(self.session_sidebar, True, True, 0)
-        
+
         # Create terminal area
         terminal_area = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        
+
         # Create welcome page
         welcome_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         welcome_box.set_halign(Gtk.Align.CENTER)
         welcome_box.set_valign(Gtk.Align.CENTER)
         welcome_box.set_spacing(12)
-        
+
         welcome_label = Gtk.Label("Welcome to Tree Style Terminal")
         welcome_label.set_markup("<big><b>Welcome to Tree Style Terminal</b></big>")
         welcome_box.pack_start(welcome_label, False, False, 0)
-        
+
         subtitle_label = Gtk.Label("Create a new terminal session to get started")
         welcome_box.pack_start(subtitle_label, False, False, 0)
-        
+
         welcome_button = Gtk.Button.new_with_label("New Terminal")
         welcome_button.connect("clicked", self._on_new_terminal_clicked)
         welcome_box.pack_start(welcome_button, False, False, 0)
-        
+
         # Create stack for terminal switching
         self.terminal_stack = Gtk.Stack()
         self.terminal_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self.terminal_stack.add_named(welcome_box, "welcome")
         self.terminal_stack.set_visible_child_name("welcome")
         terminal_area.pack_start(self.terminal_stack, True, True, 0)
-        
+
         # Pack into paned widget (no separator needed - paned has built-in handle)
         self.main_paned.pack1(self.sidebar_revealer, resize=False, shrink=False)
         self.main_paned.pack2(terminal_area, resize=True, shrink=True)
-        
+
         # Set initial sidebar width
         self._set_sidebar_position(self._saved_sidebar_width)
-        
+
         # Connect to position changes for width constraints
         self.main_paned.connect("notify::position", self._on_paned_position_changed)
         self.main_paned.connect("size-allocate", self._on_paned_size_allocate)
-        
+
         self.add(self.main_paned)
-    
+
     def _get_ui_file_path(self) -> Path:
         """Get the path to the UI file."""
         # Get the directory where this module is located
         module_dir = Path(__file__).parent
         ui_file = module_dir / "ui" / "main_window.ui"
         return ui_file
-    
+
     def _on_sidebar_toggle_clicked(self, button: Gtk.Button) -> None:
         """Handle sidebar toggle button click."""
         self.toggle_sidebar()
-    
+
     def _on_new_terminal_clicked(self, button: Gtk.Button) -> None:
         """Handle new terminal button click."""
         # Use shortcut controller action for consistency
         action = self.shortcut_controller.get_action("new_sibling")
         if action:
             action.activate(None)
-    
+
     def _on_close_session_clicked(self, button: Gtk.Button) -> None:
         """Handle close session button click."""
         # Use shortcut controller action for consistency
         action = self.shortcut_controller.get_action("close_session")
         if action:
             action.activate(None)
-    
+
     def _on_theme_toggle_clicked(self, button: Gtk.Button) -> None:
         """Handle theme toggle button click."""
         app = self.get_application()
         app.css_loader.toggle_theme()
-        
+
         # Update all terminals with the new theme
         self._update_terminal_themes(app.css_loader.current_theme)
-        
+
         # Update window CSS class for theme
         self._update_window_theme_class(app.css_loader.current_theme)
-        
+
         # Update button icon based on current theme
         self._update_theme_button_icon()
-    
+
     def _on_new_child_clicked(self, button: Gtk.Button) -> None:
         """Handle new child button click."""
         # Use shortcut controller action for consistency
@@ -459,40 +459,40 @@ class MainWindow(Gtk.ApplicationWindow):
         action = self.shortcut_controller.get_action("terminal_search")
         if action:
             action.activate(None)
-    
+
     def _update_button_states(self) -> None:
         """Update button states based on current session state."""
         has_current_session = self.session_manager.current_session is not None
-        
+
         # Update HeaderBar buttons if they exist
         if hasattr(self, 'new_sibling_button'):
             self.new_sibling_button.set_sensitive(True)  # Always available
         if hasattr(self, 'new_child_button'):
-            self.new_child_button.set_sensitive(True)  # Always available  
+            self.new_child_button.set_sensitive(True)  # Always available
         if hasattr(self, 'close_session_button'):
             self.close_session_button.set_sensitive(has_current_session)
         if hasattr(self, 'search_button'):
             self.search_button.set_sensitive(has_current_session)
-        
+
         # Update shortcut controller action states
         self.shortcut_controller.update_action_states()
-    
+
     def _setup_session_callbacks(self) -> None:
         """Set up callbacks for session management."""
         self.session_manager.set_session_created_callback(self._on_session_created)
         self.session_manager.set_session_closed_callback(self._on_session_closed)
         self.session_manager.set_session_selected_callback(self._on_session_selected_by_manager)
         self.session_manager.set_session_changed_callback(self._on_session_changed)
-        
+
         # Set initial theme in session manager
         app = self.get_application()
         if app and hasattr(app, 'css_loader'):
             self.session_manager.set_theme(app.css_loader.current_theme)
-    
+
     def _on_session_created(self, session: TerminalSession, terminal_widget: VteTerminal) -> None:
         """
         Handle session creation.
-        
+
         Args:
             session: The created session
             terminal_widget: The VTE terminal widget
@@ -501,78 +501,78 @@ class MainWindow(Gtk.ApplicationWindow):
         terminal_id = f"session_{session.pid}"
         terminal_widget.show()
         self.terminal_stack.add_named(terminal_widget, terminal_id)
-        
+
         # Switch to the new terminal
         self.terminal_stack.set_visible_child_name(terminal_id)
-        
+
         # Update sidebar - ADD ONLY THE NEW SESSION instead of full refresh
         if self.session_sidebar:
             parent = self.session_manager.session_tree.get_parent(session)
             self.session_sidebar.controller.add_session(session, parent)
             # Select the new session in the sidebar
             self.session_sidebar.select_session(session)
-        
+
         # Update button states
         self._update_button_states()
 
         GLib.idle_add(self.focus_terminal)
-        
+
         logger.debug(f"Session created: {session.title}")
-    
+
     def _on_session_closed(self, session: TerminalSession, children_to_adopt: list[TerminalSession], parent_session: Optional[TerminalSession]) -> None:
         """
         Handle session closure.
-        
+
         Args:
             session: The closed session
             children_to_adopt: Children that were adopted during closure
             parent_session: The parent session that adopted the children (or None for root level)
         """
-        
+
         # Remove from terminal stack
         terminal_id = f"session_{session.pid}"
-        
+
         # Find and remove the terminal widget
         for child in self.terminal_stack.get_children():
             if self.terminal_stack.child_get_property(child, "name") == terminal_id:
                 self.terminal_stack.remove(child)
                 break
-        
+
         # Update sidebar - remove session and handle adoption
         if self.session_sidebar:
             self.session_sidebar.controller.remove_session_with_adoption(session, children_to_adopt, parent_session)
-        
+
         # Update button states
         self._update_button_states()
-        
+
         # Show welcome page if no sessions left
         if not self.session_manager.get_all_sessions():
             self.terminal_stack.set_visible_child_name("welcome")
             self.set_title("Tree Style Terminal")
-        
+
         logger.debug(f"Session closed: {session.title}")
-    
+
     def _on_session_changed(self, session: TerminalSession) -> None:
         """
         Handle session property changes (e.g., CWD, title updates).
-        
+
         Args:
             session: The session that changed
         """
         # Update sidebar display
         if self.session_sidebar:
             self.session_sidebar.controller.update_session(session)
-        
+
         # Update window title if this is the current session
         if self.session_manager.current_session == session:
             self.set_title(f"Tree Style Terminal - {session.title}")
-        
+
         logger.debug(f"Session changed: {session.title}")
-    
+
     def _on_session_selected(self, session: TerminalSession) -> None:
         """
         Handle session selection from sidebar.
-        
+
         Args:
             session: The selected session
         """
@@ -591,28 +591,28 @@ class MainWindow(Gtk.ApplicationWindow):
     def _on_session_clear_title_requested(self, session: TerminalSession) -> None:
         """Handle a custom-title clear request from the sidebar."""
         self.session_manager.clear_session_title(session)
-    
+
     def _on_session_selected_by_manager(self, session: TerminalSession) -> None:
         """
         Handle session selection by the session manager.
-        
+
         Args:
             session: The selected session
         """
         # Switch to the terminal
         terminal_id = f"session_{session.pid}"
         self.terminal_stack.set_visible_child_name(terminal_id)
-        
+
         # Update window title
         self.set_title(f"Tree Style Terminal - {session.title}")
-        
+
         # Update sidebar selection
         if self.session_sidebar:
             self.session_sidebar.select_session(session)
-        
+
         # Update button states
         self._update_button_states()
-        
+
         logger.debug(f"Switched to session: {session.title}")
 
     def toggle_sidebar(self) -> None:
@@ -623,7 +623,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 self._sidebar_collapsed,
                 not self._sidebar_collapsed,
             )
-            
+
             if not self._sidebar_collapsed:  # Currently expanded, so collapse
                 self._collapse_sidebar()
             else:  # Currently collapsed, so expand
@@ -635,11 +635,11 @@ class MainWindow(Gtk.ApplicationWindow):
             # Save current width before collapsing (Paned layout)
             bounds = self._get_sidebar_bounds()
             self._saved_sidebar_width = clamp_sidebar_width(self.main_paned.get_position(), bounds)
-            
+
             # Hide the revealer completely to make it disappear from paned
             self.sidebar_revealer.set_reveal_child(False)
             self.sidebar_revealer.set_visible(False)
-            
+
             logger.debug("Sidebar collapsed (paned, saved width: %s)", self._saved_sidebar_width)
         else:
             # Box layout - use revealer properties
@@ -647,7 +647,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.sidebar_revealer.set_size_request(0, -1)
             self.sidebar_revealer.set_visible(False)
             logger.debug("Sidebar collapsed (box layout)")
-        
+
         self._sidebar_collapsed = True
 
     def _expand_sidebar(self) -> None:
@@ -656,11 +656,11 @@ class MainWindow(Gtk.ApplicationWindow):
             # First make revealer visible and restore position
             self.sidebar_revealer.set_visible(True)
             self._set_sidebar_position(clamp_sidebar_width(self._saved_sidebar_width, self._get_sidebar_bounds()))
-            
+
             # Then show the revealer content
             # Use idle_add to ensure position is set before revealing content
             GLib.idle_add(lambda: self.sidebar_revealer.set_reveal_child(True))
-            
+
             logger.debug("Sidebar expanded (paned, restored width: %s)", self._saved_sidebar_width)
         else:
             # Box layout - restore revealer properties
@@ -668,7 +668,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.sidebar_revealer.set_size_request(-1, -1)
             self.sidebar_revealer.set_reveal_child(True)
             logger.debug("Sidebar expanded (box layout)")
-        
+
         self._sidebar_collapsed = False
 
     def _is_paned_layout(self) -> bool:
@@ -725,29 +725,29 @@ class MainWindow(Gtk.ApplicationWindow):
         if hasattr(self, 'session_sidebar') and self.session_sidebar:
             if hasattr(self.session_sidebar, 'grab_focus'):
                 self.session_sidebar.grab_focus()
-    
+
     def _update_terminal_themes(self, theme_name: str) -> None:
         """Update all terminals to use the specified theme."""
         self.session_manager.set_theme(theme_name)
         logger.info("Updated all terminals to %s theme", theme_name)
-    
+
     def _update_window_theme_class(self, theme_name: str) -> None:
         """Update window CSS class for theme targeting."""
         style_context = self.get_style_context()
-        
+
         # Remove old theme classes
         style_context.remove_class("light")
         style_context.remove_class("dark")
-        
+
         # Add new theme class
         style_context.add_class(theme_name)
         logger.debug("Updated window theme class to %s", theme_name)
-    
+
     def _update_theme_button_icon(self) -> None:
         """Update theme toggle button icon based on current theme."""
         app = self.get_application()
         current_theme = app.css_loader.current_theme
-        
+
         if current_theme == "dark":
             self.theme_toggle_button.set_image(
                 Gtk.Image.new_from_icon_name("weather-clear-symbolic", Gtk.IconSize.BUTTON)
@@ -762,41 +762,41 @@ class MainWindow(Gtk.ApplicationWindow):
 
 class TreeStyleTerminalApp(Gtk.Application):
     """Main GTK application class."""
-    
+
     def __init__(self, args=None):
         super().__init__(
             application_id="org.example.TreeStyleTerminal",
             flags=Gio.ApplicationFlags.NON_UNIQUE
         )
-        
+
         self.window: Optional[MainWindow] = None
         self.args = args or {}
         self._initial_session_created = False
         self.css_loader = CSSLoader(override_dpi=self.args.get('dpi'))
-        
+
         # Connect the activate signal
         self.connect("activate", self._on_activate)
         self.connect("startup", self._on_startup)
-    
+
     def _on_startup(self, app: "TreeStyleTerminalApp") -> None:
         """Called when the application starts up."""
         if not self.args.get('quiet'):
             logger.info("Tree Style Terminal starting up...")
-        
+
         # Print system information for debugging (independent of quiet mode)
         if self.args.get('show_info'):
             self._print_system_info()
-        
+
         # Load CSS styles
         self.css_loader.load_base_css()
         self.css_loader.load_theme(self.css_loader.current_theme)  # Use detected system theme
-    
+
     def _print_system_info(self) -> None:
         """Print system information for debugging font scaling."""
         try:
             settings = Gtk.Settings.get_default()
             screen = Gdk.Screen.get_default()
-            
+
             # System font information
             font_name = settings.get_property("gtk-font-name")
             try:
@@ -807,7 +807,7 @@ class TreeStyleTerminalApp(Gtk.Application):
                 except:
                     mono_font = None
             dpi = settings.get_property("gtk-xft-dpi")
-            
+
             # Display information
             display = screen.get_display()
             monitor = display.get_primary_monitor() or display.get_monitor(0)
@@ -816,7 +816,7 @@ class TreeStyleTerminalApp(Gtk.Application):
             height = geometry.height
             width_mm = monitor.get_width_mm()
             height_mm = monitor.get_height_mm()
-            
+
             # Calculate actual DPI
             if width_mm > 0 and height_mm > 0:
                 dpi_x = (width * 25.4) / width_mm
@@ -824,7 +824,7 @@ class TreeStyleTerminalApp(Gtk.Application):
                 avg_dpi = (dpi_x + dpi_y) / 2
             else:
                 avg_dpi = 96  # fallback
-            
+
             print(f"System Information:")
             print(f"  Display: {width}x{height} pixels, {width_mm}x{height_mm}mm")
             print(f"  Calculated DPI: {avg_dpi:.1f}")
@@ -832,10 +832,10 @@ class TreeStyleTerminalApp(Gtk.Application):
             print(f"  System font: {font_name or 'not set'}")
             print(f"  Monospace font: {mono_font or 'not set'}")
             print(f"  Manual DPI override: {os.environ.get('TST_DPI', 'not set')}")
-            
+
         except Exception as e:
             print(f"Could not retrieve system information: {e}")
-    
+
 
     def _on_activate(self, app: "TreeStyleTerminalApp") -> None:
         """Called when the application is activated."""
@@ -843,7 +843,7 @@ class TreeStyleTerminalApp(Gtk.Application):
             self.window = MainWindow(application=self)
 
         self._create_initial_session_if_requested()
-        
+
         self.window.show_all()
         self.window.present()
 
@@ -902,7 +902,7 @@ def parse_arguments(argv: list[str] | None = None):
         epilog="""
 DPI Configuration Examples:
   %(prog)s --dpi 144           # 1.5x scaling for 1440p displays
-  %(prog)s --dpi 192           # 2x scaling for 4K displays  
+  %(prog)s --dpi 192           # 2x scaling for 4K displays
   %(prog)s --dpi 240           # 2.5x scaling for high-DPI 4K
   %(prog)s --show-info         # Show system font information
   %(prog)s --show-info --dpi 180  # Test DPI settings without starting GUI
@@ -912,25 +912,25 @@ Environment Variables:
   TST_DPI=192                  # Alternative way to set DPI
         """
     )
-    
+
     parser.add_argument(
         '--dpi',
         type=float,
         help='Override DPI for font scaling (e.g., 144, 192, 240)'
     )
-    
+
     parser.add_argument(
         '--show-info',
         action='store_true',
         help='Show system display and font information'
     )
-    
+
     parser.add_argument(
         '--test-fonts',
         action='store_true',
         help='Show font scaling test and exit (like font_test.py)'
     )
-    
+
     parser.add_argument(
         '--quiet', '-q',
         action='store_true',
@@ -955,7 +955,7 @@ Environment Variables:
         nargs='?',
         help='Create the first terminal session in this directory'
     )
-    
+
     args = parser.parse_args(argv)
     args.initial_cwd = _select_initial_cwd(args, parser)
     return args
@@ -963,14 +963,14 @@ Environment Variables:
 def print_font_test_info(dpi_override=None):
     """Print font scaling test information (integrated from font_test.py)."""
     print("=== Font Scaling Information ===\n")
-    
+
     try:
         # Initialize GTK to get settings
         Gtk.init([])
-        
+
         settings = Gtk.Settings.get_default()
         screen = Gdk.Screen.get_default()
-        
+
         # System font information
         font_name = settings.get_property("gtk-font-name")
         try:
@@ -981,7 +981,7 @@ def print_font_test_info(dpi_override=None):
             except:
                 mono_font = None
         dpi = settings.get_property("gtk-xft-dpi")
-        
+
         # Display information
         display = screen.get_display()
         monitor = display.get_primary_monitor() or display.get_monitor(0)
@@ -990,7 +990,7 @@ def print_font_test_info(dpi_override=None):
         height = geometry.height
         width_mm = monitor.get_width_mm()
         height_mm = monitor.get_height_mm()
-        
+
         # Calculate actual DPI
         if width_mm > 0 and height_mm > 0:
             dpi_x = (width * 25.4) / width_mm
@@ -998,7 +998,7 @@ def print_font_test_info(dpi_override=None):
             avg_dpi = (dpi_x + dpi_y) / 2
         else:
             avg_dpi = 96  # fallback
-        
+
         print("System Information:")
         print(f"  Display: {width}x{height} pixels")
         print(f"  Physical size: {width_mm}x{height_mm}mm")
@@ -1006,14 +1006,14 @@ def print_font_test_info(dpi_override=None):
         print(f"  GTK XFT DPI: {dpi/1024.0 if dpi else 'not set'}")
         print(f"  System font: {font_name or 'not set'}")
         print(f"  Monospace font: {mono_font or 'not set'}")
-        
+
         # Environment and argument overrides
         env_dpi = os.environ.get('TST_DPI')
         print(f"  Environment DPI: {env_dpi or 'not set'}")
         print(f"  Argument DPI: {dpi_override or 'not set'}")
-        
+
         print("\nFont Size Calculations:")
-        
+
         # Parse system font size
         if font_name:
             font_parts = font_name.split()
@@ -1023,7 +1023,7 @@ def print_font_test_info(dpi_override=None):
                 base_font_size = 10.0
         else:
             base_font_size = 10.0
-        
+
         # Use improved DPI detection logic (same as CSSLoader)
         if dpi_override:
             effective_dpi = float(dpi_override)
@@ -1033,7 +1033,7 @@ def print_font_test_info(dpi_override=None):
             # Apply the same improved auto-detection logic as CSSLoader
             system_dpi = dpi / 1024.0 if dpi else None
             monitor_dpi = avg_dpi
-            
+
             # Choose the more appropriate DPI source with comfort scaling
             if monitor_dpi > 150 and system_dpi and system_dpi < monitor_dpi * 0.8:
                 effective_dpi = monitor_dpi
@@ -1041,10 +1041,10 @@ def print_font_test_info(dpi_override=None):
                 effective_dpi = system_dpi
             else:
                 effective_dpi = monitor_dpi
-        
+
         # Calculate base scale factor
         base_scale = effective_dpi / 96.0
-        
+
         # Apply comfort scaling for better readability on high-DPI displays
         if 240 <= effective_dpi <= 260:  # Calibrated for ~250 DPI displays (MacBook-style)
             # Provide optimal 2.0x scaling for this DPI range
@@ -1055,7 +1055,7 @@ def print_font_test_info(dpi_override=None):
             scale_factor = max(base_scale, 1.25)
         else:
             scale_factor = max(base_scale, 1.0)
-        
+
         # Calculate scaled sizes (same logic as in CSSLoader)
         if effective_dpi >= 180:
             min_ui_size = 14
@@ -1063,16 +1063,16 @@ def print_font_test_info(dpi_override=None):
         else:
             min_ui_size = 10
             min_terminal_size = 11
-        
+
         ui_font_size = max(int(base_font_size * scale_factor), min_ui_size)
         terminal_font_size = max(int((base_font_size + 1) * scale_factor), min_terminal_size)
-        
+
         print(f"  Base font size: {base_font_size}px")
         print(f"  Effective DPI: {effective_dpi:.1f}")
         print(f"  Scale factor: {scale_factor:.2f}")
         print(f"  UI font size: {ui_font_size}px")
         print(f"  Terminal font size: {terminal_font_size}px")
-        
+
         # Recommendations
         print("\nRecommendations:")
         if avg_dpi >= 180:
@@ -1084,12 +1084,12 @@ def print_font_test_info(dpi_override=None):
             print("  Medium-high DPI display detected")
         else:
             print("  Standard DPI display")
-        
+
         if ui_font_size < 12:
             print("  Warning: UI fonts may be too small for comfortable reading")
         if terminal_font_size < 12:
             print("  Warning: Terminal fonts may be too small for comfortable reading")
-            
+
     except Exception as e:
         print(f"Error retrieving system information: {e}")
 
@@ -1112,14 +1112,14 @@ def configure_logging(log_level: Optional[str] = None) -> None:
 def main() -> int:
     """Main entry point for the application."""
     args = parse_arguments()
-    
+
     # Handle special modes that don't need the full GUI
     if args.test_fonts:
         print_font_test_info(args.dpi)
         return 0
 
     configure_logging(args.log_level)
-    
+
     # Create application with parsed arguments
     app_args = {
         'dpi': args.dpi,
@@ -1128,10 +1128,10 @@ def main() -> int:
         'log_level': args.log_level,
         'initial_cwd': args.initial_cwd
     }
-    
+
     # Create filtered argv for GTK (remove our custom arguments)
     gtk_argv = [sys.argv[0]]  # Keep program name
-    
+
     app = TreeStyleTerminalApp(app_args)
     return app.run(gtk_argv)
 

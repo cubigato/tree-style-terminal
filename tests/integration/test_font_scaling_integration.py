@@ -20,7 +20,7 @@ class TestFontScalingIntegration(unittest.TestCase):
         """Set up test environment with temporary config."""
         self.temp_dir = tempfile.mkdtemp()
         self.config_path = Path(self.temp_dir) / "config.yaml"
-        
+
         # Clear environment
         if 'TST_DPI' in os.environ:
             del os.environ['TST_DPI']
@@ -29,7 +29,7 @@ class TestFontScalingIntegration(unittest.TestCase):
         """Clean up test environment."""
         if 'TST_DPI' in os.environ:
             del os.environ['TST_DPI']
-        
+
         # Clean up temp files
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
@@ -44,18 +44,18 @@ class TestFontScalingIntegration(unittest.TestCase):
             "theme": "dark",
             "display.dpi_scale": 1.5
         }.get(key, default)
-        
+
         # Mock GTK settings
         mock_settings = MagicMock()
         mock_settings.get_property.return_value = "Sans 10"
         mock_gtk.Settings.get_default.return_value = mock_settings
-        
+
         # Create CSS loader (should read our config)
         css_loader = CSSLoader()
-        
+
         # Verify DPI scale is read correctly
         self.assertEqual(css_loader._config_dpi_scale, 1.5)
-        
+
         # Verify effective scale calculation
         scale = css_loader._calculate_effective_dpi_scale()
         self.assertEqual(scale, 1.5)
@@ -67,26 +67,26 @@ class TestFontScalingIntegration(unittest.TestCase):
         # Mock config manager responses
         mock_config.load_config.return_value = None
         mock_config.get.side_effect = lambda key, default: {
-            "theme": "dark", 
+            "theme": "dark",
             "display.dpi_scale": 1.2
         }.get(key, default)
-        
+
         # Mock GTK
         mock_settings = MagicMock()
         mock_settings.get_property.return_value = "Sans 10"
         mock_gtk.Settings.get_default.return_value = mock_settings
-        
+
         # Test CLI override
         css_loader = CSSLoader(override_dpi=192)  # Should be 2.0 scale
         scale = css_loader._calculate_effective_dpi_scale()
         self.assertEqual(scale, 2.0)  # 192/96
-        
+
         # Test env override
         os.environ['TST_DPI'] = '144'
         css_loader = CSSLoader()  # No CLI override
         scale = css_loader._calculate_effective_dpi_scale()
         self.assertEqual(scale, 1.5)  # 144/96
-        
+
         # Test config fallback
         del os.environ['TST_DPI']
         css_loader = CSSLoader()  # No CLI or env override

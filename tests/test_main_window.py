@@ -12,10 +12,10 @@ from tree_style_terminal.models.session import TerminalSession
 def test_main_window_creation():
     """Test MainWindow can be instantiated (basic setup)."""
     from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
-    
+
     # Create a minimal app instance for the window
     app = TreeStyleTerminalApp()
-    
+
     # Create main window
     window = MainWindow(application=app)
     assert window is not None
@@ -25,10 +25,10 @@ def test_main_window_creation():
 def test_main_window_methods_exist():
     """Test that expected methods exist on MainWindow."""
     from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
-    
+
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
-    
+
     # Check that expected methods exist
     expected_methods = [
         '_on_new_terminal_clicked',
@@ -36,7 +36,7 @@ def test_main_window_methods_exist():
         '_on_new_child_clicked',
         '_on_sidebar_toggle_clicked'
     ]
-    
+
     for method_name in expected_methods:
         assert hasattr(window, method_name), f"Missing method: {method_name}"
         assert callable(getattr(window, method_name)), f"Method not callable: {method_name}"
@@ -45,7 +45,7 @@ def test_main_window_methods_exist():
 def test_app_creation():
     """Test TreeStyleTerminalApp can be instantiated."""
     from tree_style_terminal.main import TreeStyleTerminalApp
-    
+
     app = TreeStyleTerminalApp()
     assert app is not None
     assert hasattr(app, 'window')
@@ -55,10 +55,10 @@ def test_app_creation():
 def test_sidebar_state_management():
     """Test sidebar state tracking properties."""
     from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
-    
+
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
-    
+
     # Check sidebar state properties exist
     assert hasattr(window, '_sidebar_collapsed')
     assert isinstance(window._sidebar_collapsed, bool)
@@ -112,16 +112,16 @@ def test_clamp_sidebar_width_uses_computed_bounds():
 def test_layout_components_exist():
     """Test that layout components (Paned, Revealer) are available."""
     from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
-    
+
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
-    
+
     # Check that layout-related attributes exist
     expected_attributes = [
         'paned',  # Gtk.Paned for sidebar and terminal area
         'sidebar_revealer',  # Gtk.Revealer for collapsible sidebar
     ]
-    
+
     for attr in expected_attributes:
         if hasattr(window, attr):
             # If it exists, it should not be None
@@ -131,17 +131,17 @@ def test_layout_components_exist():
 def test_sidebar_toggle_functionality():
     """Test sidebar toggle button and revealer functionality."""
     from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
-    
+
     app = TreeStyleTerminalApp()
     window = MainWindow(application=app)
-    
+
     # Check toggle method exists
     assert hasattr(window, '_on_sidebar_toggle_clicked')
     assert callable(window._on_sidebar_toggle_clicked)
-    
+
     # Test initial state
     initial_state = window._sidebar_collapsed
-    
+
     # Simulate toggle (without actually clicking)
     # This tests the method exists and can be called
     try:

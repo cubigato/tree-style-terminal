@@ -1,15 +1,16 @@
 ---
 id: TASK-27.13.2
 title: Apply Ruff import cleanup
-status: To Do
+status: next
 assignee: []
 created_date: '2026-05-31 13:06'
+updated_date: '2026-05-31 13:11'
 labels:
   - cleanup
 dependencies:
   - TASK-27.13.1
 parent_task_id: TASK-27.13
-ordinal: 17700
+ordinal: 1010
 ---
 
 ## Description

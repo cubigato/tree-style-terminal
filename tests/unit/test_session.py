@@ -20,7 +20,7 @@ class TestTerminalSession:
             cwd="/home/user/projects",
             title="My Terminal"
         )
-        
+
         assert session.pid == 123
         assert session.pty_fd == 456
         assert session.cwd == "/home/user/projects"
@@ -35,7 +35,7 @@ class TestTerminalSession:
             pty_fd=456,
             cwd="/home/user/projects"
         )
-        
+
         assert session.title == "user/projects"
         assert session.auto_title == "user/projects"
         assert session.custom_title is None
@@ -73,7 +73,7 @@ class TestTerminalSession:
             pty_fd=456,
             cwd="/"
         )
-        
+
         assert session.title == "/"
 
     def test_session_title_auto_generation_empty_cwd(self):
@@ -83,7 +83,7 @@ class TestTerminalSession:
             pty_fd=456,
             cwd=""
         )
-        
+
         assert session.title == ""
 
     def test_session_hash_and_equality(self):
@@ -91,11 +91,11 @@ class TestTerminalSession:
         session1 = TerminalSession(pid=123, pty_fd=456, cwd="/path1")
         session2 = TerminalSession(pid=123, pty_fd=456, cwd="/path2")  # Different cwd
         session3 = TerminalSession(pid=124, pty_fd=456, cwd="/path1")  # Different pid
-        
+
         # Same pid/pty_fd should be equal regardless of other fields
         assert session1 == session2
         assert hash(session1) == hash(session2)
-        
+
         # Different pid should not be equal
         assert session1 != session3
         assert hash(session1) != hash(session3)
@@ -103,7 +103,7 @@ class TestTerminalSession:
     def test_session_equality_with_non_session(self):
         """Test equality comparison with non-TerminalSession objects."""
         session = TerminalSession(pid=123, pty_fd=456, cwd="/home")
-        
+
         assert session != "not a session"
         assert session != 123
         assert session != None
@@ -112,11 +112,11 @@ class TestTerminalSession:
         """Test that each session gets its own children list."""
         session1 = TerminalSession(pid=123, pty_fd=456, cwd="/path1")
         session2 = TerminalSession(pid=124, pty_fd=457, cwd="/path2")
-        
+
         # Modify one session's children
         dummy_child = TerminalSession(pid=999, pty_fd=999, cwd="/dummy")
         session1.children.append(dummy_child)
-        
+
         # Other session should have empty children
         assert len(session1.children) == 1
         assert len(session2.children) == 0
@@ -126,11 +126,11 @@ class TestTerminalSession:
         # Trailing slash - gets normalized to show last two components
         session = TerminalSession(pid=123, pty_fd=456, cwd="/home/user/")
         assert session.title == "home/user"
-        
+
         # No leading slash
         session = TerminalSession(pid=123, pty_fd=456, cwd="relative/path")
         assert session.title == "relative/path"
-        
+
         # Single directory
         session = TerminalSession(pid=123, pty_fd=456, cwd="single")
         assert session.title == "single"

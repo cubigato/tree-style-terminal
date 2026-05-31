@@ -23,20 +23,20 @@ logger = logging.getLogger(__name__)
 class SessionSidebar(Gtk.Box):
     """
     Sidebar widget containing a TreeView for session navigation.
-    
+
     This widget wraps a Gtk.TreeView and provides methods for handling
     session selection and displaying the session tree structure.
     """
-    
+
     def __init__(self, sidebar_controller: SidebarController) -> None:
         """
         Initialize the sidebar widget.
-        
+
         Args:
             sidebar_controller: The controller managing the TreeStore
         """
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
-        
+
         self.controller = sidebar_controller
         self._selection_callback: Optional[Callable[[TerminalSession], None]] = None
         self._rename_callback: Optional[Callable[[TerminalSession, str], None]] = None
@@ -45,7 +45,7 @@ class SessionSidebar(Gtk.Box):
         self._selection_started_by_pointer = False
         self._last_selection_was_pointer = False
         self._context_menu_session: Optional[TerminalSession] = None
-        
+
         # Create the tree view
         self.tree_view = Gtk.TreeView()
         self.tree_view.set_model(self.controller.get_tree_store())
@@ -53,21 +53,21 @@ class SessionSidebar(Gtk.Box):
         self.tree_view.set_enable_tree_lines(True)
         self.tree_view.set_show_expanders(True)
         self.tree_view.set_level_indentation(16)
-        
+
         # Set up the title column
         self._setup_columns()
-        
+
         # Connect selection signal
         selection = self.tree_view.get_selection()
         selection.set_mode(Gtk.SelectionMode.SINGLE)
         selection.connect("changed", self._on_selection_changed)
         self.tree_view.connect("button-press-event", self._on_button_press_event)
-        
+
         # Create scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
         self.scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self.scrolled_window.add(self.tree_view)
-        
+
         # Pack into the box
         self.pack_start(self.scrolled_window, True, True, 0)
 
@@ -75,38 +75,38 @@ class SessionSidebar(Gtk.Box):
         ctx = self.get_style_context()
         ctx.add_class("sidebar-tree")
         ctx.remove_class("view")  # critical for transparency
-        
+
         # Add specific CSS class to TreeView and remove view class (most important)
         tree_ctx = self.tree_view.get_style_context()
         tree_ctx.add_class("transparent-tree")  # specific class for TreeView transparency
         tree_ctx.remove_class("view")  # critical for TreeView transparency
-        
+
         # Add CSS class to scrolled window for better targeting
         scrolled_ctx = self.scrolled_window.get_style_context()
         scrolled_ctx.add_class("transparent-scroll")
         scrolled_ctx.remove_class("view")  # remove if present
-        
+
         logger.debug("SessionSidebar initialized")
-    
+
     def _setup_columns(self) -> None:
         """Set up the TreeView columns for displaying session titles."""
         # Create text renderer
         renderer = Gtk.CellRendererText()
         renderer.set_property("ellipsize", 3)  # PANGO_ELLIPSIZE_END
-        
+
         # Create column for title
         column = Gtk.TreeViewColumn("Title", renderer)
         column.add_attribute(renderer, "text", self.controller.COL_TITLE)
         column.set_expand(True)
         column.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE)
-        
+
         # Add column to tree view
         self.tree_view.append_column(column)
-    
+
     def _on_selection_changed(self, selection: Gtk.TreeSelection) -> None:
         """
         Handle tree view selection changes.
-        
+
         Args:
             selection: The TreeSelection object
         """
@@ -217,11 +217,11 @@ class SessionSidebar(Gtk.Box):
     def last_selection_was_pointer(self) -> bool:
         """Return whether the most recent user selection started with a pointer event."""
         return self._last_selection_was_pointer
-    
+
     def set_selection_callback(self, callback: Callable[[TerminalSession], None]) -> None:
         """
         Set the callback function to be called when a session is selected.
-        
+
         Args:
             callback: Function to call with the selected TerminalSession
         """
@@ -234,11 +234,11 @@ class SessionSidebar(Gtk.Box):
     def set_clear_title_callback(self, callback: Callable[[TerminalSession], None]) -> None:
         """Set the callback for clearing custom session titles."""
         self._clear_title_callback = callback
-    
+
     def select_session(self, session: TerminalSession) -> None:
         """
         Programmatically select a session in the tree view.
-        
+
         Args:
             session: The session to select
         """
@@ -259,15 +259,15 @@ class SessionSidebar(Gtk.Box):
             self._selecting_programmatically = False
 
         logger.debug(f"Selected session: {session.title}")
-    
+
     def expand_all(self) -> None:
         """Expand all nodes in the tree view."""
         self.tree_view.expand_all()
-    
+
     def collapse_all(self) -> None:
         """Collapse all nodes in the tree view."""
         self.tree_view.collapse_all()
-    
+
     def refresh(self) -> None:
         """Refresh the tree view by syncing with the controller."""
         self.controller.sync_with_session_tree()

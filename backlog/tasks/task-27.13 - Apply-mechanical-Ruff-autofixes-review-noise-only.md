@@ -1,15 +1,16 @@
 ---
 id: TASK-27.13
 title: Coordinate mechanical Ruff cleanup
-status: To Do
+status: next
 assignee: []
 created_date: '2026-05-31 12:56'
-updated_date: '2026-05-31 13:06'
+updated_date: '2026-05-31 13:12'
 labels:
   - cleanup
 dependencies: []
 parent_task_id: TASK-27
-ordinal: 17500
+priority: medium
+ordinal: 990
 ---
 
 ## Description

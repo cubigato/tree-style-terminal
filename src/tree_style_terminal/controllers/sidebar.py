@@ -23,73 +23,73 @@ logger = logging.getLogger(__name__)
 class SidebarController:
     """
     Controller for managing the sidebar tree view and its underlying TreeStore.
-    
+
     This class maintains a Gtk.TreeStore with columns for the session object
     and title, and provides methods to synchronize with a SessionTree model.
     """
-    
+
     # TreeStore column indices
     COL_OBJECT = 0
     COL_TITLE = 1
-    
+
     def __init__(self, session_tree: SessionTree) -> None:
         """
         Initialize the sidebar controller.
-        
+
         Args:
             session_tree: The SessionTree model to synchronize with
         """
         self.session_tree = session_tree
-        
+
         # Create TreeStore with columns: [object, title]
         # COL_OBJECT: stores the TerminalSession object
         # COL_TITLE: stores the display title as string
         self.tree_store = Gtk.TreeStore(GObject.TYPE_PYOBJECT, str)
-        
+
         # Map sessions to their TreeIter for efficient updates
         self._session_to_iter: dict[TerminalSession, Gtk.TreeIter] = {}
-        
+
         # Initialize the tree store from current session tree state
         self._populate_from_session_tree()
-        
+
         logger.debug("SidebarController initialized")
-    
+
     def _populate_from_session_tree(self) -> None:
         """Populate the TreeStore from the current SessionTree state."""
         self.tree_store.clear()
         self._session_to_iter.clear()
-        
+
         # Add all root nodes and their children recursively
         for root_session in self.session_tree.get_roots():
             self._add_session_recursive(root_session, None)
-    
+
     def _add_session_recursive(self, session: TerminalSession, parent_iter: Optional[Gtk.TreeIter]) -> Gtk.TreeIter:
         """
         Add a session and all its children to the TreeStore recursively.
-        
+
         Args:
             session: The session to add
             parent_iter: Parent TreeIter, or None for root level
-            
+
         Returns:
             The TreeIter for the added session
         """
         # Add the session to the tree store
         tree_iter = self.tree_store.append(parent_iter, [session, session.title])
-        
+
         # Track the mapping
         self._session_to_iter[session] = tree_iter
-        
+
         # Add all children recursively
         for child in session.children:
             self._add_session_recursive(child, tree_iter)
-        
+
         return tree_iter
-    
+
     def add_session(self, session: TerminalSession, parent: Optional[TerminalSession] = None) -> None:
         """
         Add a session to the TreeStore.
-        
+
         Args:
             session: The session to add
             parent: Parent session, or None for root level
@@ -101,17 +101,17 @@ class SidebarController:
             if parent_iter is None:
                 logger.warning(f"Parent session not found in TreeStore: {parent}")
                 return
-        
+
         # Add the session
         tree_iter = self.tree_store.append(parent_iter, [session, session.title])
         self._session_to_iter[session] = tree_iter
-        
+
         logger.debug(f"Added session to TreeStore: {session.title}")
-    
+
     def _restore_children_data(self, children_data: list[tuple[TerminalSession, str]], new_parent_iter: Optional[Gtk.TreeIter]) -> None:
         """
         Restore children data to TreeStore at new parent location.
-        
+
         Args:
             children_data: List of (session, title) tuples to restore
             new_parent_iter: TreeIter of new parent, or None for root level
@@ -119,16 +119,16 @@ class SidebarController:
         for session, title in children_data:
             # Add child at new location
             new_iter = self.tree_store.append(new_parent_iter, [session, title])
-            
+
             # Update mapping
             self._session_to_iter[session] = new_iter
-            
+
             logger.debug(f"Restored child session in TreeStore: {title}")
 
     def remove_session_with_adoption(self, session: TerminalSession, adopted_children: list[TerminalSession], new_parent: Optional[TerminalSession] = None) -> None:
         """
         Remove a session and handle adoption of its children.
-        
+
         Args:
             session: The session to remove
             adopted_children: Children that need to be moved to new parent
@@ -138,7 +138,7 @@ class SidebarController:
         if tree_iter is None:
             logger.warning(f"Session not found in TreeStore: {session}")
             return
-        
+
         # Extract children data before removal
         children_data = []
         for child_session in adopted_children:
@@ -146,14 +146,14 @@ class SidebarController:
             if child_iter is not None:
                 title = self.tree_store.get_value(child_iter, self.COL_TITLE)
                 children_data.append((child_session, title))
-        
+
         # Remove from TreeStore (this removes all children too)
         self.tree_store.remove(tree_iter)
-        
+
         # Clean up mapping for the removed session
         if session in self._session_to_iter:
             del self._session_to_iter[session]
-        
+
         # Get new parent iterator
         if new_parent is None:
             new_parent_iter = None
@@ -162,16 +162,16 @@ class SidebarController:
             if new_parent_iter is None:
                 logger.warning(f"New parent session not found in TreeStore: {new_parent}")
                 new_parent_iter = None  # Fallback to root level
-        
+
         # Restore children at new location
         self._restore_children_data(children_data, new_parent_iter)
-        
+
         logger.debug(f"Removed session with adoption: {session.title}")
-    
+
     def update_session(self, session: TerminalSession) -> None:
         """
         Update a session's display in the TreeStore (title and other properties).
-        
+
         Args:
             session: The session to update
         """
@@ -179,23 +179,23 @@ class SidebarController:
         if tree_iter is None:
             logger.warning(f"Session not found in TreeStore: {session}")
             return
-        
+
         # Update the title in the TreeStore
         self.tree_store.set_value(tree_iter, self.COL_TITLE, session.title)
-        
+
         logger.debug(f"Updated session: {session.title}")
-    
+
     def get_tree_store(self) -> Gtk.TreeStore:
         """Get the underlying TreeStore."""
         return self.tree_store
-    
+
     def get_session_from_iter(self, tree_iter: Gtk.TreeIter) -> Optional[TerminalSession]:
         """
         Get the TerminalSession object from a TreeIter.
-        
+
         Args:
             tree_iter: The TreeIter to look up
-            
+
         Returns:
             The TerminalSession object, or None if not found
         """
@@ -204,23 +204,23 @@ class SidebarController:
         except Exception as e:
             logger.warning(f"Failed to get session from TreeIter: {e}")
             return None
-    
+
     def find_iter_for_session(self, session: TerminalSession) -> Optional[Gtk.TreeIter]:
         """
         Find the TreeIter for a given session.
-        
+
         Args:
             session: The session to find
-            
+
         Returns:
             The TreeIter, or None if not found
         """
         return self._session_to_iter.get(session)
-    
+
     def sync_with_session_tree(self) -> None:
         """
         Synchronize the TreeStore with the current state of the SessionTree.
-        
+
         This is a full rebuild and should be used sparingly, typically only
         during initialization or after major structural changes.
         """
