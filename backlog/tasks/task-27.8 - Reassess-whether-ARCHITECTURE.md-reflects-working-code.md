@@ -1,10 +1,10 @@
 ---
 id: TASK-27.8
 title: Reassess whether ARCHITECTURE.md reflects working code
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-27 22:19'
-updated_date: '2026-05-31 15:03'
+updated_date: '2026-05-31 15:06'
 labels: []
 dependencies: []
 references:
@@ -13,7 +13,7 @@ references:
   - src/tree_style_terminal
 parent_task_id: TASK-27
 priority: medium
-ordinal: 4000
+ordinal: 24500
 ---
 
 ## Description
