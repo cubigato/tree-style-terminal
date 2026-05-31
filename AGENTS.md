@@ -2,6 +2,8 @@ This is a python/GTK terminal emulator app.
 It's still in beta / active development.
 When asked to add a feature make clean and simple implementation - no extra bells and whistles
 Always use the project virtual environment for Python commands: `.venv/bin/python`.
+Keep Ruff checks clean after each task: run `.venv/bin/python -m ruff check src tests`
+before handoff and fix any new findings introduced by the task.
 
 Backlog.md is used for project task tracking.
 - Use the `backlog` CLI for task operations instead of creating ad-hoc markdown files.
