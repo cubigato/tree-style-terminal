@@ -128,7 +128,7 @@ class TestThemeIntegration(unittest.TestCase):
 
         self.assertTrue(os.path.exists(css_file_path), "CSS file should exist")
 
-        with open(css_file_path, 'r') as f:
+        with open(css_file_path) as f:
             css_content = f.read()
 
         # Check that our transparency rules are present

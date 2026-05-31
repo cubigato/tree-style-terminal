@@ -8,7 +8,6 @@ synchronization between the SessionTree domain model and the GTK tree view.
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 import gi
 
@@ -64,7 +63,7 @@ class SidebarController:
         for root_session in self.session_tree.get_roots():
             self._add_session_recursive(root_session, None)
 
-    def _add_session_recursive(self, session: TerminalSession, parent_iter: Optional[Gtk.TreeIter]) -> Gtk.TreeIter:
+    def _add_session_recursive(self, session: TerminalSession, parent_iter: Gtk.TreeIter | None) -> Gtk.TreeIter:
         """
         Add a session and all its children to the TreeStore recursively.
 
@@ -87,7 +86,7 @@ class SidebarController:
 
         return tree_iter
 
-    def add_session(self, session: TerminalSession, parent: Optional[TerminalSession] = None) -> None:
+    def add_session(self, session: TerminalSession, parent: TerminalSession | None = None) -> None:
         """
         Add a session to the TreeStore.
 
@@ -109,7 +108,7 @@ class SidebarController:
 
         logger.debug(f"Added session to TreeStore: {session.title}")
 
-    def _restore_children_data(self, children_data: list[tuple[TerminalSession, str]], new_parent_iter: Optional[Gtk.TreeIter]) -> None:
+    def _restore_children_data(self, children_data: list[tuple[TerminalSession, str]], new_parent_iter: Gtk.TreeIter | None) -> None:
         """
         Restore children data to TreeStore at new parent location.
 
@@ -126,7 +125,7 @@ class SidebarController:
 
             logger.debug(f"Restored child session in TreeStore: {title}")
 
-    def remove_session_with_adoption(self, session: TerminalSession, adopted_children: list[TerminalSession], new_parent: Optional[TerminalSession] = None) -> None:
+    def remove_session_with_adoption(self, session: TerminalSession, adopted_children: list[TerminalSession], new_parent: TerminalSession | None = None) -> None:
         """
         Remove a session and handle adoption of its children.
 
@@ -190,7 +189,7 @@ class SidebarController:
         """Get the underlying TreeStore."""
         return self.tree_store
 
-    def get_session_from_iter(self, tree_iter: Gtk.TreeIter) -> Optional[TerminalSession]:
+    def get_session_from_iter(self, tree_iter: Gtk.TreeIter) -> TerminalSession | None:
         """
         Get the TerminalSession object from a TreeIter.
 
@@ -206,7 +205,7 @@ class SidebarController:
             logger.warning(f"Failed to get session from TreeIter: {e}")
             return None
 
-    def find_iter_for_session(self, session: TerminalSession) -> Optional[Gtk.TreeIter]:
+    def find_iter_for_session(self, session: TerminalSession) -> Gtk.TreeIter | None:
         """
         Find the TreeIter for a given session.
 

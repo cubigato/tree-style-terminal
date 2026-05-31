@@ -13,7 +13,6 @@ import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import gi
 
@@ -76,7 +75,7 @@ def calculate_sidebar_width_bounds(window_width: int) -> SidebarWidthBounds:
 class MainWindow(Gtk.ApplicationWindow):
     """Main application window with tree-style terminal layout."""
 
-    def __init__(self, application: "TreeStyleTerminalApp"):
+    def __init__(self, application: TreeStyleTerminalApp):
         super().__init__(application=application)
 
         # Load configuration
@@ -520,7 +519,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         logger.debug(f"Session created: {session.title}")
 
-    def _on_session_closed(self, session: TerminalSession, children_to_adopt: list[TerminalSession], parent_session: Optional[TerminalSession]) -> None:
+    def _on_session_closed(self, session: TerminalSession, children_to_adopt: list[TerminalSession], parent_session: TerminalSession | None) -> None:
         """
         Handle session closure.
 
@@ -770,7 +769,7 @@ class TreeStyleTerminalApp(Gtk.Application):
             flags=Gio.ApplicationFlags.NON_UNIQUE
         )
 
-        self.window: Optional[MainWindow] = None
+        self.window: MainWindow | None = None
         self.args = args or {}
         self._initial_session_created = False
         self.css_loader = CSSLoader(override_dpi=self.args.get('dpi'))
@@ -779,7 +778,7 @@ class TreeStyleTerminalApp(Gtk.Application):
         self.connect("activate", self._on_activate)
         self.connect("startup", self._on_startup)
 
-    def _on_startup(self, app: "TreeStyleTerminalApp") -> None:
+    def _on_startup(self, app: TreeStyleTerminalApp) -> None:
         """Called when the application starts up."""
         if not self.args.get('quiet'):
             logger.info("Tree Style Terminal starting up...")
@@ -826,7 +825,7 @@ class TreeStyleTerminalApp(Gtk.Application):
             else:
                 avg_dpi = 96  # fallback
 
-            print(f"System Information:")
+            print("System Information:")
             print(f"  Display: {width}x{height} pixels, {width_mm}x{height_mm}mm")
             print(f"  Calculated DPI: {avg_dpi:.1f}")
             print(f"  GTK XFT DPI: {dpi/1024.0 if dpi else 'not set'}")
@@ -838,7 +837,7 @@ class TreeStyleTerminalApp(Gtk.Application):
             print(f"Could not retrieve system information: {e}")
 
 
-    def _on_activate(self, app: "TreeStyleTerminalApp") -> None:
+    def _on_activate(self, app: TreeStyleTerminalApp) -> None:
         """Called when the application is activated."""
         if not self.window:
             self.window = MainWindow(application=self)
@@ -1095,7 +1094,7 @@ def print_font_test_info(dpi_override=None):
         print(f"Error retrieving system information: {e}")
 
 
-def configure_logging(log_level: Optional[str] = None) -> None:
+def configure_logging(log_level: str | None = None) -> None:
     """Configure runtime diagnostics for the GUI application."""
     configured_level = log_level
     if configured_level is None:

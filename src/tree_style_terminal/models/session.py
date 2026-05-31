@@ -8,7 +8,6 @@ including process information, working directory, display title, and child sessi
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 
 @dataclass
@@ -26,10 +25,10 @@ class TerminalSession:
     pid: int
     pty_fd: int
     cwd: str
-    title: Optional[str] = None
-    auto_title: Optional[str] = None
-    custom_title: Optional[str] = None
-    children: List[TerminalSession] = field(default_factory=list, compare=False)
+    title: str | None = None
+    auto_title: str | None = None
+    custom_title: str | None = None
+    children: list[TerminalSession] = field(default_factory=list, compare=False)
 
     def __post_init__(self) -> None:
         """Initialize display and automatic titles."""

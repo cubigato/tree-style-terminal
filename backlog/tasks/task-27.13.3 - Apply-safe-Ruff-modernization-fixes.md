@@ -1,10 +1,10 @@
 ---
 id: TASK-27.13.3
 title: Apply safe Ruff modernization fixes
-status: next
+status: In Progress
 assignee: []
 created_date: '2026-05-31 13:06'
-updated_date: '2026-05-31 13:11'
+updated_date: '2026-05-31 13:22'
 labels:
   - cleanup
 dependencies:

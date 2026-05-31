@@ -7,8 +7,6 @@ and implements the adoption algorithm when sessions are removed.
 
 from __future__ import annotations
 
-from typing import List, Optional, Set
-
 from .session import TerminalSession
 
 
@@ -23,10 +21,10 @@ class SessionTree:
 
     def __init__(self) -> None:
         """Initialize an empty session tree."""
-        self.root_nodes: List[TerminalSession] = []
-        self._parent_map: dict[TerminalSession, Optional[TerminalSession]] = {}
+        self.root_nodes: list[TerminalSession] = []
+        self._parent_map: dict[TerminalSession, TerminalSession | None] = {}
 
-    def add_node(self, session: TerminalSession, parent: Optional[TerminalSession] = None) -> None:
+    def add_node(self, session: TerminalSession, parent: TerminalSession | None = None) -> None:
         """
         Add a session to the tree.
 
@@ -87,15 +85,15 @@ class SessionTree:
         session.children.clear()
         del self._parent_map[session]
 
-    def get_parent(self, session: TerminalSession) -> Optional[TerminalSession]:
+    def get_parent(self, session: TerminalSession) -> TerminalSession | None:
         """Get the parent of a session, or None if it's a root."""
         return self._parent_map.get(session)
 
-    def get_children(self, session: TerminalSession) -> List[TerminalSession]:
+    def get_children(self, session: TerminalSession) -> list[TerminalSession]:
         """Get the direct children of a session."""
         return session.children.copy()
 
-    def get_roots(self) -> List[TerminalSession]:
+    def get_roots(self) -> list[TerminalSession]:
         """Get all root sessions."""
         return self.root_nodes.copy()
 
@@ -103,11 +101,11 @@ class SessionTree:
         """Check if the tree has no sessions."""
         return len(self.root_nodes) == 0
 
-    def get_all_sessions(self) -> Set[TerminalSession]:
+    def get_all_sessions(self) -> set[TerminalSession]:
         """Get all sessions in the tree."""
         return set(self._parent_map.keys())
 
-    def find_session_by_pid(self, pid: int) -> Optional[TerminalSession]:
+    def find_session_by_pid(self, pid: int) -> TerminalSession | None:
         """Find a session by its process ID."""
         for session in self._parent_map:
             if session.pid == pid:

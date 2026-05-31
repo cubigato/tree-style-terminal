@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Callable, Dict, Optional
+from collections.abc import Callable
 
 import gi
 
@@ -40,16 +40,16 @@ class SessionManager:
             session_tree: The SessionTree model to manage
         """
         self.session_tree = session_tree
-        self.current_session: Optional[TerminalSession] = None
+        self.current_session: TerminalSession | None = None
 
         # Map sessions to their VTE terminal widgets
-        self._session_terminals: Dict[TerminalSession, VteTerminal] = {}
+        self._session_terminals: dict[TerminalSession, VteTerminal] = {}
 
         # Callbacks for session events
-        self._session_created_callback: Optional[Callable[[TerminalSession, VteTerminal], None]] = None
-        self._session_closed_callback: Optional[Callable[[TerminalSession, list[TerminalSession], Optional[TerminalSession]], None]] = None
-        self._session_selected_callback: Optional[Callable[[TerminalSession], None]] = None
-        self._session_changed_callback: Optional[Callable[[TerminalSession], None]] = None
+        self._session_created_callback: Callable[[TerminalSession, VteTerminal], None] | None = None
+        self._session_closed_callback: Callable[[TerminalSession, list[TerminalSession], TerminalSession | None], None] | None = None
+        self._session_selected_callback: Callable[[TerminalSession], None] | None = None
+        self._session_changed_callback: Callable[[TerminalSession], None] | None = None
 
         # Counter for generating unique session IDs
         self._session_counter = 0
@@ -61,10 +61,10 @@ class SessionManager:
 
     def new_session(
         self,
-        parent: Optional[TerminalSession] = None,
-        cwd: Optional[str] = None,
-        title: Optional[str] = None
-    ) -> Optional[TerminalSession]:
+        parent: TerminalSession | None = None,
+        cwd: str | None = None,
+        title: str | None = None
+    ) -> TerminalSession | None:
         """
         Create a new terminal session.
 
@@ -133,7 +133,7 @@ class SessionManager:
             logger.error(f"Error creating session: {e}")
             return None
 
-    def new_child(self, title: Optional[str] = None) -> Optional[TerminalSession]:
+    def new_child(self, title: str | None = None) -> TerminalSession | None:
         """
         Create a new child session under the current session.
 
@@ -156,7 +156,7 @@ class SessionManager:
             title=title
         )
 
-    def new_sibling(self, title: Optional[str] = None) -> Optional[TerminalSession]:
+    def new_sibling(self, title: str | None = None) -> TerminalSession | None:
         """
         Create a new sibling session at the same level as current session.
 
@@ -248,7 +248,7 @@ class SessionManager:
         else:
             logger.warning(f"Session not found: {session}")
 
-    def get_terminal_widget(self, session: TerminalSession) -> Optional[VteTerminal]:
+    def get_terminal_widget(self, session: TerminalSession) -> VteTerminal | None:
         """
         Get the VTE terminal widget for a session.
 
@@ -342,7 +342,7 @@ class SessionManager:
         """Set callback for when a session's properties change."""
         self._session_changed_callback = callback
 
-    def set_session_closed_callback(self, callback: Callable[[TerminalSession, list[TerminalSession], Optional[TerminalSession]], None]) -> None:
+    def set_session_closed_callback(self, callback: Callable[[TerminalSession, list[TerminalSession], TerminalSession | None], None]) -> None:
         """Set callback for when a session is closed."""
         self._session_closed_callback = callback
 

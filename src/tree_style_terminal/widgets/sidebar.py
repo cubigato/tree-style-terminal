@@ -8,7 +8,7 @@ for displaying the hierarchical session structure.
 from __future__ import annotations
 
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import gi
 
@@ -40,13 +40,13 @@ class SessionSidebar(Gtk.Box):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
 
         self.controller = sidebar_controller
-        self._selection_callback: Optional[Callable[[TerminalSession], None]] = None
-        self._rename_callback: Optional[Callable[[TerminalSession, str], None]] = None
-        self._clear_title_callback: Optional[Callable[[TerminalSession], None]] = None
+        self._selection_callback: Callable[[TerminalSession], None] | None = None
+        self._rename_callback: Callable[[TerminalSession, str], None] | None = None
+        self._clear_title_callback: Callable[[TerminalSession], None] | None = None
         self._selecting_programmatically = False
         self._selection_started_by_pointer = False
         self._last_selection_was_pointer = False
-        self._context_menu_session: Optional[TerminalSession] = None
+        self._context_menu_session: TerminalSession | None = None
 
         # Create the tree view
         self.tree_view = Gtk.TreeView()
@@ -141,7 +141,7 @@ class SessionSidebar(Gtk.Box):
         self,
         tree_view: Gtk.TreeView,
         event: Gdk.EventButton,
-    ) -> Optional[TerminalSession]:
+    ) -> TerminalSession | None:
         """Return the session under a pointer event."""
         path_info = tree_view.get_path_at_pos(int(event.x), int(event.y))
         if path_info is None:

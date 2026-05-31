@@ -9,7 +9,6 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
 from urllib.parse import unquote, urlparse
 
 import gi
@@ -36,7 +35,7 @@ def build_terminal_search_pattern(text: str, fuzzy: bool) -> str:
     if not fuzzy:
         return re.escape(text)
 
-    pattern_parts: List[str] = ["(?i)"]
+    pattern_parts: list[str] = ["(?i)"]
     in_separator_run = False
     has_search_term = False
 
@@ -82,7 +81,7 @@ class VteTerminal(Gtk.Box):
         # Set up basic terminal properties
         self._configure_terminal()
         self._context_menu = self._create_context_menu()
-        self._context_menu_target: Optional[str] = None
+        self._context_menu_target: str | None = None
         self._setup_text_drag_and_drop()
 
         # Add a lightweight search bar for the active terminal scrollback.
@@ -108,8 +107,8 @@ class VteTerminal(Gtk.Box):
         self.show()
 
         # Store process information
-        self.pid: Optional[int] = None
-        self.pty_fd: Optional[int] = None
+        self.pid: int | None = None
+        self.pty_fd: int | None = None
 
         # Connect signals
         self.terminal.connect("child-exited", self._on_child_exited)
@@ -427,7 +426,7 @@ class VteTerminal(Gtk.Box):
             self._open_target_menu_item.set_label("Open File")
             self._copy_target_menu_item.set_label("Copy Path")
 
-    def _target_from_event(self, event: Gdk.EventButton) -> Optional[str]:
+    def _target_from_event(self, event: Gdk.EventButton) -> str | None:
         """Return an OSC 8 hyperlink or plain-text match for the pointer event."""
         try:
             target = self.terminal.hyperlink_check_event(event)
@@ -449,7 +448,7 @@ class VteTerminal(Gtk.Box):
 
         return None
 
-    def _clean_context_target(self, target: str) -> Optional[str]:
+    def _clean_context_target(self, target: str) -> str | None:
         """Trim terminal-adjacent punctuation from detected links and paths."""
         cleaned = target.strip().rstrip(".,;:!?)")
         return cleaned or None
@@ -483,7 +482,7 @@ class VteTerminal(Gtk.Box):
         except Exception as e:
             logger.warning(f"Failed to copy terminal target: {e}")
 
-    def _target_to_uri(self, target: str) -> Optional[str]:
+    def _target_to_uri(self, target: str) -> str | None:
         """Convert a detected context target to a URI suitable for GTK opening."""
         parsed = urlparse(target)
         if parsed.scheme:
@@ -528,7 +527,7 @@ class VteTerminal(Gtk.Box):
         except Exception as e:
             logger.warning(f"Failed to select terminal contents: {e}")
 
-    def spawn_shell(self, argv: Optional[List[str]] = None, cwd: Optional[str] = None) -> bool:
+    def spawn_shell(self, argv: list[str] | None = None, cwd: str | None = None) -> bool:
         """
         Spawn a shell in the terminal.
 
@@ -613,7 +612,7 @@ class VteTerminal(Gtk.Box):
         title = self.terminal.get_window_title()
         return title if title else "Terminal"
 
-    def get_current_directory(self) -> Optional[str]:
+    def get_current_directory(self) -> str | None:
         """Get the current working directory of the terminal."""
         try:
             directory_uri = self.terminal.get_current_directory_uri()

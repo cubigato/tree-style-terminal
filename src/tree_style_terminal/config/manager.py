@@ -7,7 +7,7 @@ This module handles loading, validating, and saving configuration files.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -27,7 +27,7 @@ class ConfigManager:
     """
 
     def __init__(self):
-        self._config: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
         self._config_path: Path = self._get_config_path()
         self._loaded = False
 
@@ -55,7 +55,7 @@ class ConfigManager:
                 self._config = DEFAULT_CONFIG.copy()
             else:
                 logger.info(f"Loading config from {self._config_path}")
-                with open(self._config_path, 'r', encoding='utf-8') as f:
+                with open(self._config_path, encoding='utf-8') as f:
                     loaded_config = yaml.safe_load(f) or {}
 
                 # Merge with defaults
@@ -69,7 +69,7 @@ class ConfigManager:
 
         except yaml.YAMLError as e:
             raise ConfigError(f"Invalid YAML in config file {self._config_path}: {e}")
-        except (OSError, IOError) as e:
+        except OSError as e:
             raise ConfigError(f"Cannot read config file {self._config_path}: {e}")
         except Exception as e:
             raise ConfigError(f"Unexpected error loading config: {e}")
@@ -80,12 +80,12 @@ class ConfigManager:
             with open(self._config_path, 'w', encoding='utf-8') as f:
                 f.write(DEFAULT_CONFIG_TEMPLATE)
             logger.info(f"Created default config file at {self._config_path}")
-        except (OSError, IOError) as e:
+        except OSError as e:
             raise ConfigError(f"Cannot create config file {self._config_path}: {e}")
 
-    def _merge_with_defaults(self, loaded_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_with_defaults(self, loaded_config: dict[str, Any]) -> dict[str, Any]:
         """Merge loaded configuration with defaults."""
-        def deep_merge(default: Dict, loaded: Dict) -> Dict:
+        def deep_merge(default: dict, loaded: dict) -> dict:
             result = default.copy()
             for key, value in loaded.items():
                 if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -195,7 +195,7 @@ class ConfigManager:
             with open(self._config_path, 'w', encoding='utf-8') as f:
                 yaml.dump(self._config, f, default_flow_style=False, indent=2)
             logger.info(f"Configuration saved to {self._config_path}")
-        except (OSError, IOError) as e:
+        except OSError as e:
             raise ConfigError(f"Cannot save config file {self._config_path}: {e}")
 
     def get_config_path(self) -> Path:

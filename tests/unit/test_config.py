@@ -278,7 +278,7 @@ class TestConfigManager:
 
             # Verify file was created and contains correct data
             assert config_path.exists()
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 saved_config = yaml.safe_load(f)
 
             assert saved_config["theme"] == "light"

@@ -196,7 +196,7 @@ class TestDPIScaling(unittest.TestCase):
         mock_settings.get_property.side_effect = lambda prop: {
             "gtk-xft-dpi": 142 * 1024,  # Conservative 142 DPI
             "gtk-font-name": "Sans 10"
-        }.get(prop, None)
+        }.get(prop)
 
         # Mock screen with high monitor DPI - ensure values are integers, not mocks
         mock_screen = MagicMock()
@@ -242,7 +242,7 @@ class TestDPIScaling(unittest.TestCase):
         mock_settings.get_property.side_effect = lambda prop: {
             "gtk-xft-dpi": 120 * 1024,
             "gtk-font-name": "Sans 10"
-        }.get(prop, None)
+        }.get(prop)
 
         mock_screen = MagicMock()
         mock_screen.get_width_mm.return_value = 400

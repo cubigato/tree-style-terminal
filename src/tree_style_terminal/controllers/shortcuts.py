@@ -7,7 +7,6 @@ coordinating between user input and SessionManager operations.
 
 import logging
 from collections.abc import Callable
-from typing import Optional
 
 import gi
 
@@ -30,7 +29,7 @@ class ShortcutController:
     and session management operations via SessionManager.
     """
 
-    def __init__(self, session_manager: SessionManager, main_window: Optional[Gtk.ApplicationWindow] = None):
+    def __init__(self, session_manager: SessionManager, main_window: Gtk.ApplicationWindow | None = None):
         """
         Initialize the shortcut controller.
 
@@ -41,7 +40,7 @@ class ShortcutController:
         self.session_manager = session_manager
         self.main_window = main_window
         self._actions: dict[str, Gio.SimpleAction] = {}
-        self._accel_group: Optional[Gtk.AccelGroup] = None
+        self._accel_group: Gtk.AccelGroup | None = None
 
         self._setup_actions()
 
