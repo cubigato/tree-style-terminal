@@ -203,10 +203,13 @@ class ShortcutController:
     def _on_focus_sidebar(self, action: Gio.SimpleAction, parameter: GLib.Variant) -> None:
         """Handle focus_sidebar action activation."""
         try:
-            if self.main_window and hasattr(self.main_window, 'session_sidebar'):
-                if hasattr(self.main_window.session_sidebar, 'grab_focus'):
-                    self.main_window.session_sidebar.grab_focus()
-                    logger.debug("Focused sidebar")
+            if (
+                self.main_window
+                and hasattr(self.main_window, 'session_sidebar')
+                and hasattr(self.main_window.session_sidebar, 'grab_focus')
+            ):
+                self.main_window.session_sidebar.grab_focus()
+                logger.debug("Focused sidebar")
         except Exception as e:
             logger.error(f"Error focusing sidebar: {e}")
 

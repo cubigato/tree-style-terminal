@@ -120,7 +120,7 @@ class TestShortcutController:
         session_manager.current_session = mock_session
 
         # Mock get_all_sessions to return multiple sessions so close_current_session gets called
-        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session, mock_session2]) as mock_get_all, \
+        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session, mock_session2]), \
              patch.object(session_manager, 'close_current_session') as mock_close:
             action = shortcut_controller.get_action("close_session")
             action.activate(None)
@@ -144,7 +144,7 @@ class TestShortcutController:
         session_manager.current_session = mock_session
 
         # Mock get_all_sessions to return multiple sessions so close_current_session gets called
-        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session, mock_session2]) as mock_get_all, \
+        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session, mock_session2]), \
              patch.object(session_manager, 'close_current_session', side_effect=Exception("Test error")) as mock_close:
             action = shortcut_controller.get_action("close_session")
             # Should not raise exception
@@ -246,7 +246,7 @@ class TestShortcutController:
         mock_main_window.get_application.return_value = mock_app
         shortcut_controller.main_window = mock_main_window
 
-        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session]) as mock_get_all:
+        with patch.object(session_manager, 'get_all_sessions', return_value=[mock_session]):
             action = shortcut_controller.get_action("close_session")
             action.activate(None)
 

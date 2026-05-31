@@ -8,6 +8,7 @@ This module provides a VTE terminal widget wrapper with spawn functionality.
 import logging
 import os
 import re
+from contextlib import suppress
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
@@ -640,12 +641,8 @@ class VteTerminal(Gtk.Box):
     def close(self) -> None:
         """Close the terminal and clean up resources."""
         if self.pid:
-            try:
-                # Send SIGTERM to the process
+            with suppress(OSError, ProcessLookupError):
                 os.kill(self.pid, 15)
-            except (OSError, ProcessLookupError):
-                # Process might already be dead
-                pass
 
     def _on_child_exited(self, terminal: Vte.Terminal, status: int) -> None:
         """Handle child process exit."""

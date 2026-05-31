@@ -26,7 +26,7 @@ class TestSidebarFocusIntegration:
         tree = SessionTree()
         controller = SidebarController(tree)
         manager = SessionManager(tree)
-        sidebar = SessionSidebar(controller)
+        SessionSidebar(controller)
 
         # Track selections
         selected_sessions = []

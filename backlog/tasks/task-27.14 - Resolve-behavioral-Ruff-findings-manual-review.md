@@ -1,15 +1,15 @@
 ---
 id: TASK-27.14
 title: Resolve behavioral Ruff findings (manual review)
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-31 12:56'
-updated_date: '2026-05-31 13:11'
+updated_date: '2026-05-31 13:36'
 labels:
   - cleanup
 dependencies: []
 parent_task_id: TASK-27
-ordinal: 1030
+ordinal: 21500
 ---
 
 ## Description

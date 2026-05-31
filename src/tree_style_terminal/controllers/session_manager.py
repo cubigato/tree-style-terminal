@@ -82,10 +82,7 @@ class SessionManager:
 
             # Determine working directory
             if cwd is None:
-                if parent and parent.cwd:
-                    cwd = parent.cwd
-                else:
-                    cwd = os.path.expanduser("~")
+                cwd = parent.cwd if parent and parent.cwd else os.path.expanduser("~")
 
             # Create VTE terminal widget
             terminal_widget = VteTerminal()
@@ -330,9 +327,8 @@ class SessionManager:
                     logger.debug(f"Updated session title from CWD: {new_dir_title}")
 
         # Notify sidebar of changes if any updates occurred
-        if title_changed or cwd_changed:
-            if self._session_changed_callback:
-                self._session_changed_callback(session)
+        if (title_changed or cwd_changed) and self._session_changed_callback:
+            self._session_changed_callback(session)
 
     def set_session_created_callback(self, callback: Callable[[TerminalSession, VteTerminal], None]) -> None:
         """Set callback for when a session is created."""
@@ -426,11 +422,11 @@ class SessionManager:
 
                     # Update the session title to reflect the new directory
                     new_title = self.current_session._get_short_path_title(current_dir)
-                    if self.current_session.set_automatic_title(new_title):
-
-                        # Notify callbacks of the change
-                        if self._session_changed_callback:
-                            self._session_changed_callback(self.current_session)
+                    if (
+                        self.current_session.set_automatic_title(new_title)
+                        and self._session_changed_callback
+                    ):
+                        self._session_changed_callback(self.current_session)
 
             except Exception as e:
                 logger.debug(f"Failed to refresh current directory: {e}")

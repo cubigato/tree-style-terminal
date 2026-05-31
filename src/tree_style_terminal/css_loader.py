@@ -165,7 +165,7 @@ class CSSLoader:
 
             # Priority 3: Configuration file
             if self._config_dpi_scale != "auto":
-                if isinstance(self._config_dpi_scale, (int, float)):
+                if isinstance(self._config_dpi_scale, int | float):
                     return float(self._config_dpi_scale)
                 elif isinstance(self._config_dpi_scale, str):
                     try:
@@ -207,8 +207,8 @@ class CSSLoader:
                         dpi_x = (width * 25.4) / width_mm
                         dpi_y = (height * 25.4) / height_mm
                         monitor_dpi = (dpi_x + dpi_y) / 2
-                except:
-                    pass
+                except (AttributeError, TypeError, ValueError) as e:
+                    logger.debug("Could not detect monitor DPI: %s", e)
 
             # Choose the more appropriate DPI source
             # For high-DPI displays, prioritize monitor DPI over conservative GTK settings

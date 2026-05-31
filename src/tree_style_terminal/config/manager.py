@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class ConfigError(Exception):
     """Exception raised for configuration errors."""
+
     pass
 
 
@@ -68,11 +69,13 @@ class ConfigManager:
             logger.info("Configuration loaded successfully")
 
         except yaml.YAMLError as e:
-            raise ConfigError(f"Invalid YAML in config file {self._config_path}: {e}")
+            raise ConfigError(f"Invalid YAML in config file {self._config_path}: {e}") from e
         except OSError as e:
-            raise ConfigError(f"Cannot read config file {self._config_path}: {e}")
+            raise ConfigError(f"Cannot read config file {self._config_path}: {e}") from e
+        except ConfigError:
+            raise
         except Exception as e:
-            raise ConfigError(f"Unexpected error loading config: {e}")
+            raise ConfigError(f"Unexpected error loading config: {e}") from e
 
     def _create_default_config(self) -> None:
         """Create a default configuration file with commented examples."""
@@ -81,7 +84,7 @@ class ConfigManager:
                 f.write(DEFAULT_CONFIG_TEMPLATE)
             logger.info(f"Created default config file at {self._config_path}")
         except OSError as e:
-            raise ConfigError(f"Cannot create config file {self._config_path}: {e}")
+            raise ConfigError(f"Cannot create config file {self._config_path}: {e}") from e
 
     def _merge_with_defaults(self, loaded_config: dict[str, Any]) -> dict[str, Any]:
         """Merge loaded configuration with defaults."""
@@ -119,8 +122,8 @@ class ConfigManager:
                         value = float(value)
                         # Update the config with the converted value
                         self._set_nested_value(key, value)
-                    except ValueError:
-                        raise ConfigError(f"Config value '{key}' must be 'auto' or a numeric value, got '{value}'. {rule['description']}")
+                    except ValueError as e:
+                        raise ConfigError(f"Config value '{key}' must be 'auto' or a numeric value, got '{value}'. {rule['description']}") from e
 
             # Type validation
             expected_types = rule["type"] if isinstance(rule["type"], list) else [rule["type"]]
@@ -129,12 +132,15 @@ class ConfigManager:
                 raise ConfigError(f"Config value '{key}' must be of type {'/'.join(type_names)}, got {type(value).__name__}")
 
             # String validation (allowed values) - only for actual strings
-            if isinstance(value, str) and "allowed_values" in rule:
-                if value not in rule["allowed_values"]:
-                    raise ConfigError(f"Config value '{key}' must be one of {rule['allowed_values']}, got '{value}'. {rule['description']}")
+            if (
+                isinstance(value, str)
+                and "allowed_values" in rule
+                and value not in rule["allowed_values"]
+            ):
+                raise ConfigError(f"Config value '{key}' must be one of {rule['allowed_values']}, got '{value}'. {rule['description']}")
 
             # Numeric validation
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 if "min_value" in rule and value < rule["min_value"]:
                     raise ConfigError(f"Config value '{key}' must be >= {rule['min_value']}, got {value}. {rule['description']}")
                 if "max_value" in rule and value > rule["max_value"]:
@@ -196,7 +202,7 @@ class ConfigManager:
                 yaml.dump(self._config, f, default_flow_style=False, indent=2)
             logger.info(f"Configuration saved to {self._config_path}")
         except OSError as e:
-            raise ConfigError(f"Cannot save config file {self._config_path}: {e}")
+            raise ConfigError(f"Cannot save config file {self._config_path}: {e}") from e
 
     def get_config_path(self) -> Path:
         """Get the path to the configuration file."""

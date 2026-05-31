@@ -215,6 +215,7 @@ class TestDPIScaling(unittest.TestCase):
         diagonal_mm = (width_mm ** 2 + height_mm ** 2) ** 0.5
         diagonal_px = (width_px ** 2 + height_px ** 2) ** 0.5
         expected_monitor_dpi = diagonal_px / (diagonal_mm / 25.4)
+        assert expected_monitor_dpi > 240
 
         mock_gtk.Settings.get_default.return_value = mock_settings
         mock_gtk.Screen.get_default.return_value = mock_screen

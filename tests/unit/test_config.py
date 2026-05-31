@@ -86,7 +86,6 @@ class TestConfigManager:
 
             # First load
             config_manager.load_config()
-            first_config = config_manager._config.copy()
 
             # Modify the config in memory
             config_manager._config["theme"] = "modified"
@@ -330,7 +329,7 @@ class TestConfigManager:
         config_manager = ConfigManager()
         config_manager._config_path = Path("/nonexistent/config.yaml")
 
-        with pytest.raises(ConfigError, match="Unexpected error loading config"):
+        with pytest.raises(ConfigError, match="Cannot create config file"):
             config_manager.load_config()
 
     @patch("builtins.open", side_effect=OSError("Permission denied"))

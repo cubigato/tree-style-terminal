@@ -105,7 +105,7 @@ class TestTerminalSession:
 
         assert session != "not a session"
         assert session != 123
-        assert session != None
+        assert session.__eq__(None) is False
 
     def test_session_children_default_factory(self):
         """Test that each session gets its own children list."""

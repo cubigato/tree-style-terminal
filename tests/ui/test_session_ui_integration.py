@@ -119,7 +119,7 @@ class TestSessionUIIntegration:
         # Mock session manager methods to track calls
         with patch.object(session_manager, 'new_sibling') as mock_new_sibling, \
              patch.object(session_manager, 'new_child') as mock_new_child, \
-             patch.object(session_manager, 'get_all_sessions', return_value=[Mock(), Mock()]) as mock_get_all, \
+             patch.object(session_manager, 'get_all_sessions', return_value=[Mock(), Mock()]), \
              patch.object(session_manager, 'close_current_session') as mock_close:
 
             session_manager.current_session = Mock()
@@ -222,7 +222,7 @@ class TestSessionUIIntegration:
 
     def test_mock_button_properties(self, mock_headerbar_buttons):
         """Test that mock buttons have the expected properties."""
-        for name, button in mock_headerbar_buttons.items():
+        for button in mock_headerbar_buttons.values():
             # All buttons should have tooltip text
             assert button.get_tooltip_text() is not None
             assert "Mock tooltip" in button.get_tooltip_text()

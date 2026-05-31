@@ -722,9 +722,12 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def focus_sidebar(self) -> None:
         """Focus the sidebar tree view."""
-        if hasattr(self, 'session_sidebar') and self.session_sidebar:
-            if hasattr(self.session_sidebar, 'grab_focus'):
-                self.session_sidebar.grab_focus()
+        if (
+            hasattr(self, 'session_sidebar')
+            and self.session_sidebar
+            and hasattr(self.session_sidebar, 'grab_focus')
+        ):
+            self.session_sidebar.grab_focus()
 
     def _update_terminal_themes(self, theme_name: str) -> None:
         """Update all terminals to use the specified theme."""
@@ -801,10 +804,10 @@ class TreeStyleTerminalApp(Gtk.Application):
             font_name = settings.get_property("gtk-font-name")
             try:
                 mono_font = settings.get_property("gtk-monospace-font-name")
-            except:
+            except (AttributeError, TypeError):
                 try:
                     mono_font = settings.get_property("gtk-monospace-font")
-                except:
+                except (AttributeError, TypeError):
                     mono_font = None
             dpi = settings.get_property("gtk-xft-dpi")
 
@@ -975,10 +978,10 @@ def print_font_test_info(dpi_override=None):
         font_name = settings.get_property("gtk-font-name")
         try:
             mono_font = settings.get_property("gtk-monospace-font-name")
-        except:
+        except (AttributeError, TypeError):
             try:
                 mono_font = settings.get_property("gtk-monospace-font")
-            except:
+            except (AttributeError, TypeError):
                 mono_font = None
         dpi = settings.get_property("gtk-xft-dpi")
 
