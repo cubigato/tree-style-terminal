@@ -4,7 +4,7 @@ title: Reassess whether ARCHITECTURE.md reflects working code
 status: next
 assignee: []
 created_date: '2026-05-27 22:19'
-updated_date: '2026-05-28 12:13'
+updated_date: '2026-05-31 15:03'
 labels: []
 dependencies: []
 references:
@@ -29,6 +29,12 @@ Follow-up from TASK-27. ARCHITECTURE.md was written before implementation starte
 - [ ] #3 The outcome recommends whether to update, shrink, replace, or archive the document.
 - [ ] #4 No code is changed as part of this architecture-document review unless a separate implementation task is created and accepted.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Review-Ergebnis: ARCHITECTURE.md war ein Vor-Implementierungs-Plan. Entscheidung: aktualisiert und gestrafft statt verworfen/archiviert. Korrekturen: signalbasiertes Modell -> reales callbackbasiertes Modell (SessionManager-Callbacks, von MainWindow an SidebarController verdrahtet); ShortcutController als Gio.SimpleAction + Gtk.AccelGroup (nicht Gtk.ShortcutController); Tech-Stack bereinigt (kein pytest-gtk, VTE 2.91, PyYAML, statische Version statt setuptools_scm); Verzeichnislayout an tatsaechlichen Code angepasst (config/, css_loader.py, __main__.py, Unterstrich-Paketname). Aspirational/noch-nicht-umgesetzt (CI/CD, .deb/Flatpak, Plugins, Session-Persistenz, Splits) in einen Roadmap-Abschnitt verschoben. CI bleibt bewusst als langfristiger Roadmap-Punkt. Kein Code geaendert.
+<!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
