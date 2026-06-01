@@ -4,12 +4,12 @@ title: Review and remove obsolete spike/debug helper files
 status: Done
 assignee: []
 created_date: '2026-05-31 13:29'
-updated_date: '2026-05-31 13:44'
+updated_date: '2026-06-01 12:55'
 labels:
   - cleanup
 dependencies: []
 priority: low
-ordinal: 22500
+ordinal: 36500
 ---
 
 ## Description

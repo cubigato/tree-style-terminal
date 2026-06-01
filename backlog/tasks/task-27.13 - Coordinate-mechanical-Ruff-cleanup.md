@@ -4,7 +4,7 @@ title: Coordinate mechanical Ruff cleanup
 status: Done
 assignee: []
 created_date: '2026-05-31 12:56'
-updated_date: '2026-05-31 13:52'
+updated_date: '2026-06-01 12:55'
 labels:
   - cleanup
 dependencies: []
@@ -12,7 +12,7 @@ modified_files:
   - AGENTS.md
 parent_task_id: TASK-27
 priority: medium
-ordinal: 23500
+ordinal: 28500
 ---
 
 ## Description

@@ -29,6 +29,7 @@ FILE_PATH_MATCH_PATTERN = r"(?:~|/|\./|\../)[^\s<>'\"]*[^\s<>'\".,;:!?)]"
 FUZZY_SEARCH_SEPARATOR_PATTERN = r"[-_\s]*"
 PCRE2_MULTILINE = 1024
 VTE_REGEX_COMPILE_FLAGS = Vte.REGEX_FLAGS_DEFAULT | PCRE2_MULTILINE
+TERMINAL_LEFT_EDGE_MARGIN_PX = 16
 
 
 def build_terminal_search_pattern(text: str, fuzzy: bool) -> str:
@@ -65,6 +66,7 @@ class VteTerminal(Gtk.Box):
 
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
+        self.set_margin_start(TERMINAL_LEFT_EDGE_MARGIN_PX)
 
         # Load configuration
         try:

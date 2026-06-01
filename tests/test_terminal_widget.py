@@ -80,7 +80,10 @@ def test_shell_argv_logic():
 
 def test_terminal_properties():
     """Test that terminal widget has expected properties."""
-    from tree_style_terminal.widgets.terminal import VteTerminal
+    from tree_style_terminal.widgets.terminal import (
+        TERMINAL_LEFT_EDGE_MARGIN_PX,
+        VteTerminal,
+    )
 
     terminal = VteTerminal()
 
@@ -91,6 +94,7 @@ def test_terminal_properties():
     # Check that VTE terminal is properly embedded
     assert terminal.terminal is not None
     assert terminal.scrolled_window is not None
+    assert terminal.get_margin_start() == TERMINAL_LEFT_EDGE_MARGIN_PX
 
 
 def test_context_menu_labels_are_english():

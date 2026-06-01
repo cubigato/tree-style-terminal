@@ -4,7 +4,7 @@ title: Normalize SessionManager session_changed_callback
 status: Done
 assignee: []
 created_date: '2026-05-30 09:42'
-updated_date: '2026-05-30 10:40'
+updated_date: '2026-06-01 12:55'
 labels: []
 dependencies: []
 references:
@@ -12,7 +12,7 @@ references:
   - src/tree_style_terminal/controllers/session_manager.py
 parent_task_id: TASK-27
 priority: high
-ordinal: 16500
+ordinal: 27500
 ---
 
 ## Description

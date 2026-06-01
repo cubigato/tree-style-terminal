@@ -72,6 +72,13 @@ def calculate_sidebar_width_bounds(window_width: int) -> SidebarWidthBounds:
     )
 
 
+def configure_sidebar_paned(paned: Gtk.Paned) -> None:
+    """Apply shared sidebar paned behavior."""
+    paned.get_style_context().add_class("main-paned")
+    if hasattr(paned, "set_wide_handle"):
+        paned.set_wide_handle(False)
+
+
 class MainWindow(Gtk.ApplicationWindow):
     """Main application window with tree-style terminal layout."""
 
@@ -247,6 +254,7 @@ class MainWindow(Gtk.ApplicationWindow):
             # For UI file compatibility, set main_paned to main_container
             # This allows toggle functions to work with both UI types
             self.main_paned = main_container
+            configure_sidebar_paned(self.main_paned)
             self.add(main_container)
         else:
             self._create_manual_ui()
@@ -339,7 +347,7 @@ class MainWindow(Gtk.ApplicationWindow):
         """Create a basic UI manually if Glade file is not available."""
         # Create main horizontal paned for resizable sidebar
         self.main_paned = Gtk.HPaned()
-        self.main_paned.get_style_context().add_class("main-paned")
+        configure_sidebar_paned(self.main_paned)
 
         # Create sidebar area
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)

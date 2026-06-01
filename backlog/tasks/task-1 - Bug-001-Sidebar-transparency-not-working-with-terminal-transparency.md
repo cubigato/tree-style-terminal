@@ -4,13 +4,13 @@ title: 'Bug #001: Sidebar transparency not working with terminal transparency'
 status: Done
 assignee: []
 created_date: '2026-05-26 22:04'
-updated_date: '2026-05-30 00:16'
+updated_date: '2026-06-01 12:55'
 labels:
   - bug
   - legacy
 dependencies: []
 priority: medium
-ordinal: 4500
+ordinal: 30500
 ---
 
 ## Description

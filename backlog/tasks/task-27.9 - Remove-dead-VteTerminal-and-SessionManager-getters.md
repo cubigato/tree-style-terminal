@@ -4,7 +4,7 @@ title: Remove dead VteTerminal and SessionManager getters
 status: Done
 assignee: []
 created_date: '2026-05-30 09:41'
-updated_date: '2026-05-30 10:18'
+updated_date: '2026-06-01 12:55'
 labels: []
 dependencies: []
 references:
@@ -13,7 +13,7 @@ references:
   - src/tree_style_terminal/controllers/session_manager.py
 parent_task_id: TASK-27
 priority: high
-ordinal: 14500
+ordinal: 25500
 ---
 
 ## Description

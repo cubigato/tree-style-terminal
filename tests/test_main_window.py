@@ -113,6 +113,36 @@ def test_clamp_sidebar_width_uses_computed_bounds():
     assert clamp_sidebar_width(1200, bounds) == 1000
 
 
+def test_configure_sidebar_paned_uses_narrow_handle():
+    """Sidebar paned keeps the resize hit area out of the terminal text edge."""
+    from tree_style_terminal.main import configure_sidebar_paned
+
+    class StyleContext:
+        def __init__(self):
+            self.classes = []
+
+        def add_class(self, name):
+            self.classes.append(name)
+
+    class Paned:
+        def __init__(self):
+            self.style_context = StyleContext()
+            self.wide_handle = True
+
+        def get_style_context(self):
+            return self.style_context
+
+        def set_wide_handle(self, wide_handle):
+            self.wide_handle = wide_handle
+
+    paned = Paned()
+
+    configure_sidebar_paned(paned)
+
+    assert "main-paned" in paned.style_context.classes
+    assert paned.wide_handle is False
+
+
 def test_layout_components_exist():
     """Test that layout components (Paned, Revealer) are available."""
     from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp

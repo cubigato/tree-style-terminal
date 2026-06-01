@@ -4,7 +4,7 @@ title: Simplify SidebarController helper API
 status: Done
 assignee: []
 created_date: '2026-05-27 22:18'
-updated_date: '2026-05-30 10:01'
+updated_date: '2026-06-01 12:55'
 labels: []
 dependencies: []
 references:
@@ -19,7 +19,7 @@ modified_files:
   - tests/unit/test_session_tree_events.py
 parent_task_id: TASK-27
 priority: medium
-ordinal: 13500
+ordinal: 15500
 ---
 
 ## Description

@@ -1,9 +1,10 @@
 ---
 id: TASK-27.12
 title: Trim redundant hasattr widget guards and dedupe terminal helpers
-status: To Do
+status: next
 assignee: []
 created_date: '2026-05-30 09:42'
+updated_date: '2026-05-31 15:19'
 labels: []
 dependencies: []
 references:
@@ -12,7 +13,7 @@ references:
   - src/tree_style_terminal/controllers/shortcuts.py
 parent_task_id: TASK-27
 priority: medium
-ordinal: 15500
+ordinal: 1000
 ---
 
 ## Description

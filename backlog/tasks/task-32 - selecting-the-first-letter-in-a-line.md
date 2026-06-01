@@ -1,13 +1,14 @@
 ---
 id: TASK-32
 title: selecting the first letter in a line
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-31 13:25'
+updated_date: '2026-06-01 12:55'
 labels: []
 dependencies: []
 priority: high
-ordinal: 20500
+ordinal: 62.5
 ---
 
 ## Description

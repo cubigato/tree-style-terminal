@@ -4,7 +4,7 @@ title: Remove dead session-navigation fallback branches
 status: Done
 assignee: []
 created_date: '2026-05-30 09:41'
-updated_date: '2026-05-30 10:26'
+updated_date: '2026-06-01 12:55'
 labels: []
 dependencies: []
 references:
@@ -12,7 +12,7 @@ references:
   - src/tree_style_terminal/controllers/shortcuts.py
 parent_task_id: TASK-27
 priority: high
-ordinal: 15500
+ordinal: 26500
 ---
 
 ## Description

@@ -4,14 +4,14 @@ title: min/max resizing of sidebar
 status: Done
 assignee: []
 created_date: '2026-05-29 23:00'
-updated_date: '2026-05-30 00:16'
+updated_date: '2026-06-01 12:55'
 labels:
   - feature
   - 'area:sidebar'
   - 'effort:small'
 dependencies: []
 priority: high
-ordinal: 11500
+ordinal: 35500
 ---
 
 ## Description
