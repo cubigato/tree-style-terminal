@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.0 - 2026-06-08
+
+### Added
+
+- Added self-contained workspace profile YAML files for startup session trees.
+- Added `--profile` / `-p` startup support for loading workspace profiles.
+- Added nested workspace session creation with inherited working directories.
+- Added optional profile commands that run through the user's normal shell.
+- Added workspace profile documentation and example profile files.
+- Added startup directory support via positional path, `--working-directory`, and `--workdir`.
+
+### Fixed
+
+- Fixed selecting the first character in a terminal line.
+
+### Changed
+
+- Improved sidebar width bounds so resizing keeps a useful terminal area.
+- Retired legacy main-window terminal management paths and removed obsolete debug/spike files.
+
 ## 0.4.2 - 2026-05-28
 
 ### Added

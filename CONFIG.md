@@ -89,6 +89,62 @@ shortcuts:
   - Default: `<Control><Shift>f`
   - Uses GTK accelerator syntax
 
+## Workspace Profiles
+
+Workspace profiles are self-contained YAML files for creating a startup session
+tree. They are loaded explicitly and are separate from the normal
+`~/.config/tree-style-terminal/config.yaml` file.
+
+```bash
+tst --profile my-java-project.yml
+tst -p my-java-project.yml
+```
+
+Profile files use format version `1`:
+
+```yaml
+version: 1
+name: "My Java Project"
+workdir: "~/dev/my-java-project"
+
+root:
+  title: "project"
+  children:
+    - title: "server"
+      command: "./gradlew bootRun"
+
+    - title: "tests"
+      command: "./gradlew test"
+
+    - title: "logs"
+      workdir: "build/logs"
+```
+
+**Options:**
+- `version`: Required profile format version. The current version is `1`.
+- `name`: Optional display name for the profile.
+- Top-level `workdir`: Optional base directory inherited by all session nodes.
+- `root`: Required root session node.
+- Node `title`: Optional session title. If omitted, normal automatic title generation is used.
+- Node `workdir`: Optional working directory for this node and its children.
+- Node `command`: Optional command to run in this session.
+- Node `children`: Optional list of child session nodes.
+
+**Working directory resolution:**
+- `~` is expanded to the user's home directory.
+- Absolute paths are used as-is.
+- Relative node paths are resolved against the nearest inherited `workdir`.
+- If no `workdir` is specified anywhere, the process start directory is used.
+- Missing or unusable working directories are reported as profile validation errors.
+
+When `command` is omitted, the session starts the same normal interactive shell
+used by regular new sessions. When `command` is present, it is started through
+the user's normal shell in the resolved working directory; after the command
+exits, the shell remains available for follow-up interactive work.
+
+`--profile` cannot be combined with a positional startup directory,
+`--working-directory`, or `--workdir`.
+
 ### Display Settings
 
 ```yaml

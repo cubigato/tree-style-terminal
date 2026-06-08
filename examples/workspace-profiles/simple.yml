@@ -1,0 +1,9 @@
+version: 1
+name: "Simple Example"
+workdir: "/tmp"
+
+root:
+  title: "tmp shell"
+  children:
+    - title: "hello"
+      command: "echo hello"

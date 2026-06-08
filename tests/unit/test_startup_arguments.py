@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from tree_style_terminal.config.workspace_profile import WorkspaceNode, WorkspaceProfile
 from tree_style_terminal.main import TreeStyleTerminalApp, parse_arguments
 
 
@@ -77,6 +78,38 @@ def test_parse_arguments_rejects_positional_and_option_directory(tmp_path):
     assert exc_info.value.code == 2
 
 
+@pytest.mark.parametrize("argv", [["--profile", "{path}"], ["-p", "{path}"]])
+def test_parse_arguments_accepts_profile_path(tmp_path, argv):
+    profile_path = tmp_path / "workspace.yml"
+    profile_path.write_text("version: 1\nroot: {}\n", encoding="utf-8")
+    rendered_argv = [
+        item.format(path=profile_path)
+        for item in argv
+    ]
+
+    args = parse_arguments(rendered_argv)
+
+    assert args.profile_path == str(profile_path.resolve())
+    assert args.initial_cwd is None
+
+
+def test_parse_arguments_rejects_missing_profile_path(tmp_path):
+    with pytest.raises(SystemExit) as exc_info:
+        parse_arguments(["--profile", str(tmp_path / "missing.yml")])
+
+    assert exc_info.value.code == 2
+
+
+def test_parse_arguments_rejects_profile_and_startup_directory(tmp_path):
+    profile_path = tmp_path / "workspace.yml"
+    profile_path.write_text("version: 1\nroot: {}\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc_info:
+        parse_arguments(["--profile", str(profile_path), str(tmp_path)])
+
+    assert exc_info.value.code == 2
+
+
 def test_activation_without_initial_cwd_does_not_create_session():
     app = TreeStyleTerminalApp({"initial_cwd": None})
     window = Mock()
@@ -98,3 +131,22 @@ def test_activation_with_initial_cwd_creates_one_root_session(tmp_path):
         app._on_activate(app)
 
     window.session_manager.new_session.assert_called_once_with(cwd=str(tmp_path))
+
+
+def test_activation_with_workspace_profile_creates_workspace_tree(tmp_path):
+    root = WorkspaceNode(title="project", workdir=str(tmp_path))
+    profile = WorkspaceProfile(
+        path=tmp_path / "workspace.yml",
+        version=1,
+        name="Project",
+        root=root,
+    )
+    app = TreeStyleTerminalApp({"initial_cwd": None, "workspace_profile": profile})
+    window = Mock()
+
+    with patch("tree_style_terminal.main.MainWindow", return_value=window):
+        app._on_activate(app)
+        app._on_activate(app)
+
+    window.session_manager.create_workspace_tree.assert_called_once_with(root)
+    window.session_manager.new_session.assert_not_called()

@@ -23,6 +23,11 @@ from gi.repository import Gdk, Gio, GLib, Gtk
 
 from .config import ConfigError, config_manager
 from .config.defaults import DEFAULT_CONFIG
+from .config.workspace_profile import (
+    WorkspaceProfile,
+    WorkspaceProfileError,
+    load_workspace_profile,
+)
 from .controllers.session_manager import SessionManager
 from .controllers.shortcuts import ShortcutController
 from .controllers.sidebar import SidebarController
@@ -859,13 +864,17 @@ class TreeStyleTerminalApp(Gtk.Application):
         self.window.present()
 
     def _create_initial_session_if_requested(self) -> None:
-        """Create the requested startup session once, if a cwd was provided."""
+        """Create the requested startup session or workspace tree once."""
+        workspace_profile = self.args.get("workspace_profile")
         initial_cwd = self.args.get("initial_cwd")
-        if not initial_cwd or self._initial_session_created or not self.window:
+        if self._initial_session_created or not self.window:
             return
 
         self._initial_session_created = True
-        self.window.session_manager.new_session(cwd=initial_cwd)
+        if isinstance(workspace_profile, WorkspaceProfile):
+            self.window.session_manager.create_workspace_tree(workspace_profile.root)
+        elif initial_cwd:
+            self.window.session_manager.new_session(cwd=initial_cwd)
 
 
 def _resolve_startup_directory(path_value: str, base_dir: Path | None = None) -> str:
@@ -903,6 +912,24 @@ def _select_initial_cwd(args: argparse.Namespace, parser: argparse.ArgumentParse
         return _resolve_startup_directory(requested[0])
     except argparse.ArgumentTypeError as exc:
         parser.error(str(exc))
+
+
+def _resolve_profile_path(path_value: str, base_dir: Path | None = None) -> str:
+    """Resolve and validate a workspace profile path argument."""
+    if not path_value:
+        raise argparse.ArgumentTypeError("profile path must not be empty")
+
+    candidate = Path(path_value).expanduser()
+    if not candidate.is_absolute():
+        candidate = (base_dir or Path.cwd()) / candidate
+
+    resolved = candidate.resolve(strict=False)
+    if not resolved.is_file():
+        raise argparse.ArgumentTypeError(
+            f"{path_value!r} is not an existing file"
+        )
+
+    return str(resolved)
 
 
 def parse_arguments(argv: list[str] | None = None):
@@ -962,6 +989,14 @@ Environment Variables:
     )
 
     parser.add_argument(
+        '--profile',
+        '-p',
+        dest='profile_path',
+        type=_resolve_profile_path,
+        help='Create the startup session tree from a workspace profile YAML file'
+    )
+
+    parser.add_argument(
         'directory',
         nargs='?',
         help='Create the first terminal session in this directory'
@@ -969,6 +1004,8 @@ Environment Variables:
 
     args = parser.parse_args(argv)
     args.initial_cwd = _select_initial_cwd(args, parser)
+    if args.profile_path and args.initial_cwd:
+        parser.error("provide either --profile/-p or a startup directory, not both")
     return args
 
 def print_font_test_info(dpi_override=None):
@@ -1131,13 +1168,22 @@ def main() -> int:
 
     configure_logging(args.log_level)
 
+    workspace_profile = None
+    if args.profile_path:
+        try:
+            workspace_profile = load_workspace_profile(args.profile_path)
+        except WorkspaceProfileError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+
     # Create application with parsed arguments
     app_args = {
         'dpi': args.dpi,
         'show_info': args.show_info,
         'quiet': args.quiet,
         'log_level': args.log_level,
-        'initial_cwd': args.initial_cwd
+        'initial_cwd': args.initial_cwd,
+        'workspace_profile': workspace_profile,
     }
 
     # Create filtered argv for GTK (remove our custom arguments)

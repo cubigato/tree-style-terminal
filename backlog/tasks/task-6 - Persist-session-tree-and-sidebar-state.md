@@ -4,7 +4,7 @@ title: Persist session tree and sidebar state
 status: To Do
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-05-27 22:35'
+updated_date: '2026-06-08 08:14'
 labels:
   - feature
   - 'effort:medium'
@@ -13,7 +13,7 @@ dependencies: []
 references:
   - ARCHITECTURE.md
 priority: medium
-ordinal: 115
+ordinal: 45
 ---
 
 ## Description

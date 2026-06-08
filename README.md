@@ -164,6 +164,47 @@ tree-style-terminal --workdir /tmp
 Relative paths are resolved from the caller's current working directory. Invalid
 paths fail clearly instead of silently falling back to `$HOME`.
 
+### Opening A Workspace Profile
+
+Tree Style Terminal can create a startup session tree from a self-contained YAML
+profile file:
+
+```bash
+tst --profile examples/workspace-profiles/simple.yml
+tst -p examples/workspace-profiles/linux-overview.yml
+```
+
+A profile defines one root session and optional child sessions. Each session can
+set a title, working directory, and optional command:
+
+```yaml
+version: 1
+name: "Simple Example"
+workdir: "/tmp"
+
+root:
+  title: "tmp shell"
+  children:
+    - title: "hello"
+      command: "echo hello"
+```
+
+Sessions without `command` start a normal interactive shell. Sessions with
+`command` run it through the user's normal shell, then leave a shell open for
+follow-up work. Relative `workdir` values are resolved from the nearest inherited
+`workdir`.
+
+Example files are available in
+[`examples/workspace-profiles/`](examples/workspace-profiles/):
+
+- [`simple.yml`](examples/workspace-profiles/simple.yml): one root shell in
+  `/tmp` with a child that runs `echo hello`
+- [`linux-overview.yml`](examples/workspace-profiles/linux-overview.yml):
+  a nested tree using common Linux paths such as `/tmp`, `/etc`, `/var/log`,
+  and `/usr`
+
+`--profile` cannot be combined with a startup directory or `--workdir`.
+
 This is useful for file manager actions such as "Open Terminal Here". Some file
 managers pass the selected directory as an argument, while others start the
 terminal process with the target directory as its current working directory. For
@@ -241,6 +282,8 @@ tree-style-terminal --quiet             # Suppress startup messages
 tree-style-terminal --log-level info    # Show runtime diagnostics for this launch
 tree-style-terminal /tmp                # Open one root session in /tmp
 tree-style-terminal --workdir .         # Open in the caller's current directory
+tree-style-terminal --profile examples/workspace-profiles/simple.yml
+tst -p examples/workspace-profiles/linux-overview.yml
 
 # Combined options
 tree-style-terminal --dpi 180 --quiet   # Launch with custom DPI, no startup message

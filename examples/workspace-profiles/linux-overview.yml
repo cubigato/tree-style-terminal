@@ -1,0 +1,20 @@
+version: 1
+name: "Linux Overview"
+workdir: "/tmp"
+
+root:
+  title: "scratch"
+  children:
+    - title: "config"
+      workdir: "/etc"
+
+    - title: "logs"
+      workdir: "/var/log"
+      command: "echo hello from /var/log"
+
+    - title: "system"
+      workdir: "/usr"
+      children:
+        - title: "bin"
+          workdir: "bin"
+          command: "echo hello from /usr/bin"

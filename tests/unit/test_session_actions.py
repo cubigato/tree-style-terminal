@@ -14,6 +14,7 @@ import pytest
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gio', '2.0')
 
+from tree_style_terminal.config.workspace_profile import WorkspaceNode
 from tree_style_terminal.controllers.session_manager import SessionManager
 from tree_style_terminal.controllers.shortcuts import ShortcutController
 from tree_style_terminal.models.session import TerminalSession
@@ -131,6 +132,71 @@ class TestSessionActions:
             assert child_session is not None
             assert child_session.cwd == mock_session.cwd  # Should inherit cwd
             assert session_tree.get_parent(child_session) == mock_session
+
+    def test_new_session_with_command_runs_through_user_shell(
+        self,
+        session_tree,
+        session_manager,
+        monkeypatch,
+    ):
+        """Test that configured commands run through the user's shell."""
+        monkeypatch.setenv("SHELL", "/bin/zsh")
+
+        with patch('tree_style_terminal.controllers.session_manager.VteTerminal') as MockVteTerminal:
+            mock_terminal = Mock()
+            mock_terminal.spawn_shell.return_value = True
+            MockVteTerminal.return_value = mock_terminal
+
+            session = session_manager.new_session(
+                cwd="/work/project",
+                title="server",
+                command="./gradlew bootRun",
+            )
+
+            assert session is not None
+            assert session.title == "server"
+            assert session.cwd == "/work/project"
+            mock_terminal.spawn_shell.assert_called_once_with(
+                argv=["/bin/zsh", "-c", "./gradlew bootRun; exec /bin/zsh"],
+                cwd="/work/project",
+            )
+
+    def test_create_workspace_tree_creates_nested_sessions(self, session_tree, session_manager):
+        """Test creating a nested session tree from validated workspace nodes."""
+        root_node = WorkspaceNode(
+            title="project",
+            workdir="/work/project",
+            children=[
+                WorkspaceNode(
+                    title="server",
+                    workdir="/work/project",
+                    command="./gradlew bootRun",
+                ),
+                WorkspaceNode(
+                    title="logs",
+                    workdir="/work/project/build/logs",
+                ),
+            ],
+        )
+
+        with patch('tree_style_terminal.controllers.session_manager.VteTerminal') as MockVteTerminal:
+            terminals = [Mock(), Mock(), Mock()]
+            for terminal in terminals:
+                terminal.spawn_shell.return_value = True
+                terminal.terminal = Mock()
+            MockVteTerminal.side_effect = terminals
+
+            root_session = session_manager.create_workspace_tree(root_node)
+
+            assert root_session is not None
+            assert root_session.title == "project"
+            assert root_session in session_tree.get_roots()
+            assert len(root_session.children) == 2
+            assert root_session.children[0].title == "server"
+            assert root_session.children[1].title == "logs"
+            terminals[0].spawn_shell.assert_called_once_with(cwd="/work/project")
+            terminals[1].spawn_shell.assert_called_once()
+            terminals[2].spawn_shell.assert_called_once_with(cwd="/work/project/build/logs")
 
     def test_new_child_tree_signals(self, session_tree, session_manager, mock_session):
         """Test that new_child triggers correct tree signals."""

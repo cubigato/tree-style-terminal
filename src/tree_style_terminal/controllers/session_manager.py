@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import logging
 import os
+import shlex
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import gi
 
@@ -20,6 +22,9 @@ from gi.repository import GLib
 from ..models.session import TerminalSession
 from ..models.tree import SessionTree
 from ..widgets.terminal import VteTerminal
+
+if TYPE_CHECKING:
+    from ..config.workspace_profile import WorkspaceNode
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +68,8 @@ class SessionManager:
         self,
         parent: TerminalSession | None = None,
         cwd: str | None = None,
-        title: str | None = None
+        title: str | None = None,
+        command: str | None = None,
     ) -> TerminalSession | None:
         """
         Create a new terminal session.
@@ -72,6 +78,7 @@ class SessionManager:
             parent: Parent session for hierarchy, None for root level
             cwd: Working directory for the new session
             title: Custom title for the session
+            command: Optional command to run through the user's shell
 
         Returns:
             The created TerminalSession, or None if creation failed
@@ -91,7 +98,11 @@ class SessionManager:
             terminal_widget.apply_theme(self._current_theme)
 
             # Spawn shell in the terminal
-            if not terminal_widget.spawn_shell(cwd=cwd):
+            spawn_kwargs = {"cwd": cwd}
+            if command is not None:
+                spawn_kwargs["argv"] = self._build_shell_command_argv(command)
+
+            if not terminal_widget.spawn_shell(**spawn_kwargs):
                 logger.error("Failed to spawn shell for new session")
                 return None
 
@@ -129,6 +140,35 @@ class SessionManager:
         except Exception as e:
             logger.error(f"Error creating session: {e}")
             return None
+
+    def create_workspace_tree(self, root: WorkspaceNode) -> TerminalSession | None:
+        """Create a session tree from a validated workspace profile root."""
+        return self._create_workspace_node(root, parent=None)
+
+    def _create_workspace_node(
+        self,
+        node: WorkspaceNode,
+        parent: TerminalSession | None,
+    ) -> TerminalSession | None:
+        session = self.new_session(
+            parent=parent,
+            cwd=node.workdir,
+            title=node.title,
+            command=node.command,
+        )
+        if session is None:
+            logger.error("Failed to create workspace session %r", node.title or node.workdir)
+            return None
+
+        for child in node.children:
+            self._create_workspace_node(child, session)
+
+        return session
+
+    def _build_shell_command_argv(self, command: str) -> list[str]:
+        shell = os.environ.get("SHELL", "/bin/bash")
+        quoted_shell = shlex.quote(shell)
+        return [shell, "-c", f"{command}; exec {quoted_shell}"]
 
     def new_child(self, title: str | None = None) -> TerminalSession | None:
         """
