@@ -1,16 +1,21 @@
 ---
 id: TASK-27.12
 title: Trim redundant hasattr widget guards and dedupe terminal helpers
-status: next
+status: Done
 assignee: []
 created_date: '2026-05-30 09:42'
-updated_date: '2026-05-31 15:19'
+updated_date: '2026-07-22 21:39'
 labels: []
 dependencies: []
 references:
   - TASK-27
   - src/tree_style_terminal/main.py
   - src/tree_style_terminal/controllers/shortcuts.py
+modified_files:
+  - src/tree_style_terminal/main.py
+  - src/tree_style_terminal/controllers/shortcuts.py
+  - src/tree_style_terminal/controllers/session_manager.py
+  - tests/unit/test_shortcuts.py
 parent_task_id: TASK-27
 priority: medium
 ordinal: 1000
@@ -24,10 +29,10 @@ Follow-up from TASK-27. Three small maintainability cleanups in the session/term
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Redundant hasattr(widget, method) guards on always-present VteTerminal methods are removed (keep only the 'widget is not None' check).
-- [ ] #2 The 'session_{pid}' terminal-stack name is produced by a single small helper and used by all three main.py call sites.
-- [ ] #3 Terminal-focus logic is defined once and reused; no duplicated get_terminal_widget+grab_focus blocks remain.
-- [ ] #4 Focus, copy/paste, search, theme, and session-switch behavior is unchanged.
+- [x] #1 Redundant hasattr(widget, method) guards on always-present VteTerminal methods are removed (keep only the 'widget is not None' check).
+- [x] #2 The 'session_{pid}' terminal-stack name is produced by a single small helper and used by all three main.py call sites.
+- [x] #3 Terminal-focus logic is defined once and reused; no duplicated get_terminal_widget+grab_focus blocks remain.
+- [x] #4 Focus, copy/paste, search, theme, and session-switch behavior is unchanged.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -62,8 +67,14 @@ Risks / what could go wrong
 Lower-priority maintainability bundle. E: hasattr guards on grab_focus/copy_clipboard/paste_clipboard/show_search/apply_theme are redundant (methods always on VteTerminal). F: 'session_{pid}' built inline 3x in main.py. G: focus logic duplicated in main.focus_terminal and shortcuts._on_focus_terminal. Coordinate with TASK-27.1 which also edits _update_terminal_themes.
 <!-- SECTION:NOTES:END -->
 
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Removed redundant VteTerminal method guards, centralized terminal stack naming, and consolidated terminal focus behavior in ShortcutController. Focused tests and the full 291-test suite pass; Ruff is clean. Awaiting human review before Done.
+<!-- SECTION:FINAL_SUMMARY:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Focused main-window, shortcut, and focus integration tests pass.
-- [ ] #2 No functional change beyond the consolidations above.
+- [x] #1 Focused main-window, shortcut, and focus integration tests pass.
+- [x] #2 No functional change beyond the consolidations above.
 <!-- DOD:END -->

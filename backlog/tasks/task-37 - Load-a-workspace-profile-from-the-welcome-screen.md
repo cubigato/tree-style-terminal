@@ -1,10 +1,10 @@
 ---
 id: TASK-37
 title: Load a workspace profile from the welcome screen
-status: To Do
+status: next
 assignee: []
 created_date: '2026-07-22 21:27'
-updated_date: '2026-07-22 21:27'
+updated_date: '2026-07-22 21:29'
 labels:
   - feature
   - 'area:workspace'
@@ -12,7 +12,7 @@ labels:
   - 'area:config'
 dependencies: []
 priority: medium
-ordinal: 145
+ordinal: 500
 ---
 
 ## Description

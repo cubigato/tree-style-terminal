@@ -4,6 +4,7 @@ Unit tests for ShortcutController.
 Tests action creation, callback execution, and state management.
 """
 
+import logging
 from unittest.mock import Mock, patch
 
 import gi
@@ -13,6 +14,7 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Gio', '2.0')
 from gi.repository import Gio
 
+from tree_style_terminal.config import config_manager
 from tree_style_terminal.controllers.session_manager import SessionManager
 from tree_style_terminal.controllers.shortcuts import ShortcutController
 from tree_style_terminal.models.session import TerminalSession
@@ -294,6 +296,26 @@ class TestShortcutController:
             mock_get_terminal.assert_called_once_with(mock_session)
             mock_terminal.copy_clipboard.assert_called_once()
 
+    def test_focus_terminal_action_uses_current_terminal(
+        self,
+        shortcut_controller,
+        session_manager,
+    ):
+        """The focus action uses the controller's shared focus helper."""
+        mock_session = TerminalSession(pid=123, pty_fd=456, cwd="/test")
+        mock_terminal = Mock()
+        session_manager.current_session = mock_session
+
+        with patch.object(
+            session_manager,
+            "get_terminal_widget",
+            return_value=mock_terminal,
+        ) as mock_get_terminal:
+            shortcut_controller.get_action("focus_terminal").activate(None)
+
+        mock_get_terminal.assert_called_once_with(mock_session)
+        mock_terminal.grab_focus.assert_called_once_with()
+
     def test_terminal_paste_action_uses_current_terminal(
         self,
         shortcut_controller,
@@ -389,3 +411,23 @@ class TestShortcutController:
 
         action.activate.assert_called_once_with(None)
         assert handled is True
+
+    def test_invalid_configured_accelerator_is_warned_and_skipped(
+        self,
+        session_manager,
+        caplog,
+    ):
+        """Invalid configured accelerators do not prevent other registration."""
+        main_window = Mock()
+
+        with (
+            patch.object(config_manager, "get", return_value=""),
+            patch(
+                "tree_style_terminal.controllers.shortcuts.Gtk.AccelGroup"
+            ) as accel_group_class,
+            caplog.at_level(logging.WARNING),
+        ):
+            ShortcutController(session_manager, main_window)
+
+        assert "Invalid accelerator:" in caplog.text
+        assert accel_group_class.return_value.connect.call_count == 12

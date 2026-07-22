@@ -192,13 +192,19 @@ class ShortcutController:
     def _on_focus_terminal(self, action: Gio.SimpleAction, parameter: GLib.Variant) -> None:
         """Handle focus_terminal action activation."""
         try:
-            if self.session_manager.current_session:
-                terminal_widget = self.session_manager.get_terminal_widget(self.session_manager.current_session)
-                if terminal_widget and hasattr(terminal_widget, 'grab_focus'):
-                    terminal_widget.grab_focus()
-                    logger.debug("Focused terminal")
+            self.focus_terminal()
         except Exception as e:
             logger.error(f"Error focusing terminal: {e}")
+
+    def focus_terminal(self) -> None:
+        """Focus the terminal widget for the current session."""
+        if self.session_manager.current_session:
+            terminal_widget = self.session_manager.get_terminal_widget(
+                self.session_manager.current_session
+            )
+            if terminal_widget:
+                terminal_widget.grab_focus()
+                logger.debug("Focused terminal")
 
     def _on_focus_sidebar(self, action: Gio.SimpleAction, parameter: GLib.Variant) -> None:
         """Handle focus_sidebar action activation."""
@@ -230,7 +236,7 @@ class ShortcutController:
         """Handle terminal_copy action activation."""
         try:
             terminal_widget = self._get_current_terminal_widget()
-            if terminal_widget and hasattr(terminal_widget, "copy_clipboard"):
+            if terminal_widget:
                 terminal_widget.copy_clipboard()
         except Exception as e:
             logger.error(f"Error copying terminal selection: {e}")
@@ -243,7 +249,7 @@ class ShortcutController:
         """Handle terminal_paste action activation."""
         try:
             terminal_widget = self._get_current_terminal_widget()
-            if terminal_widget and hasattr(terminal_widget, "paste_clipboard"):
+            if terminal_widget:
                 terminal_widget.paste_clipboard()
         except Exception as e:
             logger.error(f"Error pasting into terminal: {e}")
@@ -256,7 +262,7 @@ class ShortcutController:
         """Handle terminal_search action activation."""
         try:
             terminal_widget = self._get_current_terminal_widget()
-            if terminal_widget and hasattr(terminal_widget, "show_search"):
+            if terminal_widget:
                 terminal_widget.show_search()
         except Exception as e:
             logger.error(f"Error opening terminal search: {e}")
@@ -317,7 +323,7 @@ class ShortcutController:
             logger.warning(f"Widget {widget.__class__.__name__} does not support actions")
 
     def _setup_shortcuts(self) -> None:
-        """Set up keyboard shortcuts using AccelGroup."""
+        """Set up shortcuts, warning and skipping invalid accelerators."""
         if not self.main_window:
             logger.warning("No main window provided, cannot setup shortcuts")
             return

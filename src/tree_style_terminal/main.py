@@ -58,6 +58,11 @@ def clamp_sidebar_width(value: int, bounds: SidebarWidthBounds) -> int:
     return max(bounds.minimum, min(value, bounds.maximum))
 
 
+def terminal_stack_name(session: TerminalSession) -> str:
+    """Return the terminal stack child name for a session."""
+    return f"session_{session.pid}"
+
+
 def calculate_sidebar_width_bounds(window_width: int) -> SidebarWidthBounds:
     """Calculate sidebar min/default/max widths from the available window width."""
     available_width = max(window_width, 1)
@@ -612,7 +617,7 @@ class MainWindow(Gtk.ApplicationWindow):
             terminal_widget: The VTE terminal widget
         """
         # Add terminal to the stack
-        terminal_id = f"session_{session.pid}"
+        terminal_id = terminal_stack_name(session)
         terminal_widget.show()
         self.terminal_stack.add_named(terminal_widget, terminal_id)
 
@@ -644,7 +649,7 @@ class MainWindow(Gtk.ApplicationWindow):
         """
 
         # Remove from terminal stack
-        terminal_id = f"session_{session.pid}"
+        terminal_id = terminal_stack_name(session)
 
         # Find and remove the terminal widget
         for child in self.terminal_stack.get_children():
@@ -714,7 +719,7 @@ class MainWindow(Gtk.ApplicationWindow):
             session: The selected session
         """
         # Switch to the terminal
-        terminal_id = f"session_{session.pid}"
+        terminal_id = terminal_stack_name(session)
         self.terminal_stack.set_visible_child_name(terminal_id)
 
         # Update window title
@@ -828,11 +833,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def focus_terminal(self) -> None:
         """Focus the currently active terminal."""
-        if self.session_manager.current_session:
-            terminal_widget = self.session_manager.get_terminal_widget(self.session_manager.current_session)
-            if terminal_widget and hasattr(terminal_widget, 'grab_focus'):
-                terminal_widget.grab_focus()
-                logger.debug("Focused terminal")
+        self.shortcut_controller.focus_terminal()
 
     def focus_sidebar(self) -> None:
         """Focus the sidebar tree view."""

@@ -468,8 +468,7 @@ class SessionManager:
 
         # Apply theme to all existing terminals
         for terminal_widget in self._session_terminals.values():
-            if hasattr(terminal_widget, 'apply_theme'):
-                terminal_widget.apply_theme(theme_name)
+            terminal_widget.apply_theme(theme_name)
 
         logger.debug(f"Applied {theme_name} theme to all sessions")
 

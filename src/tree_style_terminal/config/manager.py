@@ -6,6 +6,7 @@ This module handles loading, validating, and saving configuration files.
 """
 
 import logging
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +54,7 @@ class ConfigManager:
             if not self._config_path.exists():
                 logger.info(f"Config file not found, creating default at {self._config_path}")
                 self._create_default_config()
-                self._config = DEFAULT_CONFIG.copy()
+                self._config = deepcopy(DEFAULT_CONFIG)
             else:
                 logger.info(f"Loading config from {self._config_path}")
                 with open(self._config_path, encoding='utf-8') as f:
@@ -89,7 +90,7 @@ class ConfigManager:
     def _merge_with_defaults(self, loaded_config: dict[str, Any]) -> dict[str, Any]:
         """Merge loaded configuration with defaults."""
         def deep_merge(default: dict, loaded: dict) -> dict:
-            result = default.copy()
+            result = deepcopy(default)
             for key, value in loaded.items():
                 if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                     result[key] = deep_merge(result[key], value)

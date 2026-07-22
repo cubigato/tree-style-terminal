@@ -6,6 +6,7 @@ Tests configuration loading, validation, default creation, and error handling.
 """
 
 import tempfile
+from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
@@ -48,6 +49,18 @@ class TestConfigManager:
             assert config_manager._config_path.exists()
             assert config_manager._loaded
             assert config_manager._config == DEFAULT_CONFIG
+            assert config_manager._config["terminal"] is not DEFAULT_CONFIG["terminal"]
+
+    def test_loaded_defaults_cannot_mutate_default_config(self):
+        """Loaded configuration owns independent nested default values."""
+        original_defaults = deepcopy(DEFAULT_CONFIG)
+        config_manager = ConfigManager()
+
+        merged = config_manager._merge_with_defaults({"theme": "light"})
+        merged["terminal"]["scrollback_lines"] = 123
+        merged["shortcuts"]["terminal_search"] = "F1"
+
+        assert original_defaults == DEFAULT_CONFIG
 
     def test_load_config_from_existing_file(self):
         """Test loading configuration from existing file."""
