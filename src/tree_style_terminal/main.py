@@ -11,7 +11,6 @@ import argparse
 import logging
 import os
 import sys
-import threading
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,12 +21,6 @@ gi.require_version("Gdk", "3.0")
 
 from gi.repository import Gdk, Gio, GLib, Gtk
 
-from .ai_command import (
-    DEFAULT_HISTORY_LINES,
-    AICommandConfig,
-    CommandDraftError,
-    request_command_draft,
-)
 from .config import ConfigError, config_manager
 from .config.defaults import DEFAULT_CONFIG
 from .config.workspace_profile import (
@@ -36,6 +29,7 @@ from .config.workspace_profile import (
     export_workspace_profile,
     load_workspace_profile,
 )
+from .controllers.ai_command import AICommandController
 from .controllers.session_manager import SessionManager
 from .controllers.shortcuts import ShortcutController
 from .controllers.sidebar import SidebarController
@@ -49,9 +43,6 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_WINDOW_WIDTH = 1024
-AI_ICON_NAME = "ai-sparkles-symbolic"
-EXTENDED_AI_HISTORY_LINES = 200
-LARGE_AI_HISTORY_LINES = 1000
 
 
 @dataclass(frozen=True)
@@ -158,7 +149,6 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Sidebar state management
         self._sidebar_collapsed = False
-        self._ai_request_pending = False
 
         # Create header bar
         self._setup_headerbar()
@@ -287,29 +277,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.search_button.set_sensitive(False)
         self.headerbar.pack_end(self.search_button)
 
-        # Add AI command drafting button with a bundled symbolic icon.
-        icon_root = Path(__file__).parent / "resources" / "icons"
-        Gtk.IconTheme.get_default().prepend_search_path(str(icon_root))
-        self.ai_command_button = Gtk.Button()
-        self.ai_command_button.set_image(
-            Gtk.Image.new_from_icon_name(AI_ICON_NAME, Gtk.IconSize.BUTTON)
-        )
-        self.ai_command_shortcut = config_manager.get(
-            "shortcuts.ai_command_draft",
-            "<Control><Shift>a",
-        )
-        self.ai_command_button.set_tooltip_text(
-            f"Draft shell command with AI ({self.ai_command_shortcut}); "
-            "right-click for more context"
-        )
-        self.ai_command_button.connect("clicked", self._on_ai_command_clicked)
-        self.ai_command_button.connect(
-            "button-press-event",
-            self._on_ai_button_press,
-        )
-        self.ai_command_button.set_sensitive(False)
+        # Add the extracted AI command drafting controls.
+        self.ai_command_controller = AICommandController(self, self.session_manager)
+        self.ai_command_button = self.ai_command_controller.button
         self.headerbar.pack_end(self.ai_command_button)
-        self._setup_ai_context_menu()
 
         # Add theme toggle button
         self.theme_toggle_button = Gtk.Button()
@@ -582,236 +553,9 @@ class MainWindow(Gtk.ApplicationWindow):
         if action:
             action.activate(None)
 
-    def _on_ai_command_clicked(self, _button: Gtk.Button) -> None:
-        """Activate AI command drafting through the shared shortcut action."""
-        action = self.shortcut_controller.get_action("ai_command_draft")
-        if action:
-            action.activate(None)
-
-    def _setup_ai_context_menu(self) -> None:
-        """Create one-shot larger-context actions for the AI button."""
-        self.ai_context_menu = Gtk.Menu()
-
-        self.ai_extended_context_item = Gtk.MenuItem(
-            label=f"Draft with {EXTENDED_AI_HISTORY_LINES} lines"
-        )
-        self.ai_extended_context_item.connect(
-            "activate",
-            lambda _item: self.request_ai_command_draft(
-                history_lines=EXTENDED_AI_HISTORY_LINES
-            ),
-        )
-        self.ai_context_menu.append(self.ai_extended_context_item)
-
-        self.ai_large_context_item = Gtk.MenuItem(
-            label=f"Draft with {LARGE_AI_HISTORY_LINES} lines"
-        )
-        self.ai_large_context_item.connect(
-            "activate",
-            lambda _item: self.request_ai_command_draft(
-                history_lines=LARGE_AI_HISTORY_LINES
-            ),
-        )
-        self.ai_context_menu.append(self.ai_large_context_item)
-
-        self.ai_selected_context_item = Gtk.MenuItem(
-            label=f"Draft with selected text (up to {LARGE_AI_HISTORY_LINES} lines)"
-        )
-        self.ai_selected_context_item.connect(
-            "activate",
-            lambda _item: self.request_ai_command_draft(use_selected_text=True),
-        )
-        self.ai_context_menu.append(self.ai_selected_context_item)
-        self.ai_context_menu.show_all()
-
-    def _on_ai_button_press(
-        self,
-        _button: Gtk.Button,
-        event: Gdk.EventButton,
-    ) -> bool:
-        """Open one-shot AI context choices on secondary click."""
-        if event.button != Gdk.BUTTON_SECONDARY:
-            return False
-
-        current_session = self.session_manager.current_session
-        terminal_widget = (
-            self.session_manager.get_terminal_widget(current_session)
-            if current_session is not None
-            else None
-        )
-        has_selection = bool(terminal_widget and terminal_widget.has_selection())
-        self.ai_selected_context_item.set_sensitive(has_selection)
-
-        if hasattr(self.ai_context_menu, "popup_at_pointer"):
-            self.ai_context_menu.popup_at_pointer(event)
-        else:
-            self.ai_context_menu.popup(
-                None,
-                None,
-                None,
-                None,
-                event.button,
-                event.time,
-            )
-        return True
-
-    def request_ai_command_draft(
-        self,
-        *,
-        history_lines: int = DEFAULT_HISTORY_LINES,
-        use_selected_text: bool = False,
-    ) -> None:
-        """Draft a shell command without blocking GTK or submitting the result."""
-        if self._ai_request_pending:
-            return
-
-        config = AICommandConfig.from_values(
-            config_manager.get("ai.endpoint", ""),
-            config_manager.get("ai.api_key", ""),
-            config_manager.get("ai.model", ""),
-        )
-        if config is None:
-            self._show_ai_configuration_help()
-            return
-
-        current_session = self.session_manager.current_session
-        if current_session is None:
-            return
-        terminal_widget = self.session_manager.get_terminal_widget(current_session)
-        if terminal_widget is None:
-            return
-
-        try:
-            history, user_input = terminal_widget.capture_command_draft_context(
-                history_lines=0 if use_selected_text else history_lines
-            )
-            if use_selected_text:
-                history = terminal_widget.get_selected_text(LARGE_AI_HISTORY_LINES)
-        except Exception as exc:
-            logger.warning(
-                "Could not capture terminal context for AI drafting: %s",
-                type(exc).__name__,
-            )
-            self._show_ai_error("Could not read the current terminal input.")
-            return
-
-        if use_selected_text and not history:
-            self._show_ai_error("Select terminal text to use as AI context first.")
-            return
-        if not user_input.strip():
-            self._show_ai_error("Type a short description on the prompt first.")
-            return
-
-        self._set_ai_request_pending(True)
-        worker = threading.Thread(
-            target=self._run_ai_command_request,
-            args=(config, terminal_widget, history, user_input),
-            daemon=True,
-        )
-        worker.start()
-
-    def _run_ai_command_request(
-        self,
-        config: AICommandConfig,
-        terminal_widget: VteTerminal,
-        history: str,
-        user_input: str,
-    ) -> None:
-        """Perform the network call off the GTK main thread."""
-        try:
-            command = request_command_draft(config, history, user_input)
-        except CommandDraftError as exc:
-            logger.warning("AI command drafting failed: %s", type(exc).__name__)
-            GLib.idle_add(self._finish_ai_command_error, str(exc))
-            return
-        except Exception as exc:
-            logger.error("Unexpected AI command drafting failure: %s", type(exc).__name__)
-            GLib.idle_add(self._finish_ai_command_error, "The AI request failed.")
-            return
-
-        GLib.idle_add(
-            self._finish_ai_command_success,
-            terminal_widget,
-            user_input,
-            command,
-        )
-
-    def _finish_ai_command_success(
-        self,
-        terminal_widget: VteTerminal,
-        original_input: str,
-        command: str,
-    ) -> bool:
-        """Replace unchanged input with the completed draft on the GTK thread."""
-        self._set_ai_request_pending(False)
-        try:
-            _history, current_input = terminal_widget.capture_command_draft_context()
-            if current_input != original_input:
-                self._show_ai_error(
-                    "The terminal input changed while the AI request was running. "
-                    "Nothing was replaced."
-                )
-                return False
-            terminal_widget.replace_current_input(command)
-        except Exception as exc:
-            logger.warning("Could not insert AI command draft: %s", type(exc).__name__)
-            self._show_ai_error("Could not replace the current terminal input.")
-        return False
-
-    def _finish_ai_command_error(self, message: str) -> bool:
-        """Restore controls and report a sanitized request error on the GTK thread."""
-        self._set_ai_request_pending(False)
-        self._show_ai_error(message)
-        return False
-
-    def _set_ai_request_pending(self, pending: bool) -> None:
-        """Track request state and show progress on the AI button."""
-        self._ai_request_pending = pending
-        if pending:
-            spinner = Gtk.Spinner()
-            spinner.start()
-            spinner.show()
-            self.ai_command_button.set_image(spinner)
-            self.ai_command_button.set_tooltip_text("Drafting shell command with AI…")
-        else:
-            self.ai_command_button.set_image(
-                Gtk.Image.new_from_icon_name(AI_ICON_NAME, Gtk.IconSize.BUTTON)
-            )
-            self.ai_command_button.set_tooltip_text(
-                f"Draft shell command with AI ({self.ai_command_shortcut}); "
-                "right-click for more context"
-            )
-        self._update_button_states()
-
-    def _show_ai_configuration_help(self) -> None:
-        """Explain how to enable AI drafting without displaying credential values."""
-        dialog = Gtk.MessageDialog(
-            transient_for=self,
-            modal=True,
-            message_type=Gtk.MessageType.INFO,
-            buttons=Gtk.ButtonsType.CLOSE,
-            text="AI command drafting is not configured",
-        )
-        dialog.format_secondary_text(
-            f"Add endpoint, api_key, and model under 'ai' in\n"
-            f"{config_manager.get_config_path()}\n\n"
-            "See CONFIG.md for an example."
-        )
-        dialog.run()
-        dialog.destroy()
-
-    def _show_ai_error(self, message: str) -> None:
-        """Show an AI drafting error without changing terminal input."""
-        dialog = Gtk.MessageDialog(
-            transient_for=self,
-            modal=True,
-            message_type=Gtk.MessageType.WARNING,
-            buttons=Gtk.ButtonsType.CLOSE,
-            text="Could not draft shell command",
-        )
-        dialog.format_secondary_text(message)
-        dialog.run()
-        dialog.destroy()
+    def request_ai_command_draft(self) -> None:
+        """Bridge the shortcut action to the extracted AI controller."""
+        self.ai_command_controller.request()
 
     def _on_export_selected_activate(self, _menu_item: Gtk.MenuItem) -> None:
         """Export the current session and its descendants as one profile tree."""
@@ -937,10 +681,8 @@ class MainWindow(Gtk.ApplicationWindow):
             self.export_all_menu_item.set_sensitive(has_sessions)
         if hasattr(self, 'search_button'):
             self.search_button.set_sensitive(has_current_session)
-        if hasattr(self, 'ai_command_button'):
-            self.ai_command_button.set_sensitive(
-                has_current_session and not self._ai_request_pending
-            )
+        if hasattr(self, 'ai_command_controller'):
+            self.ai_command_controller.set_terminal_available(has_current_session)
 
         # Update shortcut controller action states
         self.shortcut_controller.update_action_states()

@@ -1,10 +1,10 @@
 ---
 id: TASK-25
 title: Add AI-assisted shell command drafting
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-05-26 22:11'
-updated_date: '2026-07-22 22:57'
+updated_date: '2026-07-22 23:15'
 labels:
   - feature
   - ai
@@ -15,17 +15,23 @@ references:
 modified_files:
   - CONFIG.md
   - README.md
+  - CHANGELOG.md
+  - pyproject.toml
+  - src/tree_style_terminal/__init__.py
   - src/tree_style_terminal/ai_command.py
   - src/tree_style_terminal/config/defaults.py
   - src/tree_style_terminal/config/manager.py
+  - src/tree_style_terminal/controllers/ai_command.py
   - src/tree_style_terminal/controllers/shortcuts.py
   - src/tree_style_terminal/main.py
   - >-
     src/tree_style_terminal/resources/icons/hicolor/scalable/actions/ai-sparkles-symbolic.svg
   - src/tree_style_terminal/widgets/terminal.py
   - tests/test_ai_command.py
+  - tests/test_basic.py
   - tests/test_main_window.py
   - tests/test_terminal_widget.py
+  - tests/unit/test_ai_command_controller.py
   - tests/unit/test_config.py
   - tests/unit/test_shortcuts.py
 priority: medium
@@ -57,6 +63,7 @@ Add an opt-in command-drafting feature backed by a configured OpenAI-compatible 
 - [x] #8 If the required AI API configuration is missing or incomplete, invoking either trigger makes no network request and shows a short help dialog with the config path and required fields, without exposing credential values.
 - [x] #9 Right-clicking the AI button offers one-shot requests with 200 lines, 1000 lines, or up to 1000 lines of explicitly selected terminal text, while normal click and shortcut behavior remain at the 40-line default.
 - [x] #10 When the user asks for an explanation or diagnosis instead of an executable action, the model is instructed to return one concise shell comment line beginning with '# ' rather than wrapping prose in printf, echo, or another command.
+- [x] #11 The AI-specific GTK controls, context menu, request threading, progress state, dialogs, and completion handling live in a cohesive controller instead of continuing to grow MainWindow; MainWindow retains only wiring and shortcut delegation.
 <!-- AC:END -->
 
 ## Final Summary
@@ -71,4 +78,8 @@ Added a visible spinner and drafting tooltip on the AI button for the duration o
 Added a one-shot secondary-click context menu to the AI button for 200-row, 1000-row, or explicitly selected-text requests. Selected text is available only when the active terminal has a selection and is bounded to its trailing 1000 lines; normal click and shortcut requests remain at 40 rows.
 
 Updated the prompt contract so explanation, interpretation, and diagnosis requests return one concise non-executable shell comment beginning with '# ' instead of printf/echo prose commands. Verified the behavior with mocked tests and a synthetic live Terra request.
+
+Extracted the newly added AI GTK orchestration from MainWindow into a cohesive AICommandController. MainWindow now only constructs and packs the controller, delegates the shortcut, and forwards terminal availability; dedicated controller tests preserve the behavior. This reduces main.py by 258 lines without refactoring unrelated existing responsibilities.
+
+Released as version 0.8.0 with a changelog entry dated 2026-07-23; the full test suite (335 tests) and Ruff checks pass.
 <!-- SECTION:FINAL_SUMMARY:END -->

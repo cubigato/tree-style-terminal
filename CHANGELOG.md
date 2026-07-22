@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.0 - 2026-07-23
+
+### Added
+
+- Add opt-in AI-assisted shell command drafting through a configurable shortcut and a theme-aware sparkle button.
+- Add temporary context choices for the last 200 or 1000 terminal rows, or the current selection.
+- Render explanatory AI responses as non-executable shell comments and show a spinner while requests are running.
+
+### Changed
+
+- Include bounded terminal input and output as context while keeping generated commands reviewable and preventing automatic submission.
+- Create new configuration files with user-only permissions.
+- Move AI UI and request orchestration into a dedicated controller to keep `MainWindow` focused.
+
+### Fixed
+
+- Capture current VTE terminal text reliably across supported VTE API variants.
+
 ## 0.7.0 - 2026-07-22
 
 ### Added
