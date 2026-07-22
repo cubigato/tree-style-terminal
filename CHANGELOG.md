@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.6.0 - 2026-07-22
+
+### Added
+
+- Added workspace profiles with multiple independent root session trees through
+  the top-level `roots` list while keeping existing single-root profiles valid.
+- Added explicit workspace profile export from the header bar for either the
+  selected session subtree or all current sessions.
+- Added optional `selected: true` profile nodes to choose the active session
+  after the complete profile has started.
+
+### Changed
+
+- Workspace profile exports preserve the current tree structure, titles,
+  working directories, and selection without inventing startup commands.
+- Profile files are written atomically so a failed export does not damage an
+  existing destination file.
+
 ## 0.5.0 - 2026-06-08
 
 ### Added

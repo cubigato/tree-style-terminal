@@ -1,10 +1,10 @@
 ---
 id: TASK-35
 title: Support multiple root sessions in workspace profiles
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-22 12:33'
-updated_date: '2026-07-22 12:37'
+updated_date: '2026-07-22 18:40'
 labels:
   - feature
   - 'effort:medium'
@@ -60,3 +60,9 @@ Startup through `--profile` / `-p` creates every declared root tree. This enable
 <!-- SECTION:NOTES:BEGIN -->
 Implemented backward-compatible multi-root workspace profiles. `WorkspaceProfile.roots` is the canonical root list and `WorkspaceProfile.root` remains as a compatibility accessor for the first root. The loader accepts exactly one of `root` or non-empty `roots`, applies existing recursive parsing and workdir inheritance to each root, and reports YAML-path errors for invalid lists and entries. Startup now creates each root tree once. README and CONFIG.md document the new form. Verification: 277 pytest tests passed; Ruff passed for src and tests.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Added backward-compatible multi-root workspace profiles for release 0.6.0. Profiles accept exactly one of `root` or non-empty `roots`; existing single-root profiles remain valid, inherited node semantics apply to every root, and startup creates all roots without a synthetic parent. Documentation and focused validation/startup tests were added. Human review accepted the behavior.
+<!-- SECTION:FINAL_SUMMARY:END -->

@@ -1,10 +1,10 @@
 ---
 id: TASK-6
 title: Export session trees as workspace profiles
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-07-22 16:06'
+updated_date: '2026-07-22 18:40'
 labels:
   - feature
   - 'effort:medium'
@@ -17,11 +17,15 @@ dependencies:
 references:
   - CONFIG.md
 modified_files:
+  - CHANGELOG.md
   - CONFIG.md
   - README.md
+  - pyproject.toml
+  - src/tree_style_terminal/__init__.py
   - src/tree_style_terminal/config/workspace_profile.py
   - src/tree_style_terminal/controllers/session_manager.py
   - src/tree_style_terminal/main.py
+  - tests/test_basic.py
   - tests/test_main_window.py
   - tests/unit/test_session_actions.py
   - tests/unit/test_startup_arguments.py
@@ -89,3 +93,9 @@ created: 2026-07-22 12:33
 UI scope clarified: a new export button joins the existing linked headerbar session controls. Its menu offers selected session plus descendants or all sessions, followed by a YAML save dialog. All-session export depends on TASK-35 multi-root profile support.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Released explicit workspace profile export in 0.6.0. The headerbar menu exports either the selected subtree or all roots through a YAML save dialog. Exported profiles preserve titles, workdirs, hierarchy, and inline `selected: true`, omit unreconstructable commands, and are written atomically. Profile startup applies selection after all nodes exist. No session state is saved or loaded automatically. Human review confirmed both export modes work.
+<!-- SECTION:FINAL_SUMMARY:END -->
