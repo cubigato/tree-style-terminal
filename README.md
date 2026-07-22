@@ -38,6 +38,7 @@ Currently implemented:
 - ✅ Comprehensive test suite with unit and integration tests
 - ✅ Smart terminal naming based on working directory
 - ✅ Keyboard shortcuts for session creation, navigation, focus, and terminal clipboard
+- ✅ Optional AI-assisted shell command drafting with review-before-run behavior
 - ✅ Terminal/sidebar transparency support via configuration
 
 Remaining work:
@@ -124,6 +125,7 @@ Also see [CONFIG.md](CONFIG.md)
 - **Display Scaling**: Configure DPI scaling for high-resolution displays
 - **Terminal Settings**: Customize scrollback buffer size
 - **UI Settings**: Adjust sidebar width and other interface elements
+- **AI Command Drafting**: Configure an OpenAI-compatible endpoint, model, API key, and shortcut
 
 **Example configuration:**
 ```yaml
@@ -136,9 +138,28 @@ ui:
   sidebar_width: 300
 terminal:
   scrollback_lines: 20000
+ai:
+  endpoint: "https://api.openai.com/v1/chat/completions"
+  api_key: "sk-..."
+  model: "gpt-5.6-terra"
+shortcuts:
+  ai_command_draft: "<Control><Shift>a"
 ```
 
 For complete configuration documentation, see [CONFIG.md](CONFIG.md).
+
+AI command drafting sends the current editable input and a bounded portion of
+recent terminal history to the configured provider. Use the sparkle button or
+configured shortcut to request a draft. The returned command is inserted but
+never executed automatically. The integration remains inactive and makes no
+request until all required AI settings are present.
+
+Normal requests use up to 40 recent terminal rows. Right-click the sparkle
+button to make a one-shot request with 200 rows, 1,000 rows, or selected
+terminal text without changing the everyday default.
+
+Explanation and diagnosis requests are inserted as a single shell comment
+beginning with `# ` rather than as a command that prints prose.
 
 ## Usage
 

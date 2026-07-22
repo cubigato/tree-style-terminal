@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gdk, Gtk
 
 from tree_style_terminal.models.session import TerminalSession
 
@@ -39,11 +39,267 @@ def test_main_window_methods_exist():
         '_on_export_selected_activate',
         '_on_export_all_activate',
         '_on_load_profile_clicked',
+        '_on_ai_command_clicked',
+        'request_ai_command_draft',
     ]
 
     for method_name in expected_methods:
         assert hasattr(window, method_name), f"Missing method: {method_name}"
         assert callable(getattr(window, method_name)), f"Method not callable: {method_name}"
+
+
+def test_ai_button_uses_bundled_symbolic_icon_and_tracks_active_session():
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    icon_name, _size = window.ai_command_button.get_image().get_icon_name()
+
+    assert icon_name == "ai-sparkles-symbolic"
+    icon_theme = Gtk.IconTheme.get_default()
+    assert icon_theme.has_icon("ai-sparkles-symbolic")
+    icon_info = icon_theme.lookup_icon("ai-sparkles-symbolic", 16, 0)
+    assert icon_info is not None
+    assert icon_info.is_symbolic()
+    assert window.ai_command_button.get_sensitive() is False
+
+    session = TerminalSession(pid=1, pty_fd=1, cwd="/tmp")
+    window.session_tree.add_node(session)
+    window.session_manager.current_session = session
+    window._update_button_states()
+
+    assert window.ai_command_button.get_sensitive() is True
+
+
+def test_ai_button_context_menu_offers_one_shot_context_sizes():
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    labels = [item.get_label() for item in window.ai_context_menu.get_children()]
+
+    assert labels == [
+        "Draft with 200 lines",
+        "Draft with 1000 lines",
+        "Draft with selected text (up to 1000 lines)",
+    ]
+
+    with patch.object(window, "request_ai_command_draft") as request:
+        window.ai_extended_context_item.emit("activate")
+        window.ai_large_context_item.emit("activate")
+        window.ai_selected_context_item.emit("activate")
+
+    assert [entry.kwargs for entry in request.call_args_list] == [
+        {"history_lines": 200},
+        {"history_lines": 1000},
+        {"use_selected_text": True},
+    ]
+    assert all(not entry.args for entry in request.call_args_list)
+
+
+def test_ai_button_secondary_click_enables_selected_context_when_available():
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    session = TerminalSession(pid=1, pty_fd=1, cwd="/tmp")
+    terminal = Mock()
+    terminal.has_selection.return_value = True
+    window.session_tree.add_node(session)
+    window.session_manager.current_session = session
+    window.session_manager._session_terminals[session] = terminal
+    event = Mock(button=Gdk.BUTTON_SECONDARY)
+
+    with patch.object(window.ai_context_menu, "popup_at_pointer") as popup:
+        handled = window._on_ai_button_press(window.ai_command_button, event)
+
+    assert handled is True
+    assert window.ai_selected_context_item.get_sensitive() is True
+    popup.assert_called_once_with(event)
+
+
+def test_unconfigured_ai_action_shows_help_without_starting_request():
+    from tree_style_terminal.main import (
+        MainWindow,
+        TreeStyleTerminalApp,
+        config_manager,
+    )
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+
+    def empty_ai_values(key, default=None):
+        if key.startswith("ai."):
+            return ""
+        return default
+
+    with (
+        patch.object(config_manager, "get", side_effect=empty_ai_values),
+        patch.object(window, "_show_ai_configuration_help") as show_help,
+        patch("tree_style_terminal.main.threading.Thread") as thread,
+    ):
+        window.request_ai_command_draft()
+
+    show_help.assert_called_once_with()
+    thread.assert_not_called()
+
+
+def test_configured_ai_action_starts_background_worker():
+    from tree_style_terminal.main import (
+        MainWindow,
+        TreeStyleTerminalApp,
+        config_manager,
+    )
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    session = TerminalSession(pid=1, pty_fd=1, cwd="/tmp")
+    terminal = Mock()
+    terminal.capture_command_draft_context.return_value = ("history", "show files")
+    window.session_tree.add_node(session)
+    window.session_manager.current_session = session
+    window.session_manager._session_terminals[session] = terminal
+    values = {
+        "ai.endpoint": "https://example.test/v1/chat/completions",
+        "ai.api_key": "secret",
+        "ai.model": "model",
+    }
+
+    with (
+        patch.object(
+            config_manager,
+            "get",
+            side_effect=lambda key, default=None: values.get(key, default),
+        ),
+        patch("tree_style_terminal.main.threading.Thread") as thread_class,
+        patch("tree_style_terminal.main.request_command_draft") as request,
+    ):
+        window.request_ai_command_draft()
+
+    thread_class.return_value.start.assert_called_once_with()
+    request.assert_not_called()
+    assert window._ai_request_pending is True
+    spinner = window.ai_command_button.get_image()
+    assert isinstance(spinner, Gtk.Spinner)
+    assert spinner.get_property("active") is True
+    assert window.ai_command_button.get_tooltip_text() == (
+        "Drafting shell command with AI…"
+    )
+
+
+def test_selected_text_replaces_recent_history_for_one_request():
+    from tree_style_terminal.main import (
+        MainWindow,
+        TreeStyleTerminalApp,
+        config_manager,
+    )
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    session = TerminalSession(pid=1, pty_fd=1, cwd="/tmp")
+    terminal = Mock()
+    terminal.capture_command_draft_context.return_value = ("", "explain the error")
+    terminal.get_selected_text.return_value = "selected command\nselected error"
+    window.session_tree.add_node(session)
+    window.session_manager.current_session = session
+    window.session_manager._session_terminals[session] = terminal
+    values = {
+        "ai.endpoint": "https://example.test/v1/chat/completions",
+        "ai.api_key": "secret",
+        "ai.model": "model",
+    }
+
+    with (
+        patch.object(
+            config_manager,
+            "get",
+            side_effect=lambda key, default=None: values.get(key, default),
+        ),
+        patch("tree_style_terminal.main.threading.Thread") as thread_class,
+    ):
+        window.request_ai_command_draft(use_selected_text=True)
+
+    terminal.capture_command_draft_context.assert_called_once_with(history_lines=0)
+    terminal.get_selected_text.assert_called_once_with(1000)
+    worker_args = thread_class.call_args.kwargs["args"]
+    assert worker_args[2:] == (
+        "selected command\nselected error",
+        "explain the error",
+    )
+
+
+def test_ai_progress_indicator_restores_sparkle_icon_after_request():
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+
+    window._set_ai_request_pending(True)
+    window._set_ai_request_pending(False)
+
+    image = window.ai_command_button.get_image()
+    icon_name, _size = image.get_icon_name()
+    assert icon_name == "ai-sparkles-symbolic"
+    assert window.ai_command_button.get_tooltip_text().startswith(
+        "Draft shell command with AI ("
+    )
+
+
+def test_ai_request_result_replaces_unchanged_input_without_submit():
+    from tree_style_terminal.ai_command import AICommandConfig
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    terminal = Mock()
+    terminal.capture_command_draft_context.return_value = (
+        "recent output",
+        "show changes",
+    )
+    config = AICommandConfig("https://example.test", "secret", "model")
+
+    with (
+        patch("tree_style_terminal.main.request_command_draft", return_value="git status"),
+        patch(
+            "tree_style_terminal.main.GLib.idle_add",
+            side_effect=lambda function, *args: function(*args),
+        ),
+    ):
+        window._run_ai_command_request(config, terminal, "recent output", "show changes")
+
+    terminal.replace_current_input.assert_called_once_with("git status")
+    assert window._ai_request_pending is False
+
+
+def test_ai_success_leaves_changed_terminal_input_untouched():
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    terminal = Mock()
+    terminal.capture_command_draft_context.return_value = ("history", "new text")
+
+    with patch.object(window, "_show_ai_error") as show_error:
+        window._finish_ai_command_success(terminal, "old text", "git status")
+
+    terminal.replace_current_input.assert_not_called()
+    assert "input changed" in show_error.call_args.args[0]
+
+
+def test_ai_request_error_leaves_terminal_input_untouched():
+    from tree_style_terminal.ai_command import AICommandConfig, CommandDraftError
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    terminal = Mock()
+    config = AICommandConfig("https://example.test", "secret", "model")
+
+    with (
+        patch(
+            "tree_style_terminal.main.request_command_draft",
+            side_effect=CommandDraftError("Invalid response."),
+        ),
+        patch(
+            "tree_style_terminal.main.GLib.idle_add",
+            side_effect=lambda function, *args: function(*args),
+        ),
+        patch.object(window, "_show_ai_error") as show_error,
+    ):
+        window._run_ai_command_request(config, terminal, "history", "show files")
+
+    terminal.replace_current_input.assert_not_called()
+    show_error.assert_called_once_with("Invalid response.")
 
 
 def test_app_creation():

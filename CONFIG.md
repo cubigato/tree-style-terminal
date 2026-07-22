@@ -10,6 +10,8 @@ The configuration file is located at:
 ```
 
 The configuration file will be automatically created with default (commented) values when you first run the application.
+New configuration files are created with mode `0600`, so only the current user
+can read or modify them.
 
 ## Configuration Options
 
@@ -82,12 +84,56 @@ ui:
 shortcuts:
   # Open search for the active terminal scrollback
   terminal_search: "<Control><Shift>f"
+  # Draft a shell command from the current editable input
+  ai_command_draft: "<Control><Shift>a"
 ```
 
 **Options:**
 - `terminal_search`: Keyboard shortcut that opens search for the active terminal
   - Default: `<Control><Shift>f`
   - Uses GTK accelerator syntax
+- `ai_command_draft`: Draft a shell command without submitting it
+  - Default: `<Control><Shift>a`
+  - Uses GTK accelerator syntax
+
+### AI Command Drafting
+
+AI command drafting is opt-in and uses an OpenAI-compatible Chat Completions
+endpoint. Configure all three required values to enable requests:
+
+```yaml
+ai:
+  endpoint: "https://api.openai.com/v1/chat/completions"
+  api_key: "sk-..."
+  model: "gpt-5.6-terra"
+
+shortcuts:
+  ai_command_draft: "<Control><Shift>a"
+```
+
+Type a natural-language request at the active shell prompt, then use the
+sparkle button in the header bar or the configured shortcut. The generated
+single-line command replaces the editable input but is never submitted; review
+or edit it and press Enter yourself.
+
+If the request asks for an explanation or diagnosis rather than an executable
+action, the result is inserted as one non-executable shell comment beginning
+with `# ` instead of an artificial `printf` or `echo` command.
+
+A normal click or shortcut sends up to 40 recent terminal rows. Right-click the
+sparkle button for a one-shot request using 200 rows, 1,000 rows, or explicitly
+selected terminal text (limited to its most recent 1,000 lines). The larger
+choice applies only to that request and does not change the default.
+
+If `endpoint`, `api_key`, or `model` is missing or empty, no request is made and
+the application shows a short configuration hint. The API key is stored as
+plain text in `config.yaml`, so keep that file private. Tree Style Terminal does
+not write the key, transmitted terminal history, or editable input to its logs.
+
+For each request, the configured provider receives the current editable input
+and up to 40 recent terminal lines. This may include commands, output, paths,
+hostnames, or other sensitive shell content. Only use the feature with a
+provider whose data handling you accept.
 
 ## Workspace Profiles
 

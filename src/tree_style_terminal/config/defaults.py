@@ -30,6 +30,13 @@ DEFAULT_CONFIG = {
         "default_directory": "",
     },
 
+    "ai": {
+        # OpenAI-compatible Chat Completions settings. All three are required.
+        "endpoint": "",
+        "api_key": "",
+        "model": "",
+    },
+
     "display": {
         # UI scaling factor (1.0 = 100%, 1.5 = 150%, etc.)
         # Set to "auto" to use system DPI detection
@@ -39,6 +46,8 @@ DEFAULT_CONFIG = {
     "shortcuts": {
         # Open search for the active terminal scrollback
         "terminal_search": "<Control><Shift>f",
+        # Draft a shell command from the current editable terminal line
+        "ai_command_draft": "<Control><Shift>a",
     }
 }
 
@@ -69,6 +78,12 @@ DEFAULT_CONFIG_TEMPLATE = """# Tree Style Terminal Configuration
 #  # Initial directory for the welcome-screen profile chooser (supports "~")
 #  default_directory: "~/Documents"
 
+#ai:
+#  # All three values are required to enable AI command drafting
+#  endpoint: "https://api.openai.com/v1/chat/completions"
+#  api_key: "sk-..."
+#  model: "gpt-5.6-luna"
+
 #display:
 #  # UI scaling factor (1.0 = 100%, 1.5 = 150%, etc.)
 #  # Set to "auto" to use system DPI detection and apply automatic scaling
@@ -78,6 +93,8 @@ DEFAULT_CONFIG_TEMPLATE = """# Tree Style Terminal Configuration
 #  # Open search for the active terminal scrollback
 #  # GTK accelerator syntax, e.g. "<Control><Shift>f"
 #  terminal_search: "<Control><Shift>f"
+#  # Draft a shell command without submitting it
+#  ai_command_draft: "<Control><Shift>a"
 """
 
 # Validation constraints
@@ -114,6 +131,18 @@ VALIDATION_RULES = {
         "type": str,
         "description": "Workspace profile directory must be a user path"
     },
+    "ai.endpoint": {
+        "type": str,
+        "description": "AI endpoint must be a string"
+    },
+    "ai.api_key": {
+        "type": str,
+        "description": "AI API key must be a string"
+    },
+    "ai.model": {
+        "type": str,
+        "description": "AI model identifier must be a string"
+    },
     "display.dpi_scale": {
         "type": [str, float],
         "allowed_values": ["auto"],
@@ -124,5 +153,9 @@ VALIDATION_RULES = {
     "shortcuts.terminal_search": {
         "type": str,
         "description": "Terminal search shortcut must be a GTK accelerator string"
-    }
+    },
+    "shortcuts.ai_command_draft": {
+        "type": str,
+        "description": "AI command drafting shortcut must be a GTK accelerator string"
+    },
 }

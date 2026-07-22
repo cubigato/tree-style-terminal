@@ -110,6 +110,12 @@ class ShortcutController:
         )
 
         self._create_action(
+            name="ai_command_draft",
+            callback=self._on_ai_command_draft,
+            enabled=True,
+        )
+
+        self._create_action(
             name="next_session",
             callback=self._on_next_session,
             enabled=True
@@ -267,6 +273,21 @@ class ShortcutController:
         except Exception as e:
             logger.error(f"Error opening terminal search: {e}")
 
+    def _on_ai_command_draft(
+        self,
+        action: Gio.SimpleAction,
+        parameter: GLib.Variant,
+    ) -> None:
+        """Ask the main window to draft a command for the active terminal."""
+        try:
+            if self.main_window and hasattr(
+                self.main_window,
+                "request_ai_command_draft",
+            ):
+                self.main_window.request_ai_command_draft()
+        except Exception as e:
+            logger.error("Failed to start AI command drafting: %s", type(e).__name__)
+
     def _on_next_session(self, action: Gio.SimpleAction, parameter: GLib.Variant) -> None:
         """Handle next_session action activation."""
         try:
@@ -337,6 +358,10 @@ class ShortcutController:
             "shortcuts.terminal_search",
             "<Control><Shift>f",
         )
+        ai_command_shortcut = config_manager.get(
+            "shortcuts.ai_command_draft",
+            "<Control><Shift>a",
+        )
 
         shortcuts = [
             # Core session management - as requested
@@ -353,6 +378,7 @@ class ShortcutController:
             ('<Control><Shift>c', 'terminal_copy'),
             ('<Control><Shift>v', 'terminal_paste'),
             (terminal_search_shortcut, 'terminal_search'),
+            (ai_command_shortcut, 'ai_command_draft'),
 
             # Session navigation
             ('<Control><Shift>Right', 'next_session'),
@@ -417,6 +443,7 @@ class ShortcutController:
         self.enable_action("terminal_copy", has_current_session)
         self.enable_action("terminal_paste", has_current_session)
         self.enable_action("terminal_search", has_current_session)
+        self.enable_action("ai_command_draft", has_current_session)
 
         # Navigation actions require multiple sessions
         has_multiple_sessions = len(self.session_manager.get_all_sessions()) > 1

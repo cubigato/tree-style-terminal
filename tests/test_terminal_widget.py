@@ -5,6 +5,8 @@ import os
 import re
 from unittest.mock import Mock, patch
 
+import pytest
+
 
 def test_vte_terminal_creation():
     """Test that VteTerminal widget can be instantiated."""
@@ -127,6 +129,9 @@ def test_terminal_methods_exist():
         'search_previous',
         'copy_clipboard',
         'paste_clipboard',
+        'capture_command_draft_context',
+        'get_selected_text',
+        'replace_current_input',
         'select_all',
         'has_selection',
         '_paste_dropped_text',
@@ -141,6 +146,77 @@ def test_terminal_methods_exist():
     for method_name in expected_methods:
         assert hasattr(terminal, method_name), f"Missing method: {method_name}"
         assert callable(getattr(terminal, method_name)), f"Method not callable: {method_name}"
+
+
+def test_command_draft_context_reads_bounded_history_and_editable_input():
+    """AI context excludes the conventional prompt and limits history rows."""
+    from tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal.get_cursor_position = Mock(return_value=(42, 2))
+    terminal.terminal.get_column_count = Mock(return_value=120)
+    terminal.terminal.get_text_range_format = Mock(
+        return_value=(
+            "old one\nold two\nuser@host ~/src $ list changed files   ",
+            61,
+        )
+    )
+
+    history, user_input = terminal.capture_command_draft_context(history_lines=2)
+
+    assert history == "old one\nold two"
+    assert user_input == "list changed files"
+    assert terminal.terminal.get_text_range_format.call_args.args[1:] == (
+        0,
+        0,
+        2,
+        119,
+    )
+    assert terminal.terminal.get_text_range_format.call_args.args[0].value_nick == (
+        "text"
+    )
+
+
+def test_replace_current_input_clears_line_without_submitting():
+    """Draft insertion sends readline clear controls and no newline."""
+    from tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal.feed_child = Mock()
+    terminal.terminal.grab_focus = Mock()
+
+    terminal.replace_current_input("git status --short")
+
+    inserted = terminal.terminal.feed_child.call_args.args[0]
+    assert inserted == b"\x01\x0bgit status --short"
+    assert b"\n" not in inserted
+    assert b"\r" not in inserted
+
+
+def test_selected_ai_context_is_bounded_to_trailing_lines():
+    from tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal.get_has_selection = Mock(return_value=True)
+    terminal.terminal.get_text_selected = Mock(
+        return_value=("old\nrelevant one\nrelevant two\n", 38)
+    )
+
+    selected_text = terminal.get_selected_text(max_lines=2)
+
+    assert selected_text == "relevant one\nrelevant two"
+
+
+def test_replace_current_input_rejects_multiline_command():
+    from tree_style_terminal.widgets.terminal import VteTerminal
+
+    terminal = VteTerminal()
+    terminal.terminal.feed_child = Mock()
+
+    with pytest.raises(ValueError, match="single line"):
+        terminal.replace_current_input("echo one\necho two")
+
+    terminal.terminal.feed_child.assert_not_called()
 
 
 def test_get_current_directory_uses_vte_uri(tmp_path):

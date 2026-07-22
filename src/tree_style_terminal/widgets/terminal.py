@@ -20,6 +20,7 @@ gi.require_version("Gdk", "3.0")
 
 from gi.repository import Gdk, GLib, Gtk, Vte
 
+from ..ai_command import DEFAULT_HISTORY_LINES, extract_editable_input
 from ..config import ConfigError, config_manager
 
 logger = logging.getLogger(__name__)
@@ -509,6 +510,19 @@ class VteTerminal(Gtk.Box):
             logger.debug(f"Failed to read terminal selection state: {e}")
             return False
 
+    def get_selected_text(self, max_lines: int) -> str:
+        """Return up to the requested number of trailing selected text lines."""
+        if max_lines <= 0 or not self.has_selection():
+            return ""
+        if not hasattr(self.terminal, "get_text_selected"):
+            return ""
+
+        result = self.terminal.get_text_selected(Vte.Format.TEXT)
+        text = result[0] if isinstance(result, tuple) else result
+        if not text:
+            return ""
+        return "\n".join(text.splitlines()[-max_lines:])
+
     def copy_clipboard(self) -> None:
         """Copy selected terminal text to the clipboard."""
         try:
@@ -522,6 +536,64 @@ class VteTerminal(Gtk.Box):
             self.terminal.paste_clipboard()
         except Exception as e:
             logger.warning(f"Failed to paste into terminal: {e}")
+
+    def capture_command_draft_context(
+        self,
+        history_lines: int = DEFAULT_HISTORY_LINES,
+    ) -> tuple[str, str]:
+        """Return bounded recent history and the current editable input line."""
+        _cursor_column, cursor_row = self.terminal.get_cursor_position()
+        last_column = max(self.terminal.get_column_count() - 1, 0)
+        first_history_row = max(cursor_row - max(history_lines, 0), 0)
+        terminal_text = self._read_terminal_text(
+            first_history_row,
+            0,
+            cursor_row,
+            last_column,
+        ).rstrip("\n")
+        logical_lines = terminal_text.splitlines()
+        current_line = logical_lines[-1] if logical_lines else ""
+        history = (
+            "\n".join(logical_lines[:-1][-history_lines:])
+            if history_lines > 0
+            else ""
+        )
+        return history, extract_editable_input(current_line)
+
+    def _read_terminal_text(
+        self,
+        start_row: int,
+        start_column: int,
+        end_row: int,
+        end_column: int,
+    ) -> str:
+        """Read terminal text with the current VTE API and an older fallback."""
+        if hasattr(self.terminal, "get_text_range_format"):
+            result = self.terminal.get_text_range_format(
+                Vte.Format.TEXT,
+                start_row,
+                start_column,
+                end_row,
+                end_column,
+            )
+        else:
+            result = self.terminal.get_text_range(
+                start_row,
+                start_column,
+                end_row,
+                end_column,
+                None,
+                None,
+            )
+        text = result[0] if isinstance(result, tuple) else result
+        return text or ""
+
+    def replace_current_input(self, command: str) -> None:
+        """Replace shell input without sending Enter or another submit character."""
+        if "\n" in command or "\r" in command:
+            raise ValueError("A terminal command draft must be a single line")
+        self.terminal.feed_child(b"\x01\x0b" + command.encode("utf-8"))
+        self.grab_focus()
 
     def select_all(self) -> None:
         """Select all visible terminal scrollback text."""

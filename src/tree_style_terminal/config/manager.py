@@ -6,6 +6,7 @@ This module handles loading, validating, and saving configuration files.
 """
 
 import logging
+import os
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -81,7 +82,12 @@ class ConfigManager:
     def _create_default_config(self) -> None:
         """Create a default configuration file with commented examples."""
         try:
-            with open(self._config_path, 'w', encoding='utf-8') as f:
+            descriptor = os.open(
+                self._config_path,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o600,
+            )
+            with os.fdopen(descriptor, 'w', encoding='utf-8') as f:
                 f.write(DEFAULT_CONFIG_TEMPLATE)
             logger.info(f"Created default config file at {self._config_path}")
         except OSError as e:

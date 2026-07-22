@@ -42,7 +42,7 @@ class TestShortcutController:
     def test_initialization(self, shortcut_controller):
         """Test that ShortcutController initializes correctly."""
         assert shortcut_controller.session_manager is not None
-        assert len(shortcut_controller._actions) == 11
+        assert len(shortcut_controller._actions) == 12
 
     def test_actions_created(self, shortcut_controller):
         """Test that all required actions are created."""
@@ -195,7 +195,7 @@ class TestShortcutController:
         shortcut_controller.add_actions_to_widget(mock_widget)
 
         # Should have called add_action for each action
-        assert mock_widget.add_action.call_count == 11
+        assert mock_widget.add_action.call_count == 12
 
     def test_add_actions_to_widget_without_support(self, shortcut_controller):
         """Test adding actions to a widget that doesn't support actions."""
@@ -221,6 +221,7 @@ class TestShortcutController:
         assert shortcut_controller.get_action("terminal_copy").get_enabled()
         assert shortcut_controller.get_action("terminal_paste").get_enabled()
         assert shortcut_controller.get_action("terminal_search").get_enabled()
+        assert shortcut_controller.get_action("ai_command_draft").get_enabled()
 
     def test_update_action_states_without_current_session(self, shortcut_controller, session_manager):
         """Test updating action states when there is no current session."""
@@ -236,6 +237,7 @@ class TestShortcutController:
         assert not shortcut_controller.get_action("terminal_copy").get_enabled()
         assert not shortcut_controller.get_action("terminal_paste").get_enabled()
         assert not shortcut_controller.get_action("terminal_search").get_enabled()
+        assert not shortcut_controller.get_action("ai_command_draft").get_enabled()
 
     def test_close_session_action_last_session(self, shortcut_controller, session_manager):
         """Test close_session action when it's the last session (should quit app)."""
@@ -262,6 +264,7 @@ class TestShortcutController:
         assert shortcut_controller.get_action("terminal_copy") is not None
         assert shortcut_controller.get_action("terminal_paste") is not None
         assert shortcut_controller.get_action("terminal_search") is not None
+        assert shortcut_controller.get_action("ai_command_draft") is not None
         assert shortcut_controller.get_action("next_session") is not None
         assert shortcut_controller.get_action("prev_session") is not None
 
@@ -272,6 +275,10 @@ class TestShortcutController:
         assert isinstance(shortcut_controller.get_action("terminal_copy"), Gio.SimpleAction)
         assert isinstance(shortcut_controller.get_action("terminal_paste"), Gio.SimpleAction)
         assert isinstance(shortcut_controller.get_action("terminal_search"), Gio.SimpleAction)
+        assert isinstance(
+            shortcut_controller.get_action("ai_command_draft"),
+            Gio.SimpleAction,
+        )
         assert isinstance(shortcut_controller.get_action("next_session"), Gio.SimpleAction)
         assert isinstance(shortcut_controller.get_action("prev_session"), Gio.SimpleAction)
 

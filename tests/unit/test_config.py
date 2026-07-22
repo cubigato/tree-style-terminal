@@ -5,6 +5,8 @@ Unit tests for the ConfigManager class.
 Tests configuration loading, validation, default creation, and error handling.
 """
 
+import os
+import stat
 import tempfile
 from copy import deepcopy
 from pathlib import Path
@@ -91,6 +93,29 @@ class TestConfigManager:
             assert config_manager._config["display"]["dpi_scale"] == "auto"
             assert config_manager._config["shortcuts"]["terminal_search"] == "<Control><Shift>f"
             assert config_manager._config["workspace_profiles"]["default_directory"] == ""
+            assert config_manager._config["ai"] == {
+                "endpoint": "",
+                "api_key": "",
+                "model": "",
+            }
+            assert config_manager._config["shortcuts"]["ai_command_draft"] == (
+                "<Control><Shift>a"
+            )
+
+    def test_new_default_config_is_private_to_current_user(self):
+        """Fresh config files are created with mode 0600 regardless of umask."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_manager = ConfigManager()
+            config_manager._config_path = Path(temp_dir) / "config.yaml"
+
+            previous_umask = os.umask(0)
+            try:
+                config_manager.load_config()
+            finally:
+                os.umask(previous_umask)
+
+            mode = stat.S_IMODE(config_manager._config_path.stat().st_mode)
+            assert mode == 0o600
 
     def test_load_config_only_loads_once(self):
         """Test that load_config only loads once unless explicitly reloaded."""
@@ -193,6 +218,14 @@ class TestConfigManager:
         config_manager._config = {"shortcuts": {"terminal_search": 123}}
 
         with pytest.raises(ConfigError, match="terminal_search.*must be of type str"):
+            config_manager._validate_config()
+
+    @pytest.mark.parametrize("field", ["endpoint", "api_key", "model"])
+    def test_validation_invalid_ai_config_type(self, field):
+        config_manager = ConfigManager()
+        config_manager._config = {"ai": {field: 123}}
+
+        with pytest.raises(ConfigError, match=rf"ai\.{field}.*must be of type str"):
             config_manager._validate_config()
 
     def test_validation_invalid_workspace_profile_directory_type(self):
