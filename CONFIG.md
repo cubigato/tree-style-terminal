@@ -91,8 +91,8 @@ shortcuts:
 
 ## Workspace Profiles
 
-Workspace profiles are self-contained YAML files for creating a startup session
-tree. They are loaded explicitly and are separate from the normal
+Workspace profiles are self-contained YAML files for creating one or more
+startup session trees. They are loaded explicitly and are separate from the normal
 `~/.config/tree-style-terminal/config.yaml` file.
 
 ```bash
@@ -120,11 +120,30 @@ root:
       workdir: "build/logs"
 ```
 
+For multiple independent root sessions, replace `root` with a non-empty `roots`
+list:
+
+```yaml
+version: 1
+workdir: "~/dev"
+
+roots:
+  - title: "project"
+    workdir: "my-project"
+    children:
+      - title: "tests"
+
+  - title: "scratch"
+    workdir: "/tmp"
+```
+
 **Options:**
 - `version`: Required profile format version. The current version is `1`.
 - `name`: Optional display name for the profile.
 - Top-level `workdir`: Optional base directory inherited by all session nodes.
-- `root`: Required root session node.
+- `root`: One root session node for a single-tree profile.
+- `roots`: A non-empty list of root session nodes for a multi-tree profile.
+  Exactly one of `root` or `roots` must be present.
 - Node `title`: Optional session title. If omitted, normal automatic title generation is used.
 - Node `workdir`: Optional working directory for this node and its children.
 - Node `command`: Optional command to run in this session.

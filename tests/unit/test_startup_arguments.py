@@ -1,6 +1,6 @@
 """Startup argument parsing and activation tests."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -139,7 +139,7 @@ def test_activation_with_workspace_profile_creates_workspace_tree(tmp_path):
         path=tmp_path / "workspace.yml",
         version=1,
         name="Project",
-        root=root,
+        roots=[root],
     )
     app = TreeStyleTerminalApp({"initial_cwd": None, "workspace_profile": profile})
     window = Mock()
@@ -149,4 +149,29 @@ def test_activation_with_workspace_profile_creates_workspace_tree(tmp_path):
         app._on_activate(app)
 
     window.session_manager.create_workspace_tree.assert_called_once_with(root)
+    window.session_manager.new_session.assert_not_called()
+
+
+def test_activation_with_workspace_profile_creates_all_root_trees(tmp_path):
+    roots = [
+        WorkspaceNode(title="project", workdir=str(tmp_path)),
+        WorkspaceNode(title="scratch", workdir=str(tmp_path)),
+    ]
+    profile = WorkspaceProfile(
+        path=tmp_path / "workspace.yml",
+        version=1,
+        name="Project",
+        roots=roots,
+    )
+    app = TreeStyleTerminalApp({"initial_cwd": None, "workspace_profile": profile})
+    window = Mock()
+
+    with patch("tree_style_terminal.main.MainWindow", return_value=window):
+        app._on_activate(app)
+        app._on_activate(app)
+
+    assert window.session_manager.create_workspace_tree.call_args_list == [
+        call(roots[0]),
+        call(roots[1]),
+    ]
     window.session_manager.new_session.assert_not_called()

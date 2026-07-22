@@ -872,7 +872,8 @@ class TreeStyleTerminalApp(Gtk.Application):
 
         self._initial_session_created = True
         if isinstance(workspace_profile, WorkspaceProfile):
-            self.window.session_manager.create_workspace_tree(workspace_profile.root)
+            for root in workspace_profile.roots:
+                self.window.session_manager.create_workspace_tree(root)
         elif initial_cwd:
             self.window.session_manager.new_session(cwd=initial_cwd)
 

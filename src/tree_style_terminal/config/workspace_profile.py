@@ -35,7 +35,12 @@ class WorkspaceProfile:
     path: Path
     version: int
     name: str | None
-    root: WorkspaceNode
+    roots: list[WorkspaceNode]
+
+    @property
+    def root(self) -> WorkspaceNode:
+        """Return the first root for compatibility with single-root callers."""
+        return self.roots[0]
 
 
 def load_workspace_profile(path: str | Path, base_dir: Path | None = None) -> WorkspaceProfile:
@@ -70,16 +75,44 @@ def load_workspace_profile(path: str | Path, base_dir: Path | None = None) -> Wo
         "workdir",
     )
 
-    root = raw_profile.get("root")
-    if not isinstance(root, dict):
-        raise WorkspaceProfileError("root must be a mapping")
+    roots = _parse_roots(raw_profile, inherited_workdir)
 
     return WorkspaceProfile(
         path=profile_path,
         version=version,
         name=name,
-        root=_parse_node(root, "root", inherited_workdir),
+        roots=roots,
     )
+
+
+def _parse_roots(
+    raw_profile: dict[str, Any],
+    inherited_workdir: Path,
+) -> list[WorkspaceNode]:
+    has_root = "root" in raw_profile
+    has_roots = "roots" in raw_profile
+    if has_root == has_roots:
+        raise WorkspaceProfileError("profile must define exactly one of root or roots")
+
+    if has_root:
+        raw_root = raw_profile["root"]
+        if not isinstance(raw_root, dict):
+            raise WorkspaceProfileError("root must be a mapping")
+        return [_parse_node(raw_root, "root", inherited_workdir)]
+
+    raw_roots = raw_profile["roots"]
+    if not isinstance(raw_roots, list):
+        raise WorkspaceProfileError("roots must be a list")
+    if not raw_roots:
+        raise WorkspaceProfileError("roots must contain at least one root")
+
+    roots = []
+    for index, raw_root in enumerate(raw_roots):
+        root_path = f"roots[{index}]"
+        if not isinstance(raw_root, dict):
+            raise WorkspaceProfileError(f"{root_path} must be a mapping")
+        roots.append(_parse_node(raw_root, root_path, inherited_workdir))
+    return roots
 
 
 def _parse_node(raw_node: dict[str, Any], path: str, inherited_workdir: Path) -> WorkspaceNode:

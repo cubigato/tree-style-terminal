@@ -174,8 +174,8 @@ tst --profile examples/workspace-profiles/simple.yml
 tst -p examples/workspace-profiles/linux-overview.yml
 ```
 
-A profile defines one root session and optional child sessions. Each session can
-set a title, working directory, and optional command:
+A profile defines one or more root sessions and optional child sessions. Each
+session can set a title, working directory, and optional command:
 
 ```yaml
 version: 1
@@ -188,6 +188,19 @@ root:
     - title: "hello"
       command: "echo hello"
 ```
+
+Use `roots` instead of `root` to start multiple independent trees:
+
+```yaml
+version: 1
+workdir: "/tmp"
+
+roots:
+  - title: "first"
+  - title: "second"
+```
+
+Exactly one of `root` or `roots` must be present.
 
 Sessions without `command` start a normal interactive shell. Sessions with
 `command` run it through the user's normal shell, then leave a shell open for
