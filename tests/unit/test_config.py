@@ -90,6 +90,7 @@ class TestConfigManager:
             assert config_manager._config["terminal"]["transparency"] == 1.0
             assert config_manager._config["display"]["dpi_scale"] == "auto"
             assert config_manager._config["shortcuts"]["terminal_search"] == "<Control><Shift>f"
+            assert config_manager._config["workspace_profiles"]["default_directory"] == ""
 
     def test_load_config_only_loads_once(self):
         """Test that load_config only loads once unless explicitly reloaded."""
@@ -192,6 +193,14 @@ class TestConfigManager:
         config_manager._config = {"shortcuts": {"terminal_search": 123}}
 
         with pytest.raises(ConfigError, match="terminal_search.*must be of type str"):
+            config_manager._validate_config()
+
+    def test_validation_invalid_workspace_profile_directory_type(self):
+        """Test workspace profile directory accepts only user path strings."""
+        config_manager = ConfigManager()
+        config_manager._config = {"workspace_profiles": {"default_directory": 123}}
+
+        with pytest.raises(ConfigError, match="default_directory.*must be of type str"):
             config_manager._validate_config()
 
     def test_validation_invalid_theme(self):

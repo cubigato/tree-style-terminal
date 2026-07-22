@@ -95,6 +95,18 @@ Workspace profiles are self-contained YAML files for creating one or more
 startup session trees. They are loaded explicitly and are separate from the normal
 `~/.config/tree-style-terminal/config.yaml` file.
 
+When no session is open, **Load Profile** on the welcome screen opens a chooser
+for `.yml` and `.yaml` profiles. It starts in the user's home directory by
+default. An optional user path (including `~`) can set another initial directory:
+
+```yaml
+workspace_profiles:
+  default_directory: "~/Documents/workspace-profiles"
+```
+
+An unset, empty, missing, or unusable directory falls back to the user's home
+directory. The chooser still allows navigation to other directories.
+
 ```bash
 tst --profile my-java-project.yml
 tst -p my-java-project.yml

@@ -63,6 +63,24 @@ def terminal_stack_name(session: TerminalSession) -> str:
     return f"session_{session.pid}"
 
 
+def workspace_profile_start_directory(
+    configured_directory: object,
+    home_directory: Path | None = None,
+) -> Path:
+    """Return a usable configured profile directory or the user's home."""
+    home = home_directory or Path.home()
+    if not isinstance(configured_directory, str) or not configured_directory.strip():
+        return home
+
+    try:
+        candidate = Path(configured_directory).expanduser()
+        if candidate.is_dir() and os.access(candidate, os.R_OK | os.X_OK):
+            return candidate
+    except (OSError, RuntimeError):
+        pass
+    return home
+
+
 def calculate_sidebar_width_bounds(window_width: int) -> SidebarWidthBounds:
     """Calculate sidebar min/default/max widths from the available window width."""
     available_width = max(window_width, 1)
@@ -345,6 +363,12 @@ class MainWindow(Gtk.ApplicationWindow):
         welcome_new_terminal_ui = builder.get_object("welcome_new_terminal_button")
         if welcome_new_terminal_ui:
             welcome_new_terminal_ui.connect("clicked", self._on_new_terminal_clicked)
+        self.welcome_new_terminal_button = welcome_new_terminal_ui
+
+        welcome_load_profile_ui = builder.get_object("welcome_load_profile_button")
+        if welcome_load_profile_ui:
+            welcome_load_profile_ui.connect("clicked", self._on_load_profile_clicked)
+        self.welcome_load_profile_button = welcome_load_profile_ui
 
     def _mark_sidebar_transparency_widgets(self, *widgets: Gtk.Widget) -> None:
         """Add CSS hooks used by runtime sidebar transparency rules."""
@@ -428,9 +452,13 @@ class MainWindow(Gtk.ApplicationWindow):
         subtitle_label = Gtk.Label("Create a new terminal session to get started")
         welcome_box.pack_start(subtitle_label, False, False, 0)
 
-        welcome_button = Gtk.Button.new_with_label("New Terminal")
-        welcome_button.connect("clicked", self._on_new_terminal_clicked)
-        welcome_box.pack_start(welcome_button, False, False, 0)
+        self.welcome_new_terminal_button = Gtk.Button.new_with_label("New Terminal")
+        self.welcome_new_terminal_button.connect("clicked", self._on_new_terminal_clicked)
+        welcome_box.pack_start(self.welcome_new_terminal_button, False, False, 0)
+
+        self.welcome_load_profile_button = Gtk.Button.new_with_label("Load Profile")
+        self.welcome_load_profile_button.connect("clicked", self._on_load_profile_clicked)
+        welcome_box.pack_start(self.welcome_load_profile_button, False, False, 0)
 
         # Create stack for terminal switching
         self.terminal_stack = Gtk.Stack()
@@ -469,6 +497,21 @@ class MainWindow(Gtk.ApplicationWindow):
         action = self.shortcut_controller.get_action("new_sibling")
         if action:
             action.activate(None)
+
+    def _on_load_profile_clicked(self, _button: Gtk.Button) -> None:
+        """Choose, validate, and create a workspace profile from the welcome page."""
+        profile_path = self._choose_workspace_profile_to_load()
+        if profile_path is None:
+            return
+
+        try:
+            profile = load_workspace_profile(profile_path)
+        except WorkspaceProfileError as exc:
+            logger.error("Workspace profile load failed: %s", exc)
+            self._show_workspace_profile_error(str(exc), operation="load")
+            return
+
+        self.session_manager.create_workspace_trees(profile.roots)
 
     def _on_close_session_clicked(self, button: Gtk.Button) -> None:
         """Handle close session button click."""
@@ -561,14 +604,50 @@ class MainWindow(Gtk.ApplicationWindow):
             return None
         return Path(filename)
 
-    def _show_workspace_profile_error(self, message: str) -> None:
-        """Show a profile export error to the user."""
+    def _choose_workspace_profile_to_load(self) -> Path | None:
+        """Show the workspace profile open dialog and return its chosen path."""
+        dialog = Gtk.FileChooserDialog(
+            title="Load Workspace Profile",
+            transient_for=self,
+            action=Gtk.FileChooserAction.OPEN,
+        )
+        dialog.add_buttons(
+            "Cancel",
+            Gtk.ResponseType.CANCEL,
+            "Load",
+            Gtk.ResponseType.ACCEPT,
+        )
+        start_directory = workspace_profile_start_directory(
+            config_manager.get("workspace_profiles.default_directory", "")
+        )
+        dialog.set_current_folder(str(start_directory))
+
+        yaml_filter = Gtk.FileFilter()
+        yaml_filter.set_name("YAML profile files")
+        yaml_filter.add_pattern("*.yml")
+        yaml_filter.add_pattern("*.yaml")
+        dialog.add_filter(yaml_filter)
+
+        response = dialog.run()
+        filename = dialog.get_filename()
+        dialog.destroy()
+        if response != Gtk.ResponseType.ACCEPT or not filename:
+            return None
+        return Path(filename)
+
+    def _show_workspace_profile_error(
+        self,
+        message: str,
+        *,
+        operation: str = "save",
+    ) -> None:
+        """Show a workspace profile operation error to the user."""
         dialog = Gtk.MessageDialog(
             transient_for=self,
             modal=True,
             message_type=Gtk.MessageType.ERROR,
             buttons=Gtk.ButtonsType.CLOSE,
-            text="Could not save workspace profile",
+            text=f"Could not {operation} workspace profile",
         )
         dialog.format_secondary_text(message)
         dialog.run()

@@ -38,6 +38,7 @@ def test_main_window_methods_exist():
         '_on_sidebar_toggle_clicked',
         '_on_export_selected_activate',
         '_on_export_all_activate',
+        '_on_load_profile_clicked',
     ]
 
     for method_name in expected_methods:
@@ -290,6 +291,170 @@ def test_profile_export_reports_write_failure(tmp_path):
         window._save_workspace_profile([root])
 
     show_error.assert_called_once_with("write failed")
+
+
+def test_welcome_load_profile_button_is_directly_below_new_terminal():
+    """The welcome actions retain the requested visual order."""
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    children = window.welcome_new_terminal_button.get_parent().get_children()
+
+    new_terminal_index = children.index(window.welcome_new_terminal_button)
+    assert children[new_terminal_index + 1] is window.welcome_load_profile_button
+    assert window.welcome_load_profile_button.get_label() == "Load Profile"
+
+
+def test_workspace_profile_start_directory_expands_tilde(monkeypatch, tmp_path):
+    """A usable configured user path is selected for the chooser."""
+    from tree_style_terminal.main import workspace_profile_start_directory
+
+    profile_directory = tmp_path / "profiles"
+    profile_directory.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+
+    assert workspace_profile_start_directory("~/profiles") == profile_directory
+
+
+def test_workspace_profile_start_directory_falls_back_to_home(tmp_path):
+    """Missing, empty, and unusable settings all use the supplied home path."""
+    from tree_style_terminal.main import workspace_profile_start_directory
+
+    for configured_directory in (None, "", "   ", tmp_path / "missing"):
+        assert (
+            workspace_profile_start_directory(
+                configured_directory,
+                home_directory=tmp_path,
+            )
+            == tmp_path
+        )
+
+
+def test_profile_load_chooser_uses_yaml_filter_and_configured_directory(tmp_path):
+    """The open dialog starts as configured and only offers a YAML filter."""
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    dialog = Mock()
+    dialog.run.return_value = Gtk.ResponseType.CANCEL
+    dialog.get_filename.return_value = None
+    yaml_filter = Mock()
+    window = MainWindow(application=TreeStyleTerminalApp())
+
+    with (
+        patch(
+            "tree_style_terminal.main.config_manager.get",
+            return_value=str(tmp_path),
+        ),
+        patch(
+            "tree_style_terminal.main.Gtk.FileChooserDialog",
+            return_value=dialog,
+        ) as chooser_dialog,
+        patch(
+            "tree_style_terminal.main.Gtk.FileFilter",
+            return_value=yaml_filter,
+        ),
+    ):
+        assert window._choose_workspace_profile_to_load() is None
+
+    chooser_dialog.assert_called_once_with(
+        title="Load Workspace Profile",
+        transient_for=window,
+        action=Gtk.FileChooserAction.OPEN,
+    )
+    dialog.set_current_folder.assert_called_once_with(str(tmp_path))
+    yaml_filter.set_name.assert_called_once_with("YAML profile files")
+    assert yaml_filter.add_pattern.call_count == 2
+    yaml_filter.add_pattern.assert_any_call("*.yml")
+    yaml_filter.add_pattern.assert_any_call("*.yaml")
+    dialog.add_filter.assert_called_once_with(yaml_filter)
+    dialog.destroy.assert_called_once_with()
+
+
+def test_welcome_profile_button_loads_all_validated_roots(tmp_path):
+    """Activating the button uses the shared loader and multi-root creator."""
+    from tree_style_terminal.config.workspace_profile import (
+        WorkspaceNode,
+        WorkspaceProfile,
+    )
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    profile_path = tmp_path / "workspace.yml"
+    roots = [
+        WorkspaceNode(workdir=str(tmp_path), title="first"),
+        WorkspaceNode(workdir=str(tmp_path), title="second", selected=True),
+    ]
+    profile = WorkspaceProfile(
+        path=profile_path,
+        version=1,
+        name="Two roots",
+        roots=roots,
+    )
+    window = MainWindow(application=TreeStyleTerminalApp())
+
+    with (
+        patch.object(
+            window,
+            "_choose_workspace_profile_to_load",
+            return_value=profile_path,
+        ),
+        patch(
+            "tree_style_terminal.main.load_workspace_profile",
+            return_value=profile,
+        ) as load_profile,
+        patch.object(window.session_manager, "create_workspace_trees") as create_trees,
+    ):
+        window.welcome_load_profile_button.emit("clicked")
+
+    load_profile.assert_called_once_with(profile_path)
+    create_trees.assert_called_once_with(roots)
+
+
+def test_cancelling_welcome_profile_chooser_keeps_welcome_unchanged():
+    """Cancelling creates no sessions and keeps the welcome page visible."""
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    with (
+        patch.object(
+            window,
+            "_choose_workspace_profile_to_load",
+            return_value=None,
+        ),
+        patch("tree_style_terminal.main.load_workspace_profile") as load_profile,
+    ):
+        window.welcome_load_profile_button.emit("clicked")
+
+    load_profile.assert_not_called()
+    assert window.session_tree.is_empty()
+    assert window.terminal_stack.get_visible_child_name() == "welcome"
+
+
+def test_invalid_welcome_profile_shows_load_error_without_sessions(tmp_path):
+    """Validation errors leave the empty welcome screen ready for another action."""
+    from tree_style_terminal.config.workspace_profile import WorkspaceProfileError
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    profile_path = tmp_path / "invalid.yml"
+    window = MainWindow(application=TreeStyleTerminalApp())
+    with (
+        patch.object(
+            window,
+            "_choose_workspace_profile_to_load",
+            return_value=profile_path,
+        ),
+        patch(
+            "tree_style_terminal.main.load_workspace_profile",
+            side_effect=WorkspaceProfileError("invalid profile"),
+        ),
+        patch.object(window.session_manager, "create_workspace_trees") as create_trees,
+        patch.object(window, "_show_workspace_profile_error") as show_error,
+    ):
+        window.welcome_load_profile_button.emit("clicked")
+
+    create_trees.assert_not_called()
+    show_error.assert_called_once_with("invalid profile", operation="load")
+    assert window.session_tree.is_empty()
+    assert window.terminal_stack.get_visible_child_name() == "welcome"
 
 
 def test_theme_update_applies_to_session_manager_terminals():

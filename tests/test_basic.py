@@ -57,6 +57,6 @@ class TestApplicationIntegration:
     def test_package_imports(self):
         """Test that package imports work correctly."""
         from tree_style_terminal import __author__, __license__, __version__
-        assert __version__ == "0.6.0"
+        assert __version__ == "0.7.0"
         assert __author__ == "Tree Style Terminal Contributors"
         assert __license__ == "Apache-2.0"

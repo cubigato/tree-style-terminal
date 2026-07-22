@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0 - 2026-07-22
+
+### Added
+
+- Added a **Load Profile** action to the empty welcome screen that validates and
+  creates `.yml` and `.yaml` workspace profiles through the existing startup
+  profile flow.
+- Added `workspace_profiles.default_directory` to choose the profile dialog's
+  initial directory, with tilde expansion and fallback to the user's home.
+
+### Fixed
+
+- Isolated nested configuration defaults with deep copies so runtime changes to
+  loaded configuration cannot mutate the global defaults.
+
 ## 0.6.0 - 2026-07-22
 
 ### Added

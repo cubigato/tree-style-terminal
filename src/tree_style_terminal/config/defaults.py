@@ -25,6 +25,11 @@ DEFAULT_CONFIG = {
         "sidebar_width": 250,
     },
 
+    "workspace_profiles": {
+        # Optional initial directory for the welcome-screen profile chooser
+        "default_directory": "",
+    },
+
     "display": {
         # UI scaling factor (1.0 = 100%, 1.5 = 150%, etc.)
         # Set to "auto" to use system DPI detection
@@ -59,6 +64,10 @@ DEFAULT_CONFIG_TEMPLATE = """# Tree Style Terminal Configuration
 #ui:
 #  # Initial width of the sidebar in pixels
 #  sidebar_width: 250
+
+#workspace_profiles:
+#  # Initial directory for the welcome-screen profile chooser (supports "~")
+#  default_directory: "~/Documents"
 
 #display:
 #  # UI scaling factor (1.0 = 100%, 1.5 = 150%, etc.)
@@ -100,6 +109,10 @@ VALIDATION_RULES = {
         "min_value": 50,
         "max_value": 1000,
         "description": "Sidebar width must be between 50 and 1000 pixels"
+    },
+    "workspace_profiles.default_directory": {
+        "type": str,
+        "description": "Workspace profile directory must be a user path"
     },
     "display.dpi_scale": {
         "type": [str, float],

@@ -174,6 +174,13 @@ tst --profile examples/workspace-profiles/simple.yml
 tst -p examples/workspace-profiles/linux-overview.yml
 ```
 
+With no session open, the welcome screen also provides a **Load Profile** button.
+It opens a chooser limited to `.yml` and `.yaml` files and loads the selected
+profile through the same validation and session-creation flow as `--profile`.
+The chooser starts in the user's home directory unless
+`workspace_profiles.default_directory` is set in `config.yaml`; see
+[`CONFIG.md`](CONFIG.md#workspace-profiles).
+
 A profile defines one or more root sessions and optional child sessions. Each
 session can set a title, working directory, and optional command:
 
