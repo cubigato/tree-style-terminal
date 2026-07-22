@@ -115,6 +115,7 @@ root:
 
     - title: "tests"
       command: "./gradlew test"
+      selected: true
 
     - title: "logs"
       workdir: "build/logs"
@@ -147,6 +148,9 @@ roots:
 - Node `title`: Optional session title. If omitted, normal automatic title generation is used.
 - Node `workdir`: Optional working directory for this node and its children.
 - Node `command`: Optional command to run in this session.
+- Node `selected`: Optional boolean. When `true`, this session is selected after
+  the complete profile has started. It may be `true` on at most one node across
+  the whole profile; omission means `false`.
 - Node `children`: Optional list of child session nodes.
 
 **Working directory resolution:**
@@ -163,6 +167,22 @@ exits, the shell remains available for follow-up interactive work.
 
 `--profile` cannot be combined with a positional startup directory,
 `--working-directory`, or `--workdir`.
+
+### Exporting a Workspace Profile
+
+The save button beside the new-sibling, new-child, and close-session controls
+opens a menu with two export scopes:
+
+- **Selected Session and Children** writes the selected session and its
+  descendants as one `root` tree.
+- **All Sessions** writes all current root trees, using `roots` when more than
+  one root exists.
+
+After choosing the scope, select the destination `.yml` or `.yaml` file. Export
+is always explicit; Tree Style Terminal does not automatically save or restore
+session state. The generated profile contains the current titles, working
+directories, tree structure, and selection. It does not invent startup
+`command` values for already-running sessions.
 
 ### Display Settings
 

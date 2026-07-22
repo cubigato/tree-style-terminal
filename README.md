@@ -187,6 +187,7 @@ root:
   children:
     - title: "hello"
       command: "echo hello"
+      selected: true
 ```
 
 Use `roots` instead of `root` to start multiple independent trees:
@@ -202,6 +203,9 @@ roots:
 
 Exactly one of `root` or `roots` must be present.
 
+An optional `selected: true` on one node selects that session after the whole
+profile has started. At most one node across all roots may be selected.
+
 Sessions without `command` start a normal interactive shell. Sessions with
 `command` run it through the user's normal shell, then leave a shell open for
 follow-up work. Relative `workdir` values are resolved from the nearest inherited
@@ -215,6 +219,11 @@ Example files are available in
 - [`linux-overview.yml`](examples/workspace-profiles/linux-overview.yml):
   a nested tree using common Linux paths such as `/tmp`, `/etc`, `/var/log`,
   and `/usr`
+
+To create a profile from running sessions, use the save button beside the
+session controls in the header bar. Choose either the selected session plus its
+children or all sessions, then select a YAML destination. Exported profiles are
+only written on this explicit action and can be loaded later with `--profile`.
 
 `--profile` cannot be combined with a startup directory or `--workdir`.
 

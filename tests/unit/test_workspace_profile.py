@@ -1,11 +1,16 @@
 """Workspace profile YAML loading and validation tests."""
 
+from unittest.mock import patch
+
 import pytest
+import yaml
 
 from tree_style_terminal.config.workspace_profile import (
     WorkspaceProfileError,
+    export_workspace_profile,
     load_workspace_profile,
 )
+from tree_style_terminal.models.session import TerminalSession
 
 
 def test_load_workspace_profile_resolves_inherited_workdirs(tmp_path):
@@ -89,6 +94,28 @@ roots:
     assert profile.roots[1].workdir == str(scratch)
 
 
+def test_load_workspace_profile_supports_one_selected_node(tmp_path):
+    profile_path = tmp_path / "workspace.yml"
+    profile_path.write_text(
+        """
+version: 1
+root:
+  title: "root"
+  children:
+    - title: "selected"
+      selected: true
+    - title: "normal"
+""",
+        encoding="utf-8",
+    )
+
+    profile = load_workspace_profile(profile_path, base_dir=tmp_path)
+
+    assert profile.root.selected is False
+    assert profile.root.children[0].selected is True
+    assert profile.root.children[1].selected is False
+
+
 @pytest.mark.parametrize(
     ("content", "message"),
     [
@@ -105,6 +132,14 @@ roots:
         (
             "version: 1\nroots:\n  - children: nope\n",
             r"roots\[0\].children must be a list",
+        ),
+        (
+            'version: 1\nroot:\n  selected: "yes"\n',
+            "root.selected must be a boolean",
+        ),
+        (
+            "version: 1\nroots:\n  - selected: true\n  - selected: true\n",
+            r"roots\[1\].selected cannot be true because roots\[0\].selected is already true",
         ),
         ("version: 1\nroot:\n  command: 123\n", "root.command must be a string"),
         ("version: 1\nroot:\n  children: nope\n", "root.children must be a list"),
@@ -135,3 +170,66 @@ root:
 
     with pytest.raises(WorkspaceProfileError, match="root.workdir points to a missing directory"):
         load_workspace_profile(profile_path, base_dir=tmp_path)
+
+
+def test_export_workspace_profile_writes_loadable_selected_subtree(tmp_path):
+    child_dir = tmp_path / "child"
+    child_dir.mkdir()
+    root = TerminalSession(pid=1, pty_fd=1, cwd=str(tmp_path), title="root")
+    child = TerminalSession(pid=2, pty_fd=2, cwd=str(child_dir), title="child")
+    root.children.append(child)
+    profile_path = tmp_path / "workspace.yml"
+
+    export_workspace_profile(profile_path, [root], selected_session=child)
+
+    assert yaml.safe_load(profile_path.read_text(encoding="utf-8")) == {
+        "version": 1,
+        "root": {
+            "title": "root",
+            "workdir": str(tmp_path),
+            "children": [
+                {
+                    "title": "child",
+                    "workdir": str(child_dir),
+                    "selected": True,
+                }
+            ],
+        },
+    }
+    loaded = load_workspace_profile(profile_path)
+    assert loaded.root.children[0].selected is True
+    assert loaded.root.children[0].command is None
+
+
+def test_export_workspace_profile_writes_all_roots(tmp_path):
+    first = TerminalSession(pid=1, pty_fd=1, cwd=str(tmp_path), title="first")
+    second = TerminalSession(pid=2, pty_fd=2, cwd=str(tmp_path), title="second")
+    profile_path = tmp_path / "workspace.yml"
+
+    export_workspace_profile(profile_path, [first, second], selected_session=second)
+
+    exported = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    assert "root" not in exported
+    assert exported["roots"] == [
+        {"title": "first", "workdir": str(tmp_path)},
+        {"title": "second", "workdir": str(tmp_path), "selected": True},
+    ]
+    assert len(load_workspace_profile(profile_path).roots) == 2
+
+
+def test_export_workspace_profile_preserves_destination_on_replace_failure(tmp_path):
+    profile_path = tmp_path / "workspace.yml"
+    profile_path.write_text("existing content\n", encoding="utf-8")
+    root = TerminalSession(pid=1, pty_fd=1, cwd=str(tmp_path), title="root")
+
+    with (
+        patch(
+            "tree_style_terminal.config.workspace_profile.os.replace",
+            side_effect=OSError("replace failed"),
+        ),
+        pytest.raises(WorkspaceProfileError, match="replace failed"),
+    ):
+        export_workspace_profile(profile_path, [root])
+
+    assert profile_path.read_text(encoding="utf-8") == "existing content\n"
+    assert list(tmp_path.glob(".workspace.yml.*.tmp")) == []

@@ -35,7 +35,9 @@ def test_main_window_methods_exist():
         '_on_new_terminal_clicked',
         '_on_close_session_clicked',
         '_on_new_child_clicked',
-        '_on_sidebar_toggle_clicked'
+        '_on_sidebar_toggle_clicked',
+        '_on_export_selected_activate',
+        '_on_export_all_activate',
     ]
 
     for method_name in expected_methods:
@@ -200,6 +202,94 @@ def test_new_session_creation_schedules_terminal_focus():
         window._on_session_created(session, terminal_widget)
 
     idle_add.assert_called_with(window.focus_terminal)
+
+
+def test_profile_export_button_has_two_scopes_and_tracks_session_state():
+    """The headerbar export menu exposes the two requested scopes."""
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+
+    assert window.export_profile_button.get_sensitive() is False
+    labels = [item.get_label() for item in window.export_profile_button.get_popup().get_children()]
+    assert labels == ["Selected Session and Children", "All Sessions"]
+
+    current_session = TerminalSession(
+        pid=1,
+        pty_fd=1,
+        cwd="/tmp",
+    )
+    window.session_tree.add_node(current_session)
+    window.session_manager.current_session = current_session
+    window._update_button_states()
+
+    assert window.export_profile_button.get_sensitive() is True
+
+
+def test_profile_export_scope_handlers_pass_selected_subtree_or_all_roots():
+    """Each export menu item forwards the intended session roots."""
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    first = TerminalSession(pid=1, pty_fd=1, cwd="/tmp", title="first")
+    child = TerminalSession(pid=2, pty_fd=2, cwd="/tmp", title="child")
+    second = TerminalSession(pid=3, pty_fd=3, cwd="/tmp", title="second")
+    window.session_tree.add_node(first)
+    window.session_tree.add_node(child, first)
+    window.session_tree.add_node(second)
+    window.session_manager.current_session = child
+
+    with patch.object(window, "_save_workspace_profile") as save_profile:
+        window._on_export_selected_activate(window.export_selected_menu_item)
+        save_profile.assert_called_once_with([child])
+
+        save_profile.reset_mock()
+        window._on_export_all_activate(window.export_all_menu_item)
+        save_profile.assert_called_once_with([first, second])
+
+
+def test_profile_export_cancel_does_not_write(tmp_path):
+    """Cancelling destination selection leaves the filesystem untouched."""
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    root = TerminalSession(pid=1, pty_fd=1, cwd=str(tmp_path), title="root")
+
+    with (
+        patch.object(window, "_choose_workspace_profile_path", return_value=None),
+        patch("tree_style_terminal.main.export_workspace_profile") as export_profile,
+    ):
+        window._save_workspace_profile([root])
+
+    export_profile.assert_not_called()
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_profile_export_reports_write_failure(tmp_path):
+    """A writer error is logged and shown without escaping the UI callback."""
+    from tree_style_terminal.config.workspace_profile import WorkspaceProfileError
+    from tree_style_terminal.main import MainWindow, TreeStyleTerminalApp
+
+    window = MainWindow(application=TreeStyleTerminalApp())
+    root = TerminalSession(pid=1, pty_fd=1, cwd=str(tmp_path), title="root")
+    window.session_manager.current_session = root
+    destination = tmp_path / "workspace.yml"
+
+    with (
+        patch.object(
+            window,
+            "_choose_workspace_profile_path",
+            return_value=destination,
+        ),
+        patch(
+            "tree_style_terminal.main.export_workspace_profile",
+            side_effect=WorkspaceProfileError("write failed"),
+        ),
+        patch.object(window, "_show_workspace_profile_error") as show_error,
+    ):
+        window._save_workspace_profile([root])
+
+    show_error.assert_called_once_with("write failed")
 
 
 def test_theme_update_applies_to_session_manager_terminals():

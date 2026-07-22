@@ -26,6 +26,7 @@ from .config.defaults import DEFAULT_CONFIG
 from .config.workspace_profile import (
     WorkspaceProfile,
     WorkspaceProfileError,
+    export_workspace_profile,
     load_workspace_profile,
 )
 from .controllers.session_manager import SessionManager
@@ -212,6 +213,31 @@ class MainWindow(Gtk.ApplicationWindow):
         self.close_session_button.set_tooltip_text("Close session (Ctrl+Q)")
         self.close_session_button.connect("clicked", self._on_close_session_clicked)
         session_buttons_box.pack_start(self.close_session_button, False, False, 0)
+
+        # Add workspace profile export menu
+        self.export_profile_button = Gtk.MenuButton()
+        self.export_profile_button.set_image(
+            Gtk.Image.new_from_icon_name("document-save-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self.export_profile_button.set_tooltip_text("Save workspace profile")
+
+        export_menu = Gtk.Menu()
+        self.export_selected_menu_item = Gtk.MenuItem(
+            label="Selected Session and Children"
+        )
+        self.export_selected_menu_item.connect(
+            "activate",
+            self._on_export_selected_activate,
+        )
+        export_menu.append(self.export_selected_menu_item)
+
+        self.export_all_menu_item = Gtk.MenuItem(label="All Sessions")
+        self.export_all_menu_item.connect("activate", self._on_export_all_activate)
+        export_menu.append(self.export_all_menu_item)
+        export_menu.show_all()
+        self.export_profile_button.set_popup(export_menu)
+        self.export_profile_button.set_sensitive(False)
+        session_buttons_box.pack_start(self.export_profile_button, False, False, 0)
 
         # Add the button box to header bar
         self.headerbar.pack_start(session_buttons_box)
@@ -473,9 +499,80 @@ class MainWindow(Gtk.ApplicationWindow):
         if action:
             action.activate(None)
 
+    def _on_export_selected_activate(self, _menu_item: Gtk.MenuItem) -> None:
+        """Export the current session and its descendants as one profile tree."""
+        current_session = self.session_manager.current_session
+        if current_session is not None:
+            self._save_workspace_profile([current_session])
+
+    def _on_export_all_activate(self, _menu_item: Gtk.MenuItem) -> None:
+        """Export every current root session as one workspace profile."""
+        roots = self.session_tree.get_roots()
+        if roots:
+            self._save_workspace_profile(roots)
+
+    def _save_workspace_profile(self, roots: list[TerminalSession]) -> None:
+        """Choose a destination and export the requested session trees."""
+        destination = self._choose_workspace_profile_path()
+        if destination is None:
+            return
+
+        try:
+            export_workspace_profile(
+                destination,
+                roots,
+                selected_session=self.session_manager.current_session,
+            )
+        except WorkspaceProfileError as exc:
+            logger.error("Workspace profile export failed: %s", exc)
+            self._show_workspace_profile_error(str(exc))
+
+    def _choose_workspace_profile_path(self) -> Path | None:
+        """Show the workspace profile save dialog and return its chosen path."""
+        dialog = Gtk.FileChooserDialog(
+            title="Save Workspace Profile",
+            transient_for=self,
+            action=Gtk.FileChooserAction.SAVE,
+        )
+        dialog.add_buttons(
+            "Cancel",
+            Gtk.ResponseType.CANCEL,
+            "Save",
+            Gtk.ResponseType.ACCEPT,
+        )
+        dialog.set_do_overwrite_confirmation(True)
+        dialog.set_current_name("workspace.yml")
+
+        yaml_filter = Gtk.FileFilter()
+        yaml_filter.set_name("YAML files")
+        yaml_filter.add_pattern("*.yml")
+        yaml_filter.add_pattern("*.yaml")
+        dialog.add_filter(yaml_filter)
+
+        response = dialog.run()
+        filename = dialog.get_filename()
+        dialog.destroy()
+        if response != Gtk.ResponseType.ACCEPT or not filename:
+            return None
+        return Path(filename)
+
+    def _show_workspace_profile_error(self, message: str) -> None:
+        """Show a profile export error to the user."""
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            modal=True,
+            message_type=Gtk.MessageType.ERROR,
+            buttons=Gtk.ButtonsType.CLOSE,
+            text="Could not save workspace profile",
+        )
+        dialog.format_secondary_text(message)
+        dialog.run()
+        dialog.destroy()
+
     def _update_button_states(self) -> None:
         """Update button states based on current session state."""
         has_current_session = self.session_manager.current_session is not None
+        has_sessions = not self.session_tree.is_empty()
 
         # Update HeaderBar buttons if they exist
         if hasattr(self, 'new_sibling_button'):
@@ -484,6 +581,10 @@ class MainWindow(Gtk.ApplicationWindow):
             self.new_child_button.set_sensitive(True)  # Always available
         if hasattr(self, 'close_session_button'):
             self.close_session_button.set_sensitive(has_current_session)
+        if hasattr(self, 'export_profile_button'):
+            self.export_profile_button.set_sensitive(has_sessions)
+            self.export_selected_menu_item.set_sensitive(has_current_session)
+            self.export_all_menu_item.set_sensitive(has_sessions)
         if hasattr(self, 'search_button'):
             self.search_button.set_sensitive(has_current_session)
 
@@ -872,8 +973,7 @@ class TreeStyleTerminalApp(Gtk.Application):
 
         self._initial_session_created = True
         if isinstance(workspace_profile, WorkspaceProfile):
-            for root in workspace_profile.roots:
-                self.window.session_manager.create_workspace_tree(root)
+            self.window.session_manager.create_workspace_trees(workspace_profile.roots)
         elif initial_cwd:
             self.window.session_manager.new_session(cwd=initial_cwd)
 

@@ -141,14 +141,40 @@ class SessionManager:
             logger.error(f"Error creating session: {e}")
             return None
 
+    def create_workspace_trees(self, roots: list[WorkspaceNode]) -> list[TerminalSession]:
+        """Create all roots from a validated profile, then apply its selection."""
+        created_roots = []
+        selected_sessions: list[TerminalSession] = []
+        for root in roots:
+            root_session = self._create_workspace_node(
+                root,
+                parent=None,
+                selected_sessions=selected_sessions,
+            )
+            if root_session is not None:
+                created_roots.append(root_session)
+
+        if selected_sessions:
+            self.select_session(selected_sessions[0])
+        return created_roots
+
     def create_workspace_tree(self, root: WorkspaceNode) -> TerminalSession | None:
         """Create a session tree from a validated workspace profile root."""
-        return self._create_workspace_node(root, parent=None)
+        selected_sessions: list[TerminalSession] = []
+        root_session = self._create_workspace_node(
+            root,
+            parent=None,
+            selected_sessions=selected_sessions,
+        )
+        if selected_sessions:
+            self.select_session(selected_sessions[0])
+        return root_session
 
     def _create_workspace_node(
         self,
         node: WorkspaceNode,
         parent: TerminalSession | None,
+        selected_sessions: list[TerminalSession],
     ) -> TerminalSession | None:
         session = self.new_session(
             parent=parent,
@@ -160,8 +186,11 @@ class SessionManager:
             logger.error("Failed to create workspace session %r", node.title or node.workdir)
             return None
 
+        if node.selected:
+            selected_sessions.append(session)
+
         for child in node.children:
-            self._create_workspace_node(child, session)
+            self._create_workspace_node(child, session, selected_sessions)
 
         return session
 

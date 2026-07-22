@@ -1,6 +1,6 @@
 """Startup argument parsing and activation tests."""
 
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -148,7 +148,7 @@ def test_activation_with_workspace_profile_creates_workspace_tree(tmp_path):
         app._on_activate(app)
         app._on_activate(app)
 
-    window.session_manager.create_workspace_tree.assert_called_once_with(root)
+    window.session_manager.create_workspace_trees.assert_called_once_with([root])
     window.session_manager.new_session.assert_not_called()
 
 
@@ -170,8 +170,5 @@ def test_activation_with_workspace_profile_creates_all_root_trees(tmp_path):
         app._on_activate(app)
         app._on_activate(app)
 
-    assert window.session_manager.create_workspace_tree.call_args_list == [
-        call(roots[0]),
-        call(roots[1]),
-    ]
+    window.session_manager.create_workspace_trees.assert_called_once_with(roots)
     window.session_manager.new_session.assert_not_called()

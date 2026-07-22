@@ -1,10 +1,10 @@
 ---
 id: TASK-6
 title: Export session trees as workspace profiles
-status: next
+status: In Progress
 assignee: []
 created_date: '2026-05-26 22:08'
-updated_date: '2026-07-22 12:34'
+updated_date: '2026-07-22 16:06'
 labels:
   - feature
   - 'effort:medium'
@@ -16,6 +16,16 @@ dependencies:
   - TASK-35
 references:
   - CONFIG.md
+modified_files:
+  - CONFIG.md
+  - README.md
+  - src/tree_style_terminal/config/workspace_profile.py
+  - src/tree_style_terminal/controllers/session_manager.py
+  - src/tree_style_terminal/main.py
+  - tests/test_main_window.py
+  - tests/unit/test_session_actions.py
+  - tests/unit/test_startup_arguments.py
+  - tests/unit/test_workspace_profile.py
 priority: medium
 ordinal: 500
 ---
@@ -34,22 +44,18 @@ Export nodes recursively using the existing profile fields `title`, `workdir`, o
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The generated document uses the TASK-14 version 1 profile structure and can be loaded by the existing `--profile` / `-p` startup path.
-- [ ] #2 The exported root and descendants preserve tree structure, titles, and working directories; the exporter does not invent startup commands that cannot be reconstructed from live sessions.
-- [ ] #3 Profile nodes accept optional boolean `selected`; omission is false, exactly zero or one selected node is valid, and more than one `selected: true` produces a useful YAML-path validation error.
-- [ ] #4 The exporter writes `selected: true` only on the currently selected session when that session belongs to the exported tree.
-- [ ] #5 Loading a profile with one selected node activates that session only after the complete tree has been created; a profile without `selected: true` keeps the existing default selection behavior.
-- [ ] #6 Writing failures are reported clearly and do not damage an existing destination file; automated tests cover serialization, round-trip loading, selection validation, and write failure behavior.
-- [ ] #7 The headerbar has an export button beside the existing new-sibling, new-child, and close-session controls; it is disabled when there are no sessions.
-- [ ] #8 Clicking the export button opens a menu with exactly two scopes: the selected session plus all descendants, or all sessions.
-- [ ] #9 After either scope is chosen, a file chooser lets the user select the destination YAML file; cancelling leaves the filesystem unchanged.
-- [ ] #10 Selected-subtree export writes that session as `root`; all-sessions export includes every root and uses the TASK-35 multi-root form when more than one root exists.
-- [ ] #11 Profile export occurs only after the user explicitly chooses an export scope and destination; no profile or session state is written or loaded automatically.
+- [x] #1 The generated document uses the TASK-14 version 1 profile structure and can be loaded by the existing `--profile` / `-p` startup path.
+- [x] #2 The exported root and descendants preserve tree structure, titles, and working directories; the exporter does not invent startup commands that cannot be reconstructed from live sessions.
+- [x] #3 Profile nodes accept optional boolean `selected`; omission is false, exactly zero or one selected node is valid, and more than one `selected: true` produces a useful YAML-path validation error.
+- [x] #4 The exporter writes `selected: true` only on the currently selected session when that session belongs to the exported tree.
+- [x] #5 Loading a profile with one selected node activates that session only after the complete tree has been created; a profile without `selected: true` keeps the existing default selection behavior.
+- [x] #6 Writing failures are reported clearly and do not damage an existing destination file; automated tests cover serialization, round-trip loading, selection validation, and write failure behavior.
+- [x] #7 The headerbar has an export button beside the existing new-sibling, new-child, and close-session controls; it is disabled when there are no sessions.
+- [x] #8 Clicking the export button opens a menu with exactly two scopes: the selected session plus all descendants, or all sessions.
+- [x] #9 After either scope is chosen, a file chooser lets the user select the destination YAML file; cancelling leaves the filesystem unchanged.
+- [x] #10 Selected-subtree export writes that session as `root`; all-sessions export includes every root and uses the TASK-35 multi-root form when more than one root exists.
+- [x] #11 Profile export occurs only after the user explicitly chooses an export scope and destination; no profile or session state is written or loaded automatically.
 <!-- AC:END -->
-
-
-
-
 
 ## Implementation Plan
 
@@ -61,6 +67,12 @@ Export nodes recursively using the existing profile fields `title`, `workdir`, o
 5. Update profile startup so selection is applied after every root tree has been created.
 6. Document the export workflow and `selected` field, and add focused loader, serializer, UI-action, startup, and failure tests.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Implemented explicit workspace profile export without automatic persistence. Profile nodes now support optional boolean `selected`, validated globally across all roots. Startup creates every root before applying the selected session. The headerbar has a save menu with selected-session-plus-children and all-sessions scopes, followed by a YAML save dialog. Export preserves current titles, workdirs, hierarchy, and selection, omits unreconstructable commands, and atomically replaces the destination. README and CONFIG.md document selection and export. Verification: 288 pytest tests passed, including 17 MainWindow tests against GTK; Ruff and git diff checks passed.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

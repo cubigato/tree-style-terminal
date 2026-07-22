@@ -194,9 +194,47 @@ class TestSessionActions:
             assert len(root_session.children) == 2
             assert root_session.children[0].title == "server"
             assert root_session.children[1].title == "logs"
+            assert session_manager.current_session == root_session.children[1]
             terminals[0].spawn_shell.assert_called_once_with(cwd="/work/project")
             terminals[1].spawn_shell.assert_called_once()
             terminals[2].spawn_shell.assert_called_once_with(cwd="/work/project/build/logs")
+
+    def test_create_workspace_trees_applies_selection_after_all_nodes(self, session_manager):
+        """A profile selection is applied only after every node exists."""
+        roots = [
+            WorkspaceNode(
+                title="first",
+                workdir="/work/first",
+                children=[
+                    WorkspaceNode(
+                        title="selected",
+                        workdir="/work/first",
+                        selected=True,
+                    )
+                ],
+            ),
+            WorkspaceNode(title="second", workdir="/work/second"),
+        ]
+        selection_observations = []
+        session_manager.set_session_selected_callback(
+            lambda session: selection_observations.append(
+                (session.title, len(session_manager.get_all_sessions()))
+            )
+        )
+
+        with patch('tree_style_terminal.controllers.session_manager.VteTerminal') as MockVteTerminal:
+            terminals = [Mock(), Mock(), Mock()]
+            for terminal in terminals:
+                terminal.spawn_shell.return_value = True
+                terminal.terminal = Mock()
+            MockVteTerminal.side_effect = terminals
+
+            created_roots = session_manager.create_workspace_trees(roots)
+
+        assert [root.title for root in created_roots] == ["first", "second"]
+        assert session_manager.current_session is not None
+        assert session_manager.current_session.title == "selected"
+        assert selection_observations == [("selected", 3)]
 
     def test_new_child_tree_signals(self, session_tree, session_manager, mock_session):
         """Test that new_child triggers correct tree signals."""
