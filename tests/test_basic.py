@@ -7,7 +7,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gio, Gtk
 
-from tree_style_terminal import MainWindow, TreeStyleTerminalApp, main
+from tree_style_terminal import APPLICATION_ID, MainWindow, TreeStyleTerminalApp, main
 
 
 class TestTreeStyleTerminalApp:
@@ -18,7 +18,7 @@ class TestTreeStyleTerminalApp:
         app = TreeStyleTerminalApp()
         assert app is not None
         assert isinstance(app, Gtk.Application)
-        assert app.get_application_id() == "org.example.TreeStyleTerminal"
+        assert app.get_application_id() == APPLICATION_ID
 
     def test_app_flags(self):
         """Test application flags are set correctly."""
@@ -57,6 +57,6 @@ class TestApplicationIntegration:
     def test_package_imports(self):
         """Test that package imports work correctly."""
         from tree_style_terminal import __author__, __license__, __version__
-        assert __version__ == "0.8.0"
+        assert __version__
         assert __author__ == "Tree Style Terminal Contributors"
         assert __license__ == "Apache-2.0"

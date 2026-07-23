@@ -6,10 +6,17 @@ structure instead of traditional tabs, making it easier to manage complex workfl
 with multiple related terminal sessions.
 """
 
-__version__ = "0.8.0"
 __author__ = "Tree Style Terminal Contributors"
 __license__ = "Apache-2.0"
 
+from ._metadata import APPLICATION_ID
+from ._version import __version__
 from .main import MainWindow, TreeStyleTerminalApp, main
 
-__all__ = ["TreeStyleTerminalApp", "MainWindow", "main"]
+__all__ = [
+    "APPLICATION_ID",
+    "MainWindow",
+    "TreeStyleTerminalApp",
+    "__version__",
+    "main",
+]

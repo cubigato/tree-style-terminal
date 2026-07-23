@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.1 - 2026-07-23
+
+### Added
+
+- Add a permanent application ID, application icon, desktop entry, AppStream
+  metadata, and release screenshot for Linux packaging.
+- Document the shared release-metadata update and validation workflow.
+
+### Changed
+
+- Make the runtime and package build consume one authoritative version source.
+
 ## 0.8.0 - 2026-07-23
 
 ### Added

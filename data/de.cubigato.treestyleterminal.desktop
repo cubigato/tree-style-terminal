@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Tree Style Terminal
+GenericName=Terminal Emulator
+Comment=Manage terminal sessions in a tree
+TryExec=tree-style-terminal
+Exec=tree-style-terminal
+Icon=de.cubigato.treestyleterminal
+Terminal=false
+Categories=System;TerminalEmulator;
+Keywords=terminal;shell;console;tree;sessions;
+StartupNotify=true

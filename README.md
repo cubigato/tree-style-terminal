@@ -3,8 +3,8 @@
 A Python/GTK3 terminal application featuring a collapsible tree-based session navigator instead of traditional tabs.
 It is roughly inspired by tree-style-tabs add-on for Firefox.
 
-![Tree Style Terminal Screenshot](screenshot-dark-transparent.png)
-*Tree Style Terminal in action with dark theme, showing hierarchical session organization and transparent background*
+![Tree Style Terminal showing a nested terminal session tree](assets/screenshots/tree-style-terminal.png)
+*Tree Style Terminal with hierarchical session organization and a transparent background*
 
 ## Overview
 

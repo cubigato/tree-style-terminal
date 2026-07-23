@@ -1,0 +1,4 @@
+include CHANGELOG.md
+include PACKAGING.md
+recursive-include assets/screenshots *.png
+recursive-include data *.desktop *.png *.svg *.xml

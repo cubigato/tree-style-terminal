@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tree-style-terminal"
-version = "0.8.0"
+dynamic = ["version"]
 description = "A Python/GTK3 terminal application featuring a collapsible tree-based session navigator instead of traditional tabs. Requires system GTK3 and PyGObject installation."
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -24,6 +24,12 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = ["PyYAML>=6.0", "PyGObject>=3.42.0"]
 
+[project.urls]
+Homepage = "https://github.com/cubigato/tree-style-terminal"
+Repository = "https://github.com/cubigato/tree-style-terminal"
+Issues = "https://github.com/cubigato/tree-style-terminal/issues"
+Changelog = "https://github.com/cubigato/tree-style-terminal/blob/master/CHANGELOG.md"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
@@ -40,6 +46,9 @@ tst = "tree_style_terminal.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "tree_style_terminal._version.__version__" }
 
 [tool.setuptools.package-data]
 "tree_style_terminal" = ["ui/*.ui", "resources/**/*"]

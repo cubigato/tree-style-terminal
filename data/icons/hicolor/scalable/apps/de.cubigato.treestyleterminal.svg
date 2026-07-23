@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2026 cubigato GmbH
+  SPDX-License-Identifier: Apache-2.0
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="512"
+  height="512"
+  viewBox="0 0 512 512"
+>
+  <title>Tree Style Terminal</title>
+  <desc>A terminal window containing a hierarchical session tree</desc>
+
+  <defs>
+    <linearGradient id="background" x1="70" y1="36" x2="442" y2="476">
+      <stop offset="0" stop-color="#222a36"/>
+      <stop offset="1" stop-color="#11161e"/>
+    </linearGradient>
+    <linearGradient id="tree" x1="170" y1="180" x2="430" y2="390">
+      <stop offset="0" stop-color="#63e2ef"/>
+      <stop offset="1" stop-color="#35bcd5"/>
+    </linearGradient>
+  </defs>
+
+  <rect
+    x="16"
+    y="16"
+    width="480"
+    height="480"
+    rx="104"
+    fill="url(#background)"
+  />
+  <rect
+    x="67"
+    y="72"
+    width="378"
+    height="376"
+    rx="38"
+    fill="#090d12"
+    stroke="#566170"
+    stroke-width="12"
+  />
+  <path d="M73 150H439" stroke="#566170" stroke-width="12"/>
+
+  <circle cx="105" cy="111" r="13" fill="#ffb43d"/>
+  <circle cx="145" cy="111" r="13" fill="#7d8998"/>
+  <circle cx="185" cy="111" r="13" fill="#48515f"/>
+
+  <path
+    d="M105 190L142 227L105 264"
+    fill="none"
+    stroke="#ffb43d"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="19"
+  />
+
+  <g
+    fill="none"
+    stroke="url(#tree)"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="14"
+  >
+    <path d="M304 205V252"/>
+    <path d="M218 252H380"/>
+    <path d="M218 252V315"/>
+    <path d="M380 252V315"/>
+    <path d="M174 315H262"/>
+    <path d="M338 315H418"/>
+    <path d="M174 315V365"/>
+    <path d="M262 315V365"/>
+    <path d="M338 315V365"/>
+    <path d="M418 315V365"/>
+  </g>
+
+  <g fill="url(#tree)">
+    <circle cx="304" cy="188" r="19"/>
+    <circle cx="218" cy="252" r="17"/>
+    <circle cx="380" cy="252" r="17"/>
+    <circle cx="174" cy="365" r="18"/>
+    <circle cx="262" cy="365" r="18"/>
+    <circle cx="338" cy="365" r="18"/>
+    <circle cx="418" cy="365" r="18"/>
+  </g>
+</svg>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2026 cubigato GmbH
+  SPDX-License-Identifier: CC0-1.0
+-->
+<component type="desktop-application">
+  <id>de.cubigato.treestyleterminal</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+
+  <name>Tree Style Terminal</name>
+  <summary>Manage terminal sessions in a collapsible tree</summary>
+
+  <developer id="de.cubigato">
+    <name>cubigato GmbH</name>
+  </developer>
+
+  <description>
+    <p>
+      Tree Style Terminal is a GTK terminal emulator that organizes shell
+      sessions in a hierarchical tree instead of a row of tabs.
+    </p>
+    <p>
+      Sessions can be nested, collapsed, renamed, and moved through with
+      keyboard shortcuts. Each session uses the native VTE terminal widget and
+      the user's normal shell environment.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">de.cubigato.treestyleterminal.desktop</launchable>
+
+  <provides>
+    <binary>tree-style-terminal</binary>
+    <binary>tst</binary>
+  </provides>
+
+  <categories>
+    <category>System</category>
+    <category>TerminalEmulator</category>
+  </categories>
+
+  <keywords>
+    <keyword>terminal</keyword>
+    <keyword>shell</keyword>
+    <keyword>console</keyword>
+    <keyword>tree</keyword>
+    <keyword>sessions</keyword>
+  </keywords>
+
+  <url type="homepage">https://github.com/cubigato/tree-style-terminal</url>
+  <url type="bugtracker">https://github.com/cubigato/tree-style-terminal/issues</url>
+  <url type="vcs-browser">https://github.com/cubigato/tree-style-terminal</url>
+  <url type="contact">https://cubigato.de/impressum/</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <image
+        type="source"
+        width="1673"
+        height="941"
+      >https://raw.githubusercontent.com/cubigato/tree-style-terminal/master/assets/screenshots/tree-style-terminal.png</image>
+      <caption>
+        Tree Style Terminal with nested sessions and a transparent background
+      </caption>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="0.8.1" date="2026-07-23">
+      <description>
+        <p>Linux release identity and shared desktop metadata.</p>
+        <ul>
+          <li>Add a permanent application ID and application icon.</li>
+          <li>Add desktop and AppStream metadata for Linux packages.</li>
+          <li>Use one authoritative package and runtime version source.</li>
+        </ul>
+      </description>
+      <url>
+        https://github.com/cubigato/tree-style-terminal/releases/tag/v0.8.1
+      </url>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+</component>

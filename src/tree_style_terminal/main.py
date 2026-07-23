@@ -21,6 +21,7 @@ gi.require_version("Gdk", "3.0")
 
 from gi.repository import Gdk, Gio, GLib, Gtk
 
+from ._metadata import APPLICATION_ID
 from .config import ConfigError, config_manager
 from .config.defaults import DEFAULT_CONFIG
 from .config.workspace_profile import (
@@ -974,7 +975,7 @@ class TreeStyleTerminalApp(Gtk.Application):
 
     def __init__(self, args=None):
         super().__init__(
-            application_id="org.example.TreeStyleTerminal",
+            application_id=APPLICATION_ID,
             flags=Gio.ApplicationFlags.NON_UNIQUE
         )
 
