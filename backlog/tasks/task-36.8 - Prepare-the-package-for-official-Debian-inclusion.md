@@ -1,22 +1,24 @@
 ---
 id: TASK-36.8
 title: Prepare the package for official Debian inclusion
-status: next
+status: To Do
 assignee: []
 created_date: '2026-07-23 13:17'
+updated_date: '2026-07-23 23:39'
 labels:
   - packaging
   - debian
   - distribution
 dependencies:
   - TASK-36.3
+  - TASK-36.12
 references:
   - 'https://www.debian.org/devel/wnpp/'
   - 'https://mentors.debian.net/intro-maintainers/'
   - 'https://www.debian.org/doc/manuals/developers-reference/ch05.en.html'
 parent_task_id: TASK-36
 priority: medium
-ordinal: 2800
+ordinal: 3300
 ---
 
 ## Description
@@ -33,3 +35,9 @@ Take the proven self-hosted Debian packaging to submission quality so cubigato c
 - [ ] #4 A mentors.debian.net upload and Request For Sponsorship are prepared from the exact reviewed source package, with a documented process for responding to sponsor review.
 - [ ] #5 The handoff explains unstable/testing migration, future stable or backports availability, ongoing Debian maintenance obligations, and which self-hosted release channel remains available meanwhile.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+2026-07-24 ordering clarification: official Debian submission follows the planned x-terminal-emulator compatibility work, but neither task blocks the self-published 1.0 packages.
+<!-- SECTION:NOTES:END -->

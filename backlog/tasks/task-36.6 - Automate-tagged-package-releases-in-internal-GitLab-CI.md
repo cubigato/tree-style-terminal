@@ -1,16 +1,15 @@
 ---
 id: TASK-36.6
 title: Automate tagged package releases in internal GitLab CI
-status: next
+status: To Do
 assignee: []
 created_date: '2026-07-23 13:17'
-updated_date: '2026-07-23 13:40'
+updated_date: '2026-07-23 23:39'
 labels:
   - ci
   - packaging
   - release
   - gitlab
-  - 'blocker:1.0'
 dependencies:
   - TASK-36.3
   - TASK-36.11
@@ -21,14 +20,14 @@ modified_files:
   - .gitlab-ci.yml
   - README.md
 parent_task_id: TASK-36
-priority: high
-ordinal: 2600
+priority: medium
+ordinal: 3400
 ---
 
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Extend the existing skeleton pipeline into a reproducible release workflow on cubigato's self-hosted GitLab Docker runner. Build and verify Debian and AppImage artifacts from protected version tags while keeping publishing controlled until the pipeline is deliberately enabled for production.
+After the manual Debian and AppImage release paths are proven, extend the existing skeleton pipeline into a reproducible convenience workflow on cubigato's self-hosted GitLab Docker runner. The pipeline consumes the reviewed package workflows and automates tagged builds and controlled publication. This task is useful release engineering but is not required for 1.0.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

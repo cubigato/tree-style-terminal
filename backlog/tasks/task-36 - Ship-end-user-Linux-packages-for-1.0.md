@@ -4,7 +4,7 @@ title: Ship end-user Linux packages for 1.0
 status: next
 assignee: []
 created_date: '2026-07-22 21:21'
-updated_date: '2026-07-23 13:40'
+updated_date: '2026-07-23 23:39'
 labels:
   - packaging
   - release
@@ -17,7 +17,7 @@ ordinal: 2000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Make Tree Style Terminal installable by regular Linux users without cloning the repository or setting up a Python development environment. Establish release-ready Debian and AppImage packaging for 1.0, including the native GTK3 and VTE runtime dependencies, desktop integration, reproducible build instructions, and installable release artifacts. Flatpak remains an optional post-1.0 distribution experiment and does not block this task.
+Make Tree Style Terminal installable by regular Linux users without cloning the repository or setting up a Python development environment. The 1.0 release scope is a release-ready Debian package and AppImage, including native GTK3/VTE handling, shared desktop integration, reproducible build instructions, clean host-shell behavior, and a documented manual publication path under cubigato's control. CI automation, PyPI, official Debian inclusion, and Flatpak remain independent post-1.0 follow-ups and do not block completion of this task.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -27,11 +27,15 @@ Make Tree Style Terminal installable by regular Linux users without cloning the 
 - [ ] #3 The Debian package declares and the AppImage bundles the required Python, GTK3, PyGObject, and VTE runtime dependencies appropriately for each format.
 - [ ] #4 Version, application ID, icon, desktop entry, license, and AppStream metadata are consistent and release-ready across the 1.0 artifacts.
 - [ ] #5 Installing, upgrading, replacing, or removing either 1.0 format does not overwrite user configuration, and upgrades preserve existing configuration.
-- [ ] #6 The release workflow produces versioned Debian and AppImage artifacts for protected version tags and documents how they are published and verified.
+- [ ] #6 A documented manual release workflow produces versioned Debian and AppImage artifacts plus the checksums and license information needed for direct publication without requiring GitLab CI or an application catalog.
 - [ ] #7 Supported clean Linux environments have smoke coverage that installs or runs each 1.0 artifact, starts Tree Style Terminal, opens a real host shell session, and exits successfully.
 <!-- AC:END -->
 
+## Implementation Notes
 
+<!-- SECTION:NOTES:BEGIN -->
+2026-07-24 scope clarification: TASK-36.1, TASK-36.2, TASK-36.3, and TASK-36.11 form the complete 1.0 packaging path. The remaining subtasks are useful follow-ups but do not block the parent task or the 1.0 release.
+<!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

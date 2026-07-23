@@ -1,17 +1,16 @@
 ---
 id: TASK-36.7
 title: Publish ancillary PyPI artifacts through GitLab CI
-status: next
+status: To Do
 assignee: []
 created_date: '2026-07-23 13:17'
+updated_date: '2026-07-23 23:39'
 labels:
   - packaging
   - pypi
   - release
   - gitlab
 dependencies:
-  - TASK-36.1
-  - TASK-36.2
   - TASK-36.6
 references:
   - 'https://packaging.python.org/en/latest/tutorials/packaging-projects/'
@@ -23,13 +22,13 @@ modified_files:
   - README.md
 parent_task_id: TASK-36
 priority: medium
-ordinal: 2700
+ordinal: 3500
 ---
 
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Publish the pure-Python source distribution and wheel as an ancillary channel for developers and downstream packagers without presenting PyPI as a complete Linux desktop installation. Integrate publication with the internal GitLab release workflow and document the unavoidable external GTK, PyGObject, and VTE requirements.
+As a post-1.0 distribution convenience, publish the pure-Python source distribution and wheel as an ancillary channel for developers and downstream packagers without presenting PyPI as a complete Linux desktop installation. Integrate publication with the later GitLab release workflow and document the unavoidable external GTK, PyGObject, and VTE requirements. This task does not block the Debian or AppImage release.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -1,10 +1,10 @@
 ---
 id: TASK-36.4
 title: Support real host shell sessions from Flatpak
-status: next
+status: To Do
 assignee: []
 created_date: '2026-07-23 13:16'
-updated_date: '2026-07-23 13:40'
+updated_date: '2026-07-23 23:39'
 labels:
   - packaging
   - flatpak
@@ -26,7 +26,7 @@ modified_files:
   - tests/unit/test_session_actions.py
 parent_task_id: TASK-36
 priority: low
-ordinal: 3000
+ordinal: 3600
 ---
 
 ## Description

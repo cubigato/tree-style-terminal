@@ -1,11 +1,11 @@
 ---
 id: TASK-39
 title: Streamline README for current installation and usage
-status: In Progress
+status: Done
 assignee:
   - Codex
 created_date: '2026-07-23 23:22'
-updated_date: '2026-07-23 23:25'
+updated_date: '2026-07-23 23:29'
 labels:
   - documentation
   - cleanup
@@ -49,4 +49,14 @@ Refocus the project README on current end-user value and supported entry points.
 Rewrote README.md as a concise end-user entry point. The Debian .deb is the recommended installation path, with `uv tool install .` retained as a short alternative and a clear note that native GTK/VTE/PyGObject must already be compatible on that route. Removed distribution-specific dependency recipes, PyGObject build troubleshooting, the Current Status checklist, Architecture and Requirements sections, absent pre-commit setup, obsolete multi-tool quality instructions, and verbose copies of configuration/workspace/DPI/theme/AI details. Current roadmap information points to the Backlog.md board; CONFIG.md and PACKAGING.md remain authoritative for details.
 
 Accuracy verification: compared installation claims with the current Debian/Podman build workflow and pyproject scripts; compared usage examples with live `.venv/bin/tst --help`; compared shortcuts with ShortcutController defaults; verified all local README paths exist. README reduced from 471 lines / roughly 1,900 words to 165 lines / 532 words. Ruff and git diff --check pass, and no removed stale dependency/status/architecture/tooling terms remain.
+
+Human acceptance on 2026-07-24: the streamlined README was reviewed and approved.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Reduced README.md from 471 to 165 lines and refocused it on current end-user needs. The Debian package is now the recommended installation path, with a concise `uv tool install .` alternative. Removed stale distribution dependency recipes, PyGObject/pip troubleshooting, duplicated status and requirements lists, outdated architecture claims, nonexistent pre-commit setup, obsolete quality-tool commands, and verbose material already maintained in CONFIG.md or PACKAGING.md.
+
+Verified remaining installation and usage claims against the current package workflow, pyproject entry points, live CLI help, ShortcutController defaults, and repository paths. Ruff and git diff checks pass. Current work and roadmap now point to the repository's Backlog.md board.
+<!-- SECTION:FINAL_SUMMARY:END -->

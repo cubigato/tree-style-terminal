@@ -1,10 +1,10 @@
 ---
 id: TASK-36.5
 title: Build and self-publish the Flatpak artifact
-status: next
+status: To Do
 assignee: []
 created_date: '2026-07-23 13:16'
-updated_date: '2026-07-23 13:40'
+updated_date: '2026-07-23 23:39'
 labels:
   - packaging
   - flatpak
@@ -23,7 +23,7 @@ modified_files:
   - README.md
 parent_task_id: TASK-36
 priority: low
-ordinal: 3100
+ordinal: 3700
 ---
 
 ## Description

@@ -4,6 +4,7 @@ title: Keep AppImage runtime variables out of host shell sessions
 status: next
 assignee: []
 created_date: '2026-07-23 13:39'
+updated_date: '2026-07-23 23:39'
 labels:
   - packaging
   - appimage
@@ -40,3 +41,13 @@ Introduce a clear environment boundary for AppImage execution. Tree Style Termin
 - [ ] #4 Environment construction is centralized behind a small testable boundary rather than duplicated across terminal and workspace-session code.
 - [ ] #5 Automated tests cover AppImage detection, removal of bundle-only values, preservation of host values, native behavior, workspace commands, and safe fallbacks when expected AppImage variables are absent.
 <!-- AC:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Codex
+created: 2026-07-23 23:39
+---
+Merged into TASK-36.11 on 2026-07-24. A host-shell environment boundary cannot be usefully completed or validated before the actual AppRun/AppDir exists, and it is a required property of the AppImage artifact rather than an independent deliverable.
+---
+<!-- COMMENTS:END -->
