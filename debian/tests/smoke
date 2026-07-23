@@ -1,0 +1,46 @@
+#!/bin/sh
+set -eu
+
+application_id=de.cubigato.treestyleterminal
+config_root="$(mktemp -d)"
+trap 'rm -rf "$config_root"' EXIT
+
+tree-style-terminal --help >/dev/null
+tst --help >/dev/null
+
+desktop-file-validate "/usr/share/applications/$application_id.desktop"
+appstreamcli validate --no-net "/usr/share/metainfo/$application_id.metainfo.xml"
+
+python3 - <<'PY'
+from importlib.resources import files
+
+package_root = files("tree_style_terminal")
+required_resources = (
+    "ui/main_window.ui",
+    "resources/css/style.css",
+    "resources/css/dark-theme.css",
+    "resources/css/light-theme.css",
+    "resources/icons/hicolor/scalable/actions/ai-sparkles-symbolic.svg",
+)
+for relative_path in required_resources:
+    resource = package_root.joinpath(relative_path)
+    if not resource.is_file():
+        raise SystemExit(f"missing package resource: {relative_path}")
+PY
+
+XDG_CONFIG_HOME="$config_root" xvfb-run -a python3 - <<'PY'
+import gi
+
+gi.require_version("GLib", "2.0")
+from gi.repository import GLib
+
+from tree_style_terminal.main import TreeStyleTerminalApp
+
+application = TreeStyleTerminalApp({"quiet": True})
+GLib.timeout_add(500, application.quit)
+status = application.run(["tree-style-terminal"])
+if status != 0:
+    raise SystemExit(status)
+PY
+
+test -f "$config_root/tree-style-terminal/config.yaml"

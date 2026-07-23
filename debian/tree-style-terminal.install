@@ -1,0 +1,4 @@
+data/de.cubigato.treestyleterminal.desktop usr/share/applications
+data/de.cubigato.treestyleterminal.metainfo.xml usr/share/metainfo
+data/icons/hicolor/512x512/apps/de.cubigato.treestyleterminal.png usr/share/icons/hicolor/512x512/apps
+data/icons/hicolor/scalable/apps/de.cubigato.treestyleterminal.svg usr/share/icons/hicolor/scalable/apps

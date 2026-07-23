@@ -7,13 +7,12 @@ name = "tree-style-terminal"
 dynamic = ["version"]
 description = "A Python/GTK3 terminal application featuring a collapsible tree-based session navigator instead of traditional tabs. Requires system GTK3 and PyGObject installation."
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{ name = "Jannik Winkel" }, { name = "cubigato GmbH" }]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",

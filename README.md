@@ -458,7 +458,6 @@ The application uses the Model-View-Controller pattern with GTK3 widgets as view
 - GTK 3.0+
 - VTE 2.91+
 - PyGObject
-- PyCairo
 - PyYAML
 
 ## Author & Contact

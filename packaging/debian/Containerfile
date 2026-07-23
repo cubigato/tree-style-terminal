@@ -1,0 +1,26 @@
+FROM debian:13
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        appstream \
+        ca-certificates \
+        desktop-file-utils \
+        devscripts \
+        equivs \
+        lintian
+
+COPY debian/control /tmp/tree-style-terminal-control
+
+RUN mk-build-deps \
+        --install \
+        --remove \
+        --tool "apt-get -y --no-install-recommends" \
+        /tmp/tree-style-terminal-control \
+    && rm -f /tmp/tree-style-terminal-control \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY packaging/debian/container-build.sh /usr/local/bin/build-tree-style-terminal-deb
+
+ENTRYPOINT ["/usr/local/bin/build-tree-style-terminal-deb"]

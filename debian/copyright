@@ -1,0 +1,24 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Tree Style Terminal
+Upstream-Contact: Jannik Winkel <jannik.winkel@cubigato.de>
+Source: https://github.com/cubigato/tree-style-terminal
+
+Files: *
+Copyright: 2025-2026 cubigato GmbH
+License: Apache-2.0
+
+Files: data/de.cubigato.treestyleterminal.metainfo.xml
+Copyright: 2026 cubigato GmbH
+License: CC0-1.0
+
+Files: debian/*
+Copyright: 2026 cubigato GmbH
+License: Apache-2.0
+
+License: Apache-2.0
+ On Debian systems, the complete text of the Apache License version 2.0 can be
+ found in `/usr/share/common-licenses/Apache-2.0`.
+
+License: CC0-1.0
+ On Debian systems, the complete text of the Creative Commons CC0 1.0 Universal
+ license can be found in `/usr/share/common-licenses/CC0-1.0`.

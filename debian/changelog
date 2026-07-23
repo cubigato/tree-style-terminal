@@ -1,0 +1,5 @@
+tree-style-terminal (0.8.1-1) unstable; urgency=medium
+
+  * Initial Debian package.
+
+ -- Jannik Winkel <jannik.winkel@cubigato.de>  Fri, 24 Jul 2026 00:19:51 +0200

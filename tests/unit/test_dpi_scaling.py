@@ -91,9 +91,10 @@ class TestDPIScaling(unittest.TestCase):
         # 144 DPI / 96 = 1.5 scale
         self.assertEqual(scale, 1.5)
 
+    @patch('tree_style_terminal.css_loader.Gdk')
     @patch('tree_style_terminal.css_loader.config_manager')
     @patch('tree_style_terminal.css_loader.Gtk')
-    def test_auto_detection_fallback(self, mock_gtk, mock_config):
+    def test_auto_detection_fallback(self, mock_gtk, mock_config, mock_gdk):
         """Test auto-detection when config is 'auto'."""
         mock_config.load_config.return_value = None
         mock_config.get.side_effect = lambda key, default: {
@@ -105,14 +106,12 @@ class TestDPIScaling(unittest.TestCase):
         mock_settings = MagicMock()
         mock_settings.get_property.return_value = 96 * 1024  # 96 DPI
         mock_gtk.Settings.get_default.return_value = mock_settings
-        mock_gtk.Screen.get_default.return_value = None
+        mock_gdk.Screen.get_default.return_value = None
 
         css_loader = CSSLoader()
         scale = css_loader._calculate_effective_dpi_scale()
 
-        # With improved auto-detection algorithm, the real system DPI is used
-        # For this test system (~250 DPI), calibrated to give 2.0x scaling
-        self.assertEqual(scale, 2.0)
+        self.assertEqual(scale, 1.0)
 
     @patch('tree_style_terminal.css_loader.config_manager')
     @patch('tree_style_terminal.css_loader.Gtk')

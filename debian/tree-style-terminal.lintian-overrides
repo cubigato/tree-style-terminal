@@ -1,0 +1,3 @@
+# Local first release has no Debian ITP bug yet. Remove this override and add
+# the ITP bug to debian/changelog before the first upload to Debian.
+initial-upload-closes-no-bugs

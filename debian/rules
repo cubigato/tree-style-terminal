@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --buildsystem=pybuild
+
+override_dh_auto_test:
+	xvfb-run -a dh_auto_test --buildsystem=pybuild -- --test-pytest
+
+override_dh_installchangelogs:
+	dh_installchangelogs CHANGELOG.md

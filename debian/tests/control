@@ -1,0 +1,7 @@
+Tests: smoke
+Depends:
+ @,
+ appstream,
+ desktop-file-utils,
+ xauth,
+ xvfb,

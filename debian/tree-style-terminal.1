@@ -1,0 +1,81 @@
+.TH TREE-STYLE-TERMINAL 1 "24 July 2026" "Tree Style Terminal 0.8.1" "User Commands"
+.SH NAME
+tree-style-terminal, tst \- manage terminal sessions in a tree
+.SH SYNOPSIS
+.B tree-style-terminal
+.RI [ options ]
+.RI [ directory ]
+.br
+.B tst
+.RI [ options ]
+.RI [ directory ]
+.SH DESCRIPTION
+.B Tree Style Terminal
+is a GTK 3 terminal emulator that organizes VTE terminal sessions in a
+hierarchical tree instead of a row of tabs.
+.PP
+.B tst
+is an equivalent short command.
+.SH OPTIONS
+.TP
+.BR \-\-dpi " " DPI
+Override the detected display DPI.
+.TP
+.BR \-\-show-info
+Print display and font diagnostics while starting the application.
+.TP
+.BR \-\-test-fonts
+Print font scaling diagnostics and exit.
+.TP
+.BR \-q ", " \-\-quiet
+Suppress the startup message.
+.TP
+.BR \-\-log-level " " LEVEL
+Set diagnostic verbosity to
+.BR debug ,
+.BR info ,
+.BR warning ,
+.BR error ,
+or
+.BR critical .
+.TP
+.BR \-\-working-directory " " DIRECTORY
+.TQ
+.BR \-\-workdir " " DIRECTORY
+Create the first terminal session in
+.IR DIRECTORY .
+.TP
+.BR \-p " " FILE
+.TQ
+.BR \-\-profile " " FILE
+Load a YAML workspace profile.
+.TP
+.BR \-h ", " \-\-help
+Show the command-line help.
+.SH ENVIRONMENT
+.TP
+.B XDG_CONFIG_HOME
+Base directory for the configuration file. The default is
+.IR ~/.config .
+.TP
+.B SHELL
+Shell started in new terminal sessions. The Debian fallback is
+.IR /bin/bash .
+.TP
+.B TST_DPI
+Alternative display DPI override.
+.SH FILES
+.TP
+.I ${XDG_CONFIG_HOME:-~/.config}/tree-style-terminal/config.yaml
+User configuration. A commented template is created on first configuration
+load.
+.SH NOTES
+This release does not implement Debian's
+.B x-terminal-emulator
+command-line contract and therefore is not registered as that alternative.
+.SH SEE ALSO
+.BR bash (1),
+.BR update-alternatives (1)
+.PP
+Full configuration and workspace profile documentation is installed under
+.IR /usr/share/doc/tree-style-terminal/ .

@@ -1,0 +1,43 @@
+Source: tree-style-terminal
+Section: x11
+Priority: optional
+Maintainer: Jannik Winkel <jannik.winkel@cubigato.de>
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-sequence-python3,
+ gir1.2-gtk-3.0,
+ gir1.2-vte-2.91,
+ librsvg2-common,
+ pybuild-plugin-pyproject,
+ python3-all,
+ python3-gi (>= 3.42),
+ python3-pytest,
+ python3-setuptools,
+ python3-yaml (>= 6.0),
+ xauth,
+ xvfb,
+Standards-Version: 4.7.4.1
+Homepage: https://github.com/cubigato/tree-style-terminal
+Vcs-Browser: https://github.com/cubigato/tree-style-terminal
+Vcs-Git: https://github.com/cubigato/tree-style-terminal.git
+Rules-Requires-Root: no
+
+Package: tree-style-terminal
+Architecture: all
+Depends:
+ gir1.2-gtk-3.0,
+ gir1.2-vte-2.91,
+ librsvg2-common,
+ python3-gi (>= 3.42),
+ python3-yaml (>= 6.0),
+ ${misc:Depends},
+ ${python3:Depends},
+Recommends:
+ ca-certificates,
+Description: tree-based terminal session manager
+ Tree Style Terminal is a GTK terminal emulator that organizes shell sessions
+ in a hierarchical tree instead of a row of tabs.
+ .
+ Sessions can be nested, collapsed, renamed, and navigated with keyboard
+ shortcuts. Each session uses the native VTE terminal widget and the user's
+ normal shell environment.
