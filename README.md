@@ -115,7 +115,11 @@ python3 -m pip install --user .
 
 ## Configuration
 
-Tree Style Terminal supports extensive customization through a YAML configuration file located at `~/.config/tree-style-terminal/config.yaml`. The configuration file is automatically created with default values on first run.
+Tree Style Terminal supports extensive customization through a YAML configuration
+file. Its native default location is
+`~/.config/tree-style-terminal/config.yaml`; an absolute `XDG_CONFIG_HOME`
+changes the base directory. The commented template is created on the first
+actual configuration load.
 Also see [CONFIG.md](CONFIG.md)
 
 ### Key Configuration Options

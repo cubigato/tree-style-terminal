@@ -7,6 +7,8 @@ Tests configuration loading, validation, default creation, and error handling.
 
 import os
 import stat
+import subprocess
+import sys
 import tempfile
 from copy import deepcopy
 from pathlib import Path
@@ -38,11 +40,69 @@ class TestConfigManager:
         assert path.name == "config.yaml"
         assert "tree-style-terminal" in str(path)
 
+    def test_get_config_path_uses_absolute_xdg_config_home(
+        self, monkeypatch, tmp_path
+    ):
+        """An absolute XDG config root takes precedence over the default."""
+        config_home = tmp_path / "xdg-config"
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
+
+        config_manager = ConfigManager()
+
+        assert config_manager.get_config_path() == (
+            config_home / "tree-style-terminal" / "config.yaml"
+        )
+        assert not config_home.exists()
+
+    @pytest.mark.parametrize("xdg_config_home", ["", "relative/config"])
+    def test_get_config_path_ignores_invalid_xdg_config_home(
+        self, monkeypatch, tmp_path, xdg_config_home
+    ):
+        """Empty and relative XDG paths fall back to ~/.config."""
+        monkeypatch.setenv("XDG_CONFIG_HOME", xdg_config_home)
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        config_manager = ConfigManager()
+
+        assert config_manager.get_config_path() == (
+            tmp_path / ".config" / "tree-style-terminal" / "config.yaml"
+        )
+        assert not (tmp_path / ".config").exists()
+
+    def test_get_config_path_defaults_to_home_config(self, monkeypatch, tmp_path):
+        """An unset XDG config root preserves the existing native path."""
+        monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        config_manager = ConfigManager()
+
+        assert config_manager.get_config_path() == (
+            tmp_path / ".config" / "tree-style-terminal" / "config.yaml"
+        )
+        assert not (tmp_path / ".config").exists()
+
+    def test_import_does_not_create_config_storage(self, tmp_path):
+        """Importing the config package has no filesystem side effects."""
+        config_home = tmp_path / "xdg-config"
+        environment = os.environ.copy()
+        environment["XDG_CONFIG_HOME"] = str(config_home)
+        environment["PYTHONDONTWRITEBYTECODE"] = "1"
+
+        subprocess.run(
+            [sys.executable, "-c", "import tree_style_terminal.config"],
+            check=True,
+            env=environment,
+        )
+
+        assert not config_home.exists()
+
     def test_load_config_creates_default_when_missing(self):
         """Test that load_config creates default config when file doesn't exist."""
         with tempfile.TemporaryDirectory() as temp_dir:
             config_manager = ConfigManager()
-            config_manager._config_path = Path(temp_dir) / "config.yaml"
+            config_manager._config_path = (
+                Path(temp_dir) / "nested" / "config" / "config.yaml"
+            )
 
             # Load config - should create default
             config_manager.load_config()
@@ -52,6 +112,20 @@ class TestConfigManager:
             assert config_manager._loaded
             assert config_manager._config == DEFAULT_CONFIG
             assert config_manager._config["terminal"] is not DEFAULT_CONFIG["terminal"]
+
+    def test_new_config_directory_is_private_to_current_user(self, tmp_path):
+        """Fresh application config directories are created with mode 0700."""
+        config_manager = ConfigManager()
+        config_manager._config_path = tmp_path / "config" / "config.yaml"
+
+        previous_umask = os.umask(0)
+        try:
+            config_manager.load_config()
+        finally:
+            os.umask(previous_umask)
+
+        mode = stat.S_IMODE(config_manager._config_path.parent.stat().st_mode)
+        assert mode == 0o700
 
     def test_loaded_defaults_cannot_mutate_default_config(self):
         """Loaded configuration owns independent nested default values."""
@@ -76,8 +150,8 @@ class TestConfigManager:
                 "ui": {"sidebar_width": 300}
             }
 
-            with open(config_path, 'w') as f:
-                yaml.dump(custom_config, f)
+            original_content = yaml.dump(custom_config)
+            config_path.write_text(original_content, encoding="utf-8")
 
             config_manager = ConfigManager()
             config_manager._config_path = config_path
@@ -101,6 +175,7 @@ class TestConfigManager:
             assert config_manager._config["shortcuts"]["ai_command_draft"] == (
                 "<Control><Shift>a"
             )
+            assert config_path.read_text(encoding="utf-8") == original_content
 
     def test_new_default_config_is_private_to_current_user(self):
         """Fresh config files are created with mode 0600 regardless of umask."""
@@ -319,25 +394,6 @@ class TestConfigManager:
         with pytest.raises(ConfigError, match="dpi_scale.*must be 'auto' or a numeric value"):
             config_manager._validate_config()
 
-    def test_save_config(self):
-        """Test saving configuration to file."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_path = Path(temp_dir) / "config.yaml"
-
-            config_manager = ConfigManager()
-            config_manager._config_path = config_path
-            config_manager._config = {"theme": "light", "test": "value"}
-
-            config_manager.save_config()
-
-            # Verify file was created and contains correct data
-            assert config_path.exists()
-            with open(config_path) as f:
-                saved_config = yaml.safe_load(f)
-
-            assert saved_config["theme"] == "light"
-            assert saved_config["test"] == "value"
-
     def test_merge_with_defaults(self):
         """Test merging loaded config with defaults."""
         config_manager = ConfigManager()
@@ -378,23 +434,34 @@ class TestConfigManager:
             with pytest.raises(ConfigError, match="Invalid YAML"):
                 config_manager.load_config()
 
-    @patch("builtins.open", side_effect=OSError("Permission denied"))
-    def test_load_config_io_error(self, mock_file):
-        """Test handling of IO errors when loading config."""
+    @patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied"))
+    def test_load_config_directory_creation_error(self, mock_mkdir):
+        """Test handling of errors while creating the config directory."""
         config_manager = ConfigManager()
         config_manager._config_path = Path("/nonexistent/config.yaml")
+
+        with pytest.raises(ConfigError, match="Cannot create config directory"):
+            config_manager.load_config()
+
+    @patch("os.open", side_effect=OSError("Permission denied"))
+    def test_load_config_file_creation_error(self, mock_open, tmp_path):
+        """Test handling of errors while creating the config file."""
+        config_manager = ConfigManager()
+        config_manager._config_path = tmp_path / "config" / "config.yaml"
 
         with pytest.raises(ConfigError, match="Cannot create config file"):
             config_manager.load_config()
 
     @patch("builtins.open", side_effect=OSError("Permission denied"))
-    def test_save_config_io_error(self, mock_file):
-        """Test handling of IO errors when saving config."""
+    def test_load_config_read_error(self, mock_file, tmp_path):
+        """Test handling of IO errors while reading an existing config."""
+        config_path = tmp_path / "config.yaml"
+        config_path.touch()
         config_manager = ConfigManager()
-        config_manager._config = {"theme": "dark"}
+        config_manager._config_path = config_path
 
-        with pytest.raises(ConfigError, match="Cannot save config file"):
-            config_manager.save_config()
+        with pytest.raises(ConfigError, match="Cannot read config file"):
+            config_manager.load_config()
 
     def test_get_config_path_method(self):
         """Test get_config_path() method."""

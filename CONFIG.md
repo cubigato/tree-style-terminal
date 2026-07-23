@@ -4,14 +4,39 @@ Tree Style Terminal supports configuration via a YAML file that allows you to cu
 
 ## Configuration File Location
 
-The configuration file is located at:
+Tree Style Terminal follows the XDG Base Directory specification. With an
+absolute, non-empty `XDG_CONFIG_HOME`, the configuration file is located at:
+
+```
+$XDG_CONFIG_HOME/tree-style-terminal/config.yaml
+```
+
+Otherwise, including when `XDG_CONFIG_HOME` is empty or relative, the native
+default remains:
+
 ```
 ~/.config/tree-style-terminal/config.yaml
 ```
 
-The configuration file will be automatically created with default (commented) values when you first run the application.
-New configuration files are created with mode `0600`, so only the current user
-can read or modify them.
+The configuration manager creates no files or directories merely by being
+imported or constructed. On the first actual configuration load, normally
+during application startup, it creates the application directory with mode
+`0700` and a neutral, commented template with mode `0600`.
+
+Flatpak redirects `XDG_CONFIG_HOME` into the application's persistent storage,
+so the resulting host path is normally:
+
+```
+~/.var/app/de.cubigato.treestyleterminal/config/tree-style-terminal/config.yaml
+```
+
+Native and Debian installations keep configuration in the user's XDG config
+directory. The package does not own that file, so normal package upgrades and
+uninstalls leave it in place. Flatpak updates and normal uninstalls likewise
+retain the per-application data; `flatpak uninstall --delete-data` explicitly
+removes it. See the
+[XDG Base Directory specification](https://specifications.freedesktop.org/basedir-spec/latest/)
+and [Flatpak command reference](https://docs.flatpak.org/en/latest/flatpak-command-reference.html).
 
 ## Configuration Options
 
@@ -139,7 +164,7 @@ provider whose data handling you accept.
 
 Workspace profiles are self-contained YAML files for creating one or more
 startup session trees. They are loaded explicitly and are separate from the normal
-`~/.config/tree-style-terminal/config.yaml` file.
+Tree Style Terminal configuration file described above.
 
 When no session is open, **Load Profile** on the welcome screen opens a chooser
 for `.yml` and `.yaml` profiles. It starts in the user's home directory by
@@ -324,9 +349,12 @@ Configuration is only loaded when the application starts. To apply changes, rest
 
 If the configuration file doesn't exist or has missing values:
 - Missing file: Default values are used, and a template file is created
-- Missing keys: Default values are used for missing options
+- Missing keys: Default values are merged in memory without rewriting the file
 - Invalid values: Application exits with error message
 
 ## File Creation
 
-When you first run Tree Style Terminal, a configuration template will be automatically created at `~/.config/tree-style-terminal/config.yaml` with all options commented out. Uncomment and modify the values you want to change.
+On its first actual configuration load, Tree Style Terminal creates a commented
+template at the XDG-aware location described above. Uncomment and modify the
+values you want to change. Existing configuration files are never rewritten
+merely because a later release introduces additional default settings.

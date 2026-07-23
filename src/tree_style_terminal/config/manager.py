@@ -36,10 +36,13 @@ class ConfigManager:
 
     def _get_config_path(self) -> Path:
         """Get the path to the configuration file."""
-        # Use XDG config directory
-        config_dir = Path.home() / ".config" / "tree-style-terminal"
-        config_dir.mkdir(parents=True, exist_ok=True)
-        return config_dir / "config.yaml"
+        xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
+        if xdg_config_home and Path(xdg_config_home).is_absolute():
+            config_home = Path(xdg_config_home)
+        else:
+            config_home = Path.home() / ".config"
+
+        return config_home / "tree-style-terminal" / "config.yaml"
 
     def load_config(self) -> None:
         """
@@ -81,6 +84,13 @@ class ConfigManager:
 
     def _create_default_config(self) -> None:
         """Create a default configuration file with commented examples."""
+        try:
+            self._config_path.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
+        except OSError as e:
+            raise ConfigError(
+                f"Cannot create config directory {self._config_path.parent}: {e}"
+            ) from e
+
         try:
             descriptor = os.open(
                 self._config_path,
@@ -196,20 +206,6 @@ class ConfigManager:
 
         value = self._get_nested_value(key)
         return value if value is not None else default
-
-    def save_config(self) -> None:
-        """
-        Save current configuration to file.
-
-        Raises:
-            ConfigError: If configuration cannot be saved.
-        """
-        try:
-            with open(self._config_path, 'w', encoding='utf-8') as f:
-                yaml.dump(self._config, f, default_flow_style=False, indent=2)
-            logger.info(f"Configuration saved to {self._config_path}")
-        except OSError as e:
-            raise ConfigError(f"Cannot save config file {self._config_path}: {e}") from e
 
     def get_config_path(self) -> Path:
         """Get the path to the configuration file."""
