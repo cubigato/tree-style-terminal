@@ -53,6 +53,102 @@ long, descriptive command name and does not claim D-Bus activation.
 Package-specific installation paths and build mechanics belong to their
 respective Debian, AppImage, PyPI, or Flatpak tasks.
 
+## AppImage
+
+The self-published AppImage is the portable x86_64 option. It is built on
+Debian 12 (bookworm) against glibc 2.36 and therefore supports x86_64
+distributions with glibc 2.36 or newer. The artifact bundles Python 3.11,
+PyYAML, PyGObject, GTK 3, VTE, typelibs, loaders, schemas, Fontconfig data, a
+base monospace font, themes, icons, and their required non-glibc libraries. It
+is not a sandbox: terminal sessions run the real host shell with normal access
+to the user's files, environment, agents, and network.
+
+### One-command Podman build and check
+
+The normal build requires GNU Make and rootless Podman:
+
+```sh
+make appimage
+```
+
+It writes the following release files under `build/appimage/`:
+
+```text
+TreeStyleTerminal-0.8.1-x86_64.AppImage
+TreeStyleTerminal-0.8.1-x86_64.AppImage.sha256
+TreeStyleTerminal-0.8.1-x86_64.third-party-licenses.txt
+```
+
+For the release-level check, use:
+
+```sh
+make appimage-check
+```
+
+The check builds the artifact from a read-only checkout, validates its desktop
+metadata, and runs it in a minimal Debian 12 container without host Python,
+GTK, VTE, or PyGObject. Xvfb and headless-Weston smoke tests open a workspace
+through the X11 and Wayland GTK backends, respectively. Both run a host command
+in a requested directory and verify that the bundled Python, library, typelib,
+schema, and module paths do not leak into the terminal. A real-session launch
+on a Wayland release workstation remains a prudent manual release check.
+
+The builder image is pinned to a Debian snapshot. AppImage tooling is pinned by
+commit-derived download URLs where available and every external binary or
+license input is verified by SHA-256. Network access is used only while Podman
+creates the builder images. AppDir assembly and the application smoke test run
+with networking disabled. Exact pins and checksums live in
+`packaging/appimage/Containerfile`; the AppDir recipe is
+`packaging/appimage/container-build.sh`.
+
+Remove local artifacts and rebuild from scratch with:
+
+```sh
+make clean
+make appimage-check
+```
+
+The image and Podman executable can be overridden when necessary:
+
+```sh
+APPIMAGE_BUILD_IMAGE=localhost/custom-tst-appimage \
+PODMAN=podman make appimage
+```
+
+### Run, verify, and remove
+
+Verify the checksum before executing a downloaded artifact:
+
+```sh
+sha256sum --check TreeStyleTerminal-0.8.1-x86_64.AppImage.sha256
+chmod +x TreeStyleTerminal-0.8.1-x86_64.AppImage
+./TreeStyleTerminal-0.8.1-x86_64.AppImage
+```
+
+Type 2 AppImages normally use FUSE. If FUSE is unavailable, use the runtime's
+extract-and-run fallback:
+
+```sh
+APPIMAGE_EXTRACT_AND_RUN=1 \
+  ./TreeStyleTerminal-0.8.1-x86_64.AppImage
+```
+
+The AppImage does not install itself, register MIME types, add menu entries, or
+provide automatic updates. Desktop launchers created by an optional third-party
+integration tool are outside this project's release contract. To uninstall,
+delete the AppImage and any launcher created for it. Configuration remains in
+`${XDG_CONFIG_HOME:-~/.config}/tree-style-terminal/config.yaml`; remove that
+file separately only if its settings are no longer wanted.
+
+### Manual self-publication
+
+Run `make clean && make appimage-check`, preferably perform one real Wayland
+launch on a Wayland release workstation, and publish the three files from
+`build/appimage/` together as direct release downloads. The checksum is for
+the versioned AppImage. The inventory lists bundled Debian package versions,
+copyright files, and the AppImage runtime license. No GitLab CI, AppImageHub,
+or application catalog is required.
+
 ## Debian package
 
 The Debian package targets Debian 13 (trixie) and uses the distribution's

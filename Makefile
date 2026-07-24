@@ -1,9 +1,15 @@
 .DEFAULT_GOAL := deb
 
-.PHONY: clean deb deb-check lint test
+.PHONY: appimage appimage-check clean deb deb-check lint test
 
 clean:
 	rm -rf -- "$(CURDIR)/build"
+
+appimage:
+	./packaging/appimage/build.sh package
+
+appimage-check:
+	./packaging/appimage/build.sh check
 
 deb:
 	./packaging/debian/build.sh package

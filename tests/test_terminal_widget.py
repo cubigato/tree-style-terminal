@@ -80,6 +80,38 @@ def test_shell_argv_logic():
             del os.environ['SHELL']
 
 
+def test_spawn_shell_uses_exact_constructed_environment():
+    """VTE must not merge the bundled parent environment back into envv."""
+    from tree_style_terminal.widgets.terminal import (
+        TERMINAL_SPAWN_FLAGS,
+        Vte,
+        VteTerminal,
+    )
+
+    terminal = VteTerminal()
+    pty = Mock()
+    terminal.terminal.set_pty = Mock()
+
+    with (
+        patch(
+            "tree_style_terminal.widgets.terminal.build_terminal_environment",
+            return_value={"PATH": "/usr/bin", "TERM": "xterm-256color"},
+        ),
+        patch(
+            "tree_style_terminal.widgets.terminal.Vte.Pty.new_sync",
+            return_value=pty,
+        ),
+    ):
+        assert terminal.spawn_shell(argv=["/bin/sh"], cwd="/tmp")
+
+    assert TERMINAL_SPAWN_FLAGS & Vte.SPAWN_NO_PARENT_ENVV
+    assert pty.spawn_async.call_args.args[2] == [
+        "PATH=/usr/bin",
+        "TERM=xterm-256color",
+    ]
+    assert pty.spawn_async.call_args.args[3] == TERMINAL_SPAWN_FLAGS
+
+
 def test_terminal_properties():
     """Test that terminal widget has expected properties."""
     from tree_style_terminal.widgets.terminal import (

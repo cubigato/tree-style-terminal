@@ -22,6 +22,7 @@ from gi.repository import Gdk, GLib, Gtk, Vte
 
 from ..ai_command import DEFAULT_HISTORY_LINES, extract_editable_input
 from ..config import ConfigError, config_manager
+from ..runtime_environment import build_terminal_environment
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,9 @@ FUZZY_SEARCH_SEPARATOR_PATTERN = r"[-_\s]*"
 PCRE2_MULTILINE = 1024
 VTE_REGEX_COMPILE_FLAGS = Vte.REGEX_FLAGS_DEFAULT | PCRE2_MULTILINE
 TERMINAL_LEFT_EDGE_MARGIN_PX = 16
+TERMINAL_SPAWN_FLAGS = GLib.SpawnFlags.DEFAULT | GLib.SpawnFlags(
+    Vte.SPAWN_NO_PARENT_ENVV
+)
 
 
 def build_terminal_search_pattern(text: str, fuzzy: bool) -> str:
@@ -626,12 +630,8 @@ class VteTerminal(Gtk.Box):
             logger.warning(f"Working directory {cwd} does not exist, using home directory")
             cwd = os.path.expanduser("~")
 
-        # Set up environment
-        env = os.environ.copy()
-
-        # Set TERM if not already set
-        if "TERM" not in env:
-            env["TERM"] = "xterm-256color"
+        # Keep the bundled application runtime out of host shell sessions.
+        env = build_terminal_environment()
 
         try:
             # Convert environment to the format expected by spawn_async
@@ -651,7 +651,7 @@ class VteTerminal(Gtk.Box):
                 cwd,                     # working_directory
                 argv,                    # argv
                 envv,                    # envv
-                GLib.SpawnFlags.DEFAULT, # spawn_flags
+                TERMINAL_SPAWN_FLAGS,    # spawn_flags
                 None,                    # child_setup
                 None,                    # child_setup_data
                 -1,                      # timeout (-1 = no timeout)

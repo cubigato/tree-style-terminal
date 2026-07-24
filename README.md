@@ -40,6 +40,20 @@ sudo apt install ./build/debian/tree-style-terminal_*_all.deb
 See [PACKAGING.md](PACKAGING.md) for build verification, package contents, and
 release details.
 
+### AppImage
+
+The portable x86_64 AppImage is an alternative for glibc-based Linux systems:
+
+```sh
+chmod +x TreeStyleTerminal-*-x86_64.AppImage
+./TreeStyleTerminal-*-x86_64.AppImage
+```
+
+It bundles the graphical runtime but deliberately launches terminal sessions
+with the host's normal shell and environment. See
+[PACKAGING.md](PACKAGING.md#appimage) for compatibility, verification, FUSE
+fallback, and desktop-integration details.
+
 ### uv tool install
 
 As an alternative, install directly from a checkout:
@@ -144,6 +158,12 @@ Build and exercise the Debian package in a clean Podman environment:
 
 ```sh
 make deb-check
+```
+
+Build and exercise the AppImage in clean Podman environments:
+
+```sh
+make appimage-check
 ```
 
 ## Project documentation
